@@ -38,7 +38,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/swaggo/gin-swagger v1.2.0
-	github.com/swaggo/swag v1.6.2
 	github.com/timandy/routine v1.1.1
 	github.com/unknwon/com v0.0.0-20190804042917-757f69c95f3e
 	gopkg.in/yaml.v3 v3.0.1
@@ -48,6 +47,7 @@ require (
 )
 
 require (
+	github.com/swaggo/swag v1.6.2 // indirect
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.0 // indirect
