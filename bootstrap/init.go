@@ -12,6 +12,7 @@ import (
 	"github.com/wjshen/gophrame/router"
 )
 
+// Lazy init
 func Init() {
 	logger.Info("Initializing Bootstrap...")
 

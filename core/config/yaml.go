@@ -1,6 +1,8 @@
 package config
 
 import (
+	"encoding/json"
+
 	"github.com/wjshen/gophrame/core/command"
 	"github.com/wjshen/gophrame/core/container"
 	"github.com/wjshen/gophrame/core/global"
@@ -65,7 +67,13 @@ func InitConfig(out interface{}) {
 	//1读取文件
 	data, err := ioutil.ReadFile(global.BasePath + "/conf/" + yamlFile + ".yml")
 	if err == nil {
-		err = yaml.Unmarshal(data, out)
+		var temp = make(map[string]interface{})
+
+		if err = yaml.Unmarshal(data, temp); err == nil {
+			if data, err = json.Marshal(temp); err == nil {
+				err = json.Unmarshal(data, out)
+			}
+		}
 	}
 
 	if err != nil {
