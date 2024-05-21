@@ -22,6 +22,16 @@ var error_messages = map[int]string{
 	ERROR_AUTH:                     "Token错误",
 }
 
+func AddErrorMessage(code int, message string) {
+	error_messages[code] = message
+}
+
+func AddErrorMessages(messages map[int]string) {
+	for code, value := range messages {
+		error_messages[code] = value
+	}
+}
+
 func GetErrorMessage(code int) string {
 	msg, ok := error_messages[code]
 	if ok {
