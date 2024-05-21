@@ -1,7 +1,7 @@
 package config
 
 import (
-	"encoding/json"
+	"unsafe"
 
 	"github.com/wjshen/gophrame/core/command"
 	"github.com/wjshen/gophrame/core/container"
@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/modern-go/reflect2"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -41,8 +43,37 @@ var containerFactory = container.CreateContainersFactory()
 
 var ConfigYml IYmlConfig
 
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 func init() {
 	lastChangeTime = time.Now()
+	json.RegisterExtension(&JsonExtension{})
+}
+
+type JsonExtension struct {
+	jsoniter.DummyExtension
+}
+
+type DurationDecoder struct{}
+
+func (*DurationDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+	switch iter.WhatIsNext() {
+	case jsoniter.StringValue:
+		if d, err := time.ParseDuration(iter.ReadString()); err == nil {
+			*(*time.Duration)(ptr) = time.Duration(d)
+		}
+	case jsoniter.NilValue:
+		*((*time.Duration)(ptr)) = time.Duration(0)
+	default:
+		*((*time.Duration)(ptr)) = time.Duration(iter.ReadInt64())
+	}
+}
+
+func (*JsonExtension) CreateDecoder(typ reflect2.Type) jsoniter.ValDecoder {
+	if typ.AssignableTo(reflect2.TypeOf(time.Duration(0))) {
+		return &DurationDecoder{}
+	}
+	return nil
 }
 
 func InitConfig(out interface{}) {
@@ -68,7 +99,6 @@ func InitConfig(out interface{}) {
 	data, err := ioutil.ReadFile(global.BasePath + "/conf/" + yamlFile + ".yml")
 	if err == nil {
 		var temp = make(map[string]interface{})
-
 		if err = yaml.Unmarshal(data, temp); err == nil {
 			if data, err = json.Marshal(temp); err == nil {
 				err = json.Unmarshal(data, out)
