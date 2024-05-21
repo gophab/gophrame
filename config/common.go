@@ -87,7 +87,9 @@ var Config *Configuration = &Configuration{
 
 var ConfigYml c.IYmlConfig = c.ConfigYml
 
-func init() {
-	c.InitConfig(&Config)
-	logger.Debug("Load application configuration: ", json.String(Config))
+func InitConfig(conf interface{}) {
+	c.InitConfig(conf)
+
+	// Logger
+	logger.Debug("Load application configuration: ", json.String(conf))
 }
