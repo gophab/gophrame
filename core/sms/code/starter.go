@@ -1,4 +1,4 @@
-package starter
+package code
 
 import (
 	"sync"
@@ -6,10 +6,7 @@ import (
 	"github.com/wjshen/gophrame/core/code"
 	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/sms/config"
-
-	SmsCode "github.com/wjshen/gophrame/core/sms/code"
-
-	_ "github.com/wjshen/gophrame/config"
+	"github.com/wjshen/gophrame/core/starter"
 )
 
 var (
@@ -17,6 +14,10 @@ var (
 )
 
 func init() {
+	starter.RegisterStarter(Start)
+}
+
+func Start() {
 	once.Do(func() {
 		initSmsCodeSender()
 		initSmsCodeStore()
@@ -27,7 +28,7 @@ func init() {
 
 func initSmsCodeSender() (sender code.CodeSender, err error) {
 	if config.Setting.Enabled {
-		sender := &SmsCode.SmsCodeSender{}
+		sender := &SmsCodeSender{}
 		inject.InjectValue("smsCodeSender", sender)
 	}
 	return sender, err
@@ -51,12 +52,12 @@ func initSmsCodeStore() (store code.CodeStore, err error) {
 
 func initSmsCodeValidator() {
 	if config.Setting.Enabled {
-		inject.InjectValue("smsCodeValidator", &SmsCode.SmsCodeValidator{})
+		inject.InjectValue("smsCodeValidator", &SmsCodeValidator{})
 	}
 }
 
 func initSmsCodeController() {
 	if config.Setting.Enabled {
-		inject.InjectValue("smsCodeController", &SmsCode.SmsCodeController{})
+		inject.InjectValue("smsCodeController", &SmsCodeController{})
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/wjshen/gophrame/controller"
 )
 
-func InitRouters() {
+func Init() {
 	// 初始化缺省路由
 	root := DefaultRouter.InitDefaultRouters()
 

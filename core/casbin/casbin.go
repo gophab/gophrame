@@ -4,13 +4,12 @@ import (
 	"errors"
 	"net/http"
 
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/casbin/config"
 	"github.com/wjshen/gophrame/core/database"
 	"github.com/wjshen/gophrame/core/global"
 	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/logger"
+	"github.com/wjshen/gophrame/core/starter"
 	"github.com/wjshen/gophrame/core/webservice/response"
 
 	"github.com/casbin/casbin/v2"
@@ -29,6 +28,10 @@ const (
 )
 
 func init() {
+	starter.RegisterStarter(Start)
+}
+
+func Start() {
 	if config.Setting.Enabled {
 		logger.Info("Initializing Casbin")
 		if enforcer, err := InitCasbinEnforcer(); err != nil {

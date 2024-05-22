@@ -1,17 +1,22 @@
 package security
 
 import (
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/logger"
+	"github.com/wjshen/gophrame/core/starter"
 
-	_ "github.com/wjshen/gophrame/core/security/server"
-	_ "github.com/wjshen/gophrame/core/security/token"
+	"github.com/wjshen/gophrame/core/security/server"
+	"github.com/wjshen/gophrame/core/security/token"
 )
+
+func init() {
+	starter.RegisterStarter(Start)
+}
 
 /**
  * 安全框架启动
  */
-func init() {
+func Start() {
 	logger.Info("Initializing GOES Security Starter")
+	server.Start()
+	token.Start()
 }

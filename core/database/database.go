@@ -4,12 +4,8 @@ import (
 	"strings"
 	"sync"
 
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/database/config"
 	MySQL "github.com/wjshen/gophrame/core/database/mysql"
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/logger"
 
 	"gorm.io/gorm"
@@ -20,17 +16,6 @@ var (
 	db    *gorm.DB
 	mutex sync.Mutex
 )
-
-func init() {
-	logger.Info("Initializing Database")
-	if config.Setting.Enabled {
-		logger.Info("Database Enabled")
-		global.DB = InitDB()
-		inject.InjectValue("database", global.DB)
-	} else {
-		logger.Info("Database Disabled")
-	}
-}
 
 func InitDB() *gorm.DB {
 	mutex.Lock()

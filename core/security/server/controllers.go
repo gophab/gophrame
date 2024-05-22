@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/wjshen/gophrame/config"
 	"github.com/wjshen/gophrame/errors"
 
 	"github.com/wjshen/gophrame/core/captcha"

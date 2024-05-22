@@ -1,8 +1,6 @@
 package starter
 
 import (
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/microservice/registry/config"
 	"github.com/wjshen/gophrame/core/microservice/registry/eureka"

@@ -5,8 +5,6 @@ import (
 	"errors"
 	"time"
 
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/database"
 	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/json"
@@ -28,10 +26,6 @@ func TokenStore() oauth2.TokenStore {
 		theTokenStore = InitTokenStore()
 	}
 	return theTokenStore
-}
-
-func init() {
-	InitTokenStore()
 }
 
 func InitTokenStore() oauth2.TokenStore {

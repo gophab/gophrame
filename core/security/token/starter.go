@@ -1,10 +1,6 @@
 package token
 
-import (
-	_ "github.com/wjshen/gophrame/config"
-)
-
-func init() {
+func Start() {
 	InitTokenResolver()
 	InitTokenStore()
 }

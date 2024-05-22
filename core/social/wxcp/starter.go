@@ -1,19 +1,16 @@
-package starter
+package wxcp
 
 import (
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/core/social/wxcp"
 	"github.com/wjshen/gophrame/core/social/wxcp/config"
 )
 
-var wxcpService *wxcp.WxcpService
-var wxcpController *wxcp.WxcpController
+var wxcpService *WxcpService
+var wxcpController *WxcpController
 
-func init() {
+func Start() {
 	if config.Setting.Enabled {
 		if service, _ := initWxcpService(); service != nil {
 			social.RegisterSocialService("ww", service)
@@ -21,10 +18,10 @@ func init() {
 	}
 }
 
-func initWxcpService() (*wxcp.WxcpService, error) {
+func initWxcpService() (*WxcpService, error) {
 	logger.Info("Initializing WxcpService...")
-	wxcpService = &wxcp.WxcpService{}
-	wxcpController = &wxcp.WxcpController{WxcpService: wxcpService}
+	wxcpService = &WxcpService{}
+	wxcpController = &WxcpController{WxcpService: wxcpService}
 
 	inject.InjectValue("wxcpController", wxcpController)
 	return wxcpService, nil

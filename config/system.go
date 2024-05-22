@@ -3,7 +3,21 @@ package config
 import (
 	"time"
 
-	c "github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/config"
+
+	_ "github.com/wjshen/gophrame/core/captcha/config"
+	_ "github.com/wjshen/gophrame/core/casbin/config"
+	_ "github.com/wjshen/gophrame/core/database/config"
+	_ "github.com/wjshen/gophrame/core/email/config"
+	_ "github.com/wjshen/gophrame/core/logger/config"
+	_ "github.com/wjshen/gophrame/core/microservice/config"
+	_ "github.com/wjshen/gophrame/core/rabbitmq/config"
+	_ "github.com/wjshen/gophrame/core/redis/config"
+	_ "github.com/wjshen/gophrame/core/security/config"
+	_ "github.com/wjshen/gophrame/core/sms/config"
+	_ "github.com/wjshen/gophrame/core/snowflake/config"
+	_ "github.com/wjshen/gophrame/core/social/config"
+	_ "github.com/wjshen/gophrame/core/websocket/config"
 )
 
 /**
@@ -43,5 +57,5 @@ type Configuration struct {
 var Config *Configuration = &Configuration{}
 
 func init() {
-	c.RegisterConfig("ROOT", Config, "Default system configuration")
+	config.RegisterConfig("ROOT", Config, "Default system configuration")
 }

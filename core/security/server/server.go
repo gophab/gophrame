@@ -6,8 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/security/config"
@@ -38,7 +36,7 @@ type OAuth2Server struct {
 
 var theOAuth2Server *OAuth2Server
 
-func init() {
+func Start() {
 	if config.Setting.Server.Enabled {
 		logger.Info("Initializing OAuth2 Server")
 

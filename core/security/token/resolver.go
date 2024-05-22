@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/security/token/config"
@@ -24,10 +22,6 @@ func TokenResolver() ITokenResolver {
 		theTokenResolver = InitTokenResolver()
 	}
 	return theTokenResolver
-}
-
-func init() {
-	InitTokenResolver()
 }
 
 func InitTokenResolver() ITokenResolver {

@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/security/token/config"

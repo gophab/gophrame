@@ -88,15 +88,14 @@ func loadConfig() error {
 	var err error
 	if err = InitYamlConfig(&config); err == nil {
 		// Logger
-		if value, _ := json.MarshalToString(config); value != "" {
-			logger.Debug("Load application configuration: ", value)
+		if text, _ := json.MarshalToString(config); text != "" {
+			logger.Debug("Load application configuration: ", text)
 		}
 
 		// Second to json
 		for key, value := range configs {
 			if key == "ROOT" {
 				// "ROOT" node
-				logger.Debug("Load system configuration")
 				err = UnmarshalFromNode(config, value.Setting)
 			} else if node, ok := config[key]; ok {
 				// Setting node
@@ -105,8 +104,12 @@ func loadConfig() error {
 			}
 
 			if err != nil {
-				logger.Error(err.Error())
+				logger.Error("Load configuration error: ", key, err.Error())
 				break
+			} else {
+				if text, _ := json.MarshalToString(value.Setting); text != "" {
+					logger.Debug("Load configuration: ", key, text)
+				}
 			}
 		}
 	}

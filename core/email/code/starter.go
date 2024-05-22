@@ -1,15 +1,12 @@
-package starter
+package code
 
 import (
 	"sync"
 
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/code"
 	"github.com/wjshen/gophrame/core/email/config"
 	"github.com/wjshen/gophrame/core/inject"
-
-	EmailCode "github.com/wjshen/gophrame/core/email/code"
+	"github.com/wjshen/gophrame/core/starter"
 )
 
 var (
@@ -17,6 +14,10 @@ var (
 )
 
 func init() {
+	starter.RegisterStarter(Start)
+}
+
+func Start() {
 	once.Do(func() {
 		initEmailCodeSender()
 		initEmailCodeStore()
@@ -27,9 +28,8 @@ func init() {
 
 func initEmailCodeSender() (sender code.CodeSender, err error) {
 	if config.Setting.Enabled {
-		if sender != nil {
-			inject.InjectValue("emailCodeSender", sender)
-		}
+		sender = &EmailCodeSender{}
+		inject.InjectValue("emailCodeSender", sender)
 	}
 
 	return sender, err
@@ -53,12 +53,12 @@ func initEmailCodeStore() (store code.CodeStore, err error) {
 
 func initEmailCodeValidator() {
 	if config.Setting.Enabled {
-		inject.InjectValue("emailCodeValidator", &EmailCode.EmailCodeValidator{})
+		inject.InjectValue("emailCodeValidator", &EmailCodeValidator{})
 	}
 }
 
 func initEmailCodeController() {
 	if config.Setting.Enabled {
-		inject.InjectValue("emailCodeController", &EmailCode.EmailCodeController{})
+		inject.InjectValue("emailCodeController", &EmailCodeController{})
 	}
 }

@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/database/config"
 	"github.com/wjshen/gophrame/core/global"
 	"github.com/wjshen/gophrame/core/logger"

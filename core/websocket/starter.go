@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"github.com/wjshen/gophrame/core/starter"
 	"github.com/wjshen/gophrame/core/websocket/config"
 
 	"github.com/wjshen/gophrame/core/global"
@@ -8,6 +9,10 @@ import (
 )
 
 func init() {
+	starter.RegisterStarter(Start)
+}
+
+func Start() {
 	// websocket Hub中心启动
 	if config.Setting.Enabled {
 		logger.Info("Enable websocket")

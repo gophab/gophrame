@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/wjshen/gophrame/config"
-
 	"github.com/wjshen/gophrame/core/snowflake/config"
 )
 
