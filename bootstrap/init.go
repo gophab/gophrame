@@ -18,8 +18,7 @@ import (
 	_ "github.com/wjshen/gophrame/core/snowflake"
 	_ "github.com/wjshen/gophrame/core/social/starter"
 	_ "github.com/wjshen/gophrame/core/websocket"
-
-	// _ "github.com/wjshen/gophrame/security"
+	_ "github.com/wjshen/gophrame/security"
 
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/starter"
