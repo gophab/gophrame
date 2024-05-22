@@ -17,6 +17,7 @@ func init() {
  */
 func Start() {
 	logger.Info("Initializing GOES Security Starter")
-	server.Start()
+	server.StartServer()
+	server.StartControllers()
 	token.Start()
 }
