@@ -2,9 +2,11 @@ package config
 
 import (
 	CodeConfig "github.com/wjshen/gophrame/core/code/config"
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
 
 	AliyunConfig "github.com/wjshen/gophrame/core/sms/aliyun/config"
-	"github.com/wjshen/gophrame/core/sms/code/config"
+	SmsCodeConfig "github.com/wjshen/gophrame/core/sms/code/config"
 	QcloudConfig "github.com/wjshen/gophrame/core/sms/qcloud/config"
 )
 
@@ -28,5 +30,10 @@ var Setting *SmsSetting = &SmsSetting{
 		Aliyun: AliyunConfig.Setting,
 		Qcloud: QcloudConfig.Setting,
 	},
-	Store: config.Setting,
+	Store: SmsCodeConfig.Setting,
+}
+
+func init() {
+	logger.Debug("Register SMS Config")
+	config.RegisterConfig("sms", Setting, "SMS Settings")
 }

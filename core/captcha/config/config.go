@@ -1,5 +1,10 @@
 package config
 
+import (
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
+)
+
 type CaptchaSetting struct {
 	Enabled      bool   `json:"enabled"`
 	CaptchaId    string `json:"captchaId" yaml:"captchaId"`
@@ -9,4 +14,9 @@ type CaptchaSetting struct {
 
 var Setting *CaptchaSetting = &CaptchaSetting{
 	Enabled: false,
+}
+
+func init() {
+	logger.Debug("Register Captcha Config")
+	config.RegisterConfig("captcha", Setting, "Captcha Settings")
 }

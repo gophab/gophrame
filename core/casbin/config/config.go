@@ -1,6 +1,11 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
+)
 
 type CasbinSetting struct {
 	Enabled                bool          `json:"enabled"`
@@ -13,4 +18,9 @@ type CasbinSetting struct {
 var Setting *CasbinSetting = &CasbinSetting{
 	Enabled:                false,
 	AutoLoadPolicyInterval: time.Second * 5,
+}
+
+func init() {
+	logger.Debug("Register Casbin Config")
+	config.RegisterConfig("casbin", Setting, "Casbin Settings")
 }

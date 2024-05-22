@@ -1,6 +1,11 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
+)
 
 type RedisSetting struct {
 	Enabled                  bool          `json:"enabled"`
@@ -24,4 +29,9 @@ var Setting *RedisSetting = &RedisSetting{
 	IdleTimout:               time.Second * 60,
 	ConnectionFailRetryTimes: 3,
 	ReConnectInterval:        time.Second * 5,
+}
+
+func init() {
+	logger.Debug("Register Redis Config")
+	config.RegisterConfig("redis", Setting, "Redis Settings")
 }

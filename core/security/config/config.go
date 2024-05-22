@@ -1,6 +1,9 @@
 package config
 
 import (
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
+
 	ServerConfig "github.com/wjshen/gophrame/core/security/server/config"
 	TokenConfig "github.com/wjshen/gophrame/core/security/token/config"
 )
@@ -28,4 +31,6 @@ var Setting *SecuritySetting = &SecuritySetting{
 }
 
 func init() {
+	logger.Debug("Register Security Settings")
+	config.RegisterConfig("security", Setting, "Security Settings")
 }

@@ -3,6 +3,9 @@ package config
 import (
 	"time"
 
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
+
 	MysqlConfig "github.com/wjshen/gophrame/core/database/mysql/config"
 )
 
@@ -18,7 +21,7 @@ type DatabaseSetting struct {
 	ConnectionMaxLifeTime time.Duration `json:"connectionMaxLifeTime" yaml:"connectionMaxLifeTime"`
 
 	// Driver Settings
-	Mysql *MysqlConfig.MysqlSetting `json:"mysql"`
+	Mysql *MysqlConfig.MysqlSetting `json:"mysql" yaml:"mysql"`
 }
 
 var Setting *DatabaseSetting = &DatabaseSetting{
@@ -36,4 +39,9 @@ var Setting *DatabaseSetting = &DatabaseSetting{
 	MaxOpenConnections:    128,
 
 	Mysql: MysqlConfig.Setting,
+}
+
+func init() {
+	logger.Debug("Register Database Config")
+	config.RegisterConfig("database", Setting, "Database Settings")
 }

@@ -1,5 +1,7 @@
 package config
 
+import "github.com/wjshen/gophrame/core/config"
+
 type LogSetting struct {
 	LogName       string `json:"logName" yaml:"logName"`
 	TextFormat    string `json:"textFormat" yaml:"textFormat"`
@@ -11,3 +13,7 @@ type LogSetting struct {
 }
 
 var Setting *LogSetting = &LogSetting{}
+
+func init() {
+	config.RegisterConfig("log", Setting, "Log Settings")
+}

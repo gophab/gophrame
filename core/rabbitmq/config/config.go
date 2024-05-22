@@ -1,6 +1,11 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
+)
 
 type RabbitQueueSetting struct {
 	QueueName                string        `json:"queueName" yaml:"queueName"`
@@ -25,4 +30,9 @@ type RabbitMQSetting struct {
 
 var Setting *RabbitMQSetting = &RabbitMQSetting{
 	Enabled: false,
+}
+
+func init() {
+	logger.Debug("Register RabbitMQ Config")
+	config.RegisterConfig("rabbitmq", Setting, "Rabbit MQ Settings")
 }

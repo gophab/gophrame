@@ -2,8 +2,10 @@ package config
 
 import (
 	CodeConfig "github.com/wjshen/gophrame/core/code/config"
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
 
-	"github.com/wjshen/gophrame/core/email/code/config"
+	EmailCodeConfig "github.com/wjshen/gophrame/core/email/code/config"
 )
 
 type RedisCodeStoreSetting struct {
@@ -27,5 +29,10 @@ var Setting *EmailSetting = &EmailSetting{
 	Enabled: false,
 	Sender: struct {
 	}{},
-	Store: config.Setting,
+	Store: EmailCodeConfig.Setting,
+}
+
+func init() {
+	logger.Debug("Register Email Config")
+	config.RegisterConfig("email", Setting, "Email Settings")
 }

@@ -4,19 +4,6 @@ import (
 	"time"
 
 	c "github.com/wjshen/gophrame/core/config"
-
-	CaptchaConfig "github.com/wjshen/gophrame/core/captcha/config"
-	CasbinConfig "github.com/wjshen/gophrame/core/casbin/config"
-	DatabaseConfig "github.com/wjshen/gophrame/core/database/config"
-	EmailConfig "github.com/wjshen/gophrame/core/email/config"
-	LoggerConfig "github.com/wjshen/gophrame/core/logger/config"
-	RabbitMQConfig "github.com/wjshen/gophrame/core/rabbitmq/config"
-	RedisConfig "github.com/wjshen/gophrame/core/redis/config"
-	SecurityConfig "github.com/wjshen/gophrame/core/security/config"
-	SmsConfig "github.com/wjshen/gophrame/core/sms/config"
-	SnowflakeConfig "github.com/wjshen/gophrame/core/snowflake/config"
-	SocialConfig "github.com/wjshen/gophrame/core/social/config"
-	WebsocketConfig "github.com/wjshen/gophrame/core/websocket/config"
 )
 
 /**
@@ -51,35 +38,9 @@ var Server = &Config.Server
 type Configuration struct {
 	Server     ServerSetting     `json:"server"`
 	FileUpload FileUploadSetting `json:"fileUpload" yaml:"fileUpload"`
-
-	Security  *SecurityConfig.SecuritySetting   `json:"security" yaml:"security"`
-	Database  *DatabaseConfig.DatabaseSetting   `json:"database" yaml:"database"`
-	Redis     *RedisConfig.RedisSetting         `json:"redis" yaml:"redis"`
-	Log       *LoggerConfig.LogSetting          `json:"log" yaml:"log"`
-	SnowFlake *SnowflakeConfig.SnowFlakeSetting `json:"snowflake" yaml:"snowflake"`
-	Captcha   *CaptchaConfig.CaptchaSetting     `json:"captcha" yaml:"captcha"`
-	Sms       *SmsConfig.SmsSetting             `json:"sms" yaml:"sms"`
-	Email     *EmailConfig.EmailSetting         `json:"email" yaml:"email"`
-	Casbin    *CasbinConfig.CasbinSetting       `json:"casbin"`
-	RabbitMQ  *RabbitMQConfig.RabbitMQSetting   `json:"rabbitmq" yaml:"rabbitmq"`
-	Websocket *WebsocketConfig.WebsocketSetting `json:"websocket"`
-	Social    *SocialConfig.SocialSetting       `json:"social"`
 }
 
-var Config *Configuration = &Configuration{
-	Database:  DatabaseConfig.Setting,
-	SnowFlake: SnowflakeConfig.Setting,
-	Casbin:    CasbinConfig.Setting,
-	Redis:     RedisConfig.Setting,
-	Websocket: WebsocketConfig.Setting,
-	Log:       LoggerConfig.Setting,
-	Captcha:   CaptchaConfig.Setting,
-	Sms:       SmsConfig.Setting,
-	Email:     EmailConfig.Setting,
-	RabbitMQ:  RabbitMQConfig.Setting,
-	Security:  SecurityConfig.Setting,
-	Social:    SocialConfig.Setting,
-}
+var Config *Configuration = &Configuration{}
 
 func init() {
 	c.RegisterConfig("ROOT", Config, "Default system configuration")

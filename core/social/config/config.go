@@ -1,6 +1,8 @@
 package config
 
 import (
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
 	DingtalkConfig "github.com/wjshen/gophrame/core/social/dingtalk/config"
 	FeishuConfig "github.com/wjshen/gophrame/core/social/feishu/config"
 	WxcpConfig "github.com/wjshen/gophrame/core/social/wxcp/config"
@@ -24,4 +26,9 @@ var Setting *SocialSetting = &SocialSetting{
 	Wxma:     WxmaConfig.Setting,
 	Feishu:   FeishuConfig.Setting,
 	Dingtalk: DingtalkConfig.Setting,
+}
+
+func init() {
+	logger.Debug("Register Social Config")
+	config.RegisterConfig("social", Setting, "Social Settings")
 }

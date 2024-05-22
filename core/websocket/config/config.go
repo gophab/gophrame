@@ -1,5 +1,10 @@
 package config
 
+import (
+	"github.com/wjshen/gophrame/core/config"
+	"github.com/wjshen/gophrame/core/logger"
+)
+
 type WebsocketSetting struct {
 	Enabled               bool  `json:"enabled"`
 	BufferSize            int   `json:"bufferSize" yaml:"bufferSize"`
@@ -18,4 +23,9 @@ var Setting *WebsocketSetting = &WebsocketSetting{
 	HeartbeatFailMaxTimes: 4,
 	ReadDeadline:          100,
 	WriteDeadline:         35,
+}
+
+func init() {
+	logger.Debug("Register Websocket Config")
+	config.RegisterConfig("websocket", Setting, "Websocket Settings")
 }
