@@ -135,12 +135,8 @@ func (s *SmsCodeController) GenerateCode(c *gin.Context) {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
 	}
-	scene := request.Param(c, "scene").DefaultString("register-pin")
 
-	if err != nil {
-		response.FailCode(c, errors.INVALID_PARAMS)
-		return
-	}
+	scene := request.Param(c, "scene").DefaultString("register-pin")
 	force := request.Param(c, "force").DefaultBool(false)
 
 	_, b := s.SmsCodeValidator.GetVerificationCode(s.SmsCodeValidator, phone, scene)
