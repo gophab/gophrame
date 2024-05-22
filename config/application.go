@@ -1,10 +1,13 @@
 package config
 
-type ApplicationSetting struct {
-	Debug bool `json:"debug"`
+import (
+	"github.com/wjshen/gophrame/core/config"
+)
 
-	PageSize  int
-	PrefixUrl string
+type ApplicationSetting struct {
+	Debug     bool   `json:"debug"`
+	PageSize  int    `json:"pageSize" yaml:"pageSize"`
+	PrefixUrl string `json:"prefixUrl" yaml:"prefixUrl"`
 
 	RuntimeRootPath string
 
@@ -22,8 +25,11 @@ type ApplicationSetting struct {
 	TimeFormat  string
 }
 
-var Application *ApplicationSetting = &Config.Application
+var Application *ApplicationSetting = &ApplicationSetting{}
 
 func init() {
 	Application.ImageMaxSize = Application.ImageMaxSize * 1024 * 1024
+
+	// ... 增加Application配置节点
+	config.RegisterConfig("application", Application, "Application Settings")
 }

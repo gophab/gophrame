@@ -4,8 +4,6 @@ import (
 	"time"
 
 	c "github.com/wjshen/gophrame/core/config"
-	"github.com/wjshen/gophrame/core/json"
-	"github.com/wjshen/gophrame/core/logger"
 
 	CaptchaConfig "github.com/wjshen/gophrame/core/captcha/config"
 	CasbinConfig "github.com/wjshen/gophrame/core/casbin/config"
@@ -51,17 +49,15 @@ var Server = &Config.Server
  * 全局配置
  */
 type Configuration struct {
-	// ... 增加Application配置节点
-	Application ApplicationSetting `json:"application"`
-	Server      ServerSetting      `json:"server"`
-	FileUpload  FileUploadSetting  `json:"fileUpload" yaml:"fileUpload"`
+	Server     ServerSetting     `json:"server"`
+	FileUpload FileUploadSetting `json:"fileUpload" yaml:"fileUpload"`
 
-	Security  *SecurityConfig.SecuritySetting   `json:"security"`
-	Database  *DatabaseConfig.DatabaseSetting   `json:"database"`
-	Redis     *RedisConfig.RedisSetting         `json:"redis"`
-	Log       *LoggerConfig.LogSetting          `json:"log"`
-	SnowFlake *SnowflakeConfig.SnowFlakeSetting `json:"snowflake"`
-	Captcha   *CaptchaConfig.CaptchaSetting     `json:"captcha"`
+	Security  *SecurityConfig.SecuritySetting   `json:"security" yaml:"security"`
+	Database  *DatabaseConfig.DatabaseSetting   `json:"database" yaml:"database"`
+	Redis     *RedisConfig.RedisSetting         `json:"redis" yaml:"redis"`
+	Log       *LoggerConfig.LogSetting          `json:"log" yaml:"log"`
+	SnowFlake *SnowflakeConfig.SnowFlakeSetting `json:"snowflake" yaml:"snowflake"`
+	Captcha   *CaptchaConfig.CaptchaSetting     `json:"captcha" yaml:"captcha"`
 	Sms       *SmsConfig.SmsSetting             `json:"sms" yaml:"sms"`
 	Email     *EmailConfig.EmailSetting         `json:"email" yaml:"email"`
 	Casbin    *CasbinConfig.CasbinSetting       `json:"casbin"`
@@ -85,11 +81,6 @@ var Config *Configuration = &Configuration{
 	Social:    SocialConfig.Setting,
 }
 
-var ConfigYml c.IYmlConfig = c.ConfigYml
-
-func InitConfig(conf interface{}) {
-	c.InitConfig(conf)
-
-	// Logger
-	logger.Debug("Load application configuration: ", json.String(conf))
+func init() {
+	c.RegisterConfig("ROOT", Config, "Default system configuration")
 }

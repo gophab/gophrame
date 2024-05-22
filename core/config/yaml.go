@@ -1,8 +1,6 @@
 package config
 
 import (
-	"unsafe"
-
 	"github.com/wjshen/gophrame/core/command"
 	"github.com/wjshen/gophrame/core/container"
 	"github.com/wjshen/gophrame/core/global"
@@ -14,8 +12,6 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/modern-go/reflect2"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -43,40 +39,11 @@ var containerFactory = container.CreateContainersFactory()
 
 var ConfigYml IYmlConfig
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
-
 func init() {
 	lastChangeTime = time.Now()
-	json.RegisterExtension(&JsonExtension{})
 }
 
-type JsonExtension struct {
-	jsoniter.DummyExtension
-}
-
-type DurationDecoder struct{}
-
-func (*DurationDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
-	switch iter.WhatIsNext() {
-	case jsoniter.StringValue:
-		if d, err := time.ParseDuration(iter.ReadString()); err == nil {
-			*(*time.Duration)(ptr) = time.Duration(d)
-		}
-	case jsoniter.NilValue:
-		*((*time.Duration)(ptr)) = time.Duration(0)
-	default:
-		*((*time.Duration)(ptr)) = time.Duration(iter.ReadInt64())
-	}
-}
-
-func (*JsonExtension) CreateDecoder(typ reflect2.Type) jsoniter.ValDecoder {
-	if typ.AssignableTo(reflect2.TypeOf(time.Duration(0))) {
-		return &DurationDecoder{}
-	}
-	return nil
-}
-
-func InitConfig(out interface{}) {
+func InitYamlConfig(out interface{}) error {
 	yamlFile := "application"
 
 	if command.Profile != "" {
@@ -95,20 +62,19 @@ func InitConfig(out interface{}) {
 	ConfigYml = CreateYamlFactory(yamlFile)
 	ConfigYml.ConfigFileChangeListen()
 
-	//1读取文件
+	//1. 读取文件
 	data, err := ioutil.ReadFile(global.BasePath + "/conf/" + yamlFile + ".yml")
 	if err == nil {
-		var temp = make(map[string]interface{})
-		if err = yaml.Unmarshal(data, temp); err == nil {
-			if data, err = json.Marshal(temp); err == nil {
-				err = json.Unmarshal(data, out)
-			}
+		if err = yaml.Unmarshal(data, out); err == nil {
+			err = json.Unmarshal(data, out)
 		}
 	}
 
 	if err != nil {
 		logger.Error(err.Error())
 	}
+
+	return err
 }
 
 // CreateYamlFactory 创建一个yaml配置文件工厂
@@ -146,10 +112,14 @@ type ymlConfig struct {
 // ConfigFileChangeListen 监听文件变化
 func (y *ymlConfig) ConfigFileChangeListen() {
 	y.viper.OnConfigChange(func(changeEvent fsnotify.Event) {
-		if time.Now().Sub(lastChangeTime).Seconds() >= 1 {
+		if time.Since(lastChangeTime).Seconds() >= 1 {
 			if changeEvent.Op.String() == "WRITE" {
 				y.clearCache()
 				lastChangeTime = time.Now()
+
+				for _, f := range configChangeCallbacks {
+					f()
+				}
 			}
 		}
 	})
