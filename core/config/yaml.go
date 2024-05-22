@@ -13,6 +13,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 // 由于 vipver 包本身对于文件的变化事件有一个bug，相关事件会被回调两次
@@ -64,7 +65,7 @@ func InitYamlConfig(out interface{}) error {
 	//1. 读取文件
 	data, err := ioutil.ReadFile(global.BasePath + "/conf/" + yamlFile + ".yml")
 	if err == nil {
-		err = json.Unmarshal(data, out)
+		err = yaml.Unmarshal(data, out)
 	}
 
 	if err != nil {
