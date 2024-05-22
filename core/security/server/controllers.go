@@ -17,6 +17,7 @@ import (
 	"github.com/wjshen/gophrame/core/security/model"
 	"github.com/wjshen/gophrame/core/security/server/config"
 	"github.com/wjshen/gophrame/core/security/token"
+	"github.com/wjshen/gophrame/core/starter"
 	"github.com/wjshen/gophrame/core/webservice/request"
 	"github.com/wjshen/gophrame/core/webservice/response"
 
@@ -56,6 +57,10 @@ type OAuth2Controller struct {
 var oauth2Controller *OAuth2Controller
 
 func init() {
+	starter.RegisterStarter(StartControllers)
+}
+
+func StartControllers() {
 	if config.Setting.Enabled {
 		oauth2Controller = &OAuth2Controller{reqCache: cache.New(time.Minute*5, time.Minute*5)}
 		inject.InjectValue("oauth2Controller", oauth2Controller)

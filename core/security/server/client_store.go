@@ -22,9 +22,6 @@ func ClientStore() oauth2.ClientStore {
 	return theClientStore
 }
 
-func init() {
-}
-
 func InitClientStore() oauth2.ClientStore {
 	if theClientStore == nil {
 		if result, err := NewDatabaseClientStore(); err == nil {
