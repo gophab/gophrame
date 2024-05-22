@@ -11,7 +11,6 @@ import (
 	"github.com/wjshen/gophrame/core/security/config"
 	"github.com/wjshen/gophrame/core/security/model"
 	"github.com/wjshen/gophrame/core/security/token"
-	"github.com/wjshen/gophrame/core/starter"
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
@@ -36,10 +35,6 @@ type OAuth2Server struct {
 }
 
 var theOAuth2Server *OAuth2Server
-
-func init() {
-	starter.RegisterStarter(StartServer)
-}
 
 func StartServer() {
 	if config.Setting.Server.Enabled {
