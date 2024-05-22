@@ -96,9 +96,11 @@ func loadConfig() error {
 		for key, value := range configs {
 			if key == "ROOT" {
 				// "ROOT" node
+				logger.Debug("Load system configuration")
 				err = UnmarshalFromNode(config, value.Setting)
 			} else if node, ok := config[key]; ok {
 				// Setting node
+				logger.Debug("Load module configuration: ", key)
 				err = UnmarshalFromNode(node, value.Setting)
 			}
 

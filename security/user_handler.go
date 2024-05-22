@@ -8,6 +8,7 @@ import (
 	EmailCode "github.com/wjshen/gophrame/core/email/code"
 	"github.com/wjshen/gophrame/core/inject"
 	"github.com/wjshen/gophrame/core/logger"
+	SecurityConfig "github.com/wjshen/gophrame/core/security/config"
 	SecurityModel "github.com/wjshen/gophrame/core/security/model"
 	SmsCode "github.com/wjshen/gophrame/core/sms/code"
 	"github.com/wjshen/gophrame/core/social"
@@ -15,7 +16,6 @@ import (
 	"github.com/wjshen/gophrame/service"
 	"github.com/wjshen/gophrame/service/dto"
 
-	"github.com/wjshen/gophrame/config"
 	"github.com/wjshen/gophrame/domain"
 
 	"gorm.io/gorm"
@@ -78,7 +78,7 @@ func (h *UserHandler) GetMobileUserDetails(ctx context.Context, mobile string, c
 
 	if user == nil {
 		// 是否支持自动注册
-		if config.Config.Security.AutoRegister && (config.Config.Security.MobileAutoRegister == nil || *config.Config.Security.MobileAutoRegister) {
+		if SecurityConfig.Setting.AutoRegister && (SecurityConfig.Setting.MobileAutoRegister == nil || *SecurityConfig.Setting.MobileAutoRegister) {
 			// 用手机号/
 			if user, err = h.UserService.CreateUser(&dto.User{
 				User: domain.User{
@@ -121,7 +121,7 @@ func (h *UserHandler) GetEmailUserDetails(ctx context.Context, email string, cod
 
 	if user == nil {
 		// 是否支持自动注册
-		if config.Config.Security.AutoRegister && (config.Config.Security.EmailAutoRegister == nil || *config.Config.Security.EmailAutoRegister) {
+		if SecurityConfig.Setting.AutoRegister && (SecurityConfig.Setting.EmailAutoRegister == nil || *SecurityConfig.Setting.EmailAutoRegister) {
 			// 用Email
 			if user, err = h.UserService.CreateUser(&dto.User{
 				User: domain.User{
@@ -211,7 +211,7 @@ func (h *UserHandler) GetSocialUserDetails(ctx context.Context, socialChannelId 
 				}
 			}
 
-			if !matched && config.Config.Security.AutoRegister && (config.Config.Security.SocialAutoRegister == nil || *config.Config.Security.SocialAutoRegister) {
+			if !matched && SecurityConfig.Setting.AutoRegister && (SecurityConfig.Setting.SocialAutoRegister == nil || *SecurityConfig.Setting.SocialAutoRegister) {
 				// 自动注册
 				if user, err := h.UserService.CreateUser(&dto.User{
 					User: domain.User{
