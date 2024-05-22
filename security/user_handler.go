@@ -12,6 +12,7 @@ import (
 	SecurityModel "github.com/wjshen/gophrame/core/security/model"
 	SmsCode "github.com/wjshen/gophrame/core/sms/code"
 	"github.com/wjshen/gophrame/core/social"
+	"github.com/wjshen/gophrame/core/starter"
 	"github.com/wjshen/gophrame/core/util"
 	"github.com/wjshen/gophrame/service"
 	"github.com/wjshen/gophrame/service/dto"
@@ -31,6 +32,10 @@ type UserHandler struct {
 }
 
 func init() {
+	starter.RegisterStarter(Start)
+}
+
+func Start() {
 	logger.Info("Initializing User Handler")
 	inject.InjectValue("userHandler", new(UserHandler))
 }

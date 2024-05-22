@@ -9,6 +9,7 @@ import (
 	_ "github.com/wjshen/gophrame/core/email/code"
 	_ "github.com/wjshen/gophrame/core/engine"
 	_ "github.com/wjshen/gophrame/core/eventbus"
+	_ "github.com/wjshen/gophrame/core/microservice"
 	_ "github.com/wjshen/gophrame/core/rabbitmq"
 	_ "github.com/wjshen/gophrame/core/redis"
 	_ "github.com/wjshen/gophrame/core/security"
@@ -17,7 +18,8 @@ import (
 	_ "github.com/wjshen/gophrame/core/snowflake"
 	_ "github.com/wjshen/gophrame/core/social/starter"
 	_ "github.com/wjshen/gophrame/core/websocket"
-	_ "github.com/wjshen/gophrame/security"
+
+	// _ "github.com/wjshen/gophrame/security"
 
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/starter"

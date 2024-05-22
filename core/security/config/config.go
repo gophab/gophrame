@@ -31,6 +31,6 @@ var Setting *SecuritySetting = &SecuritySetting{
 }
 
 func init() {
-	logger.Debug("Register Security Settings")
+	logger.Debug("Register Security Config")
 	config.RegisterConfig("security", Setting, "Security Settings")
 }
