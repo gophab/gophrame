@@ -86,7 +86,7 @@ func loadConfig() error {
 
 	// First load into map[]
 	var err error
-	if err = InitYamlConfig(config); err == nil {
+	if err = InitYamlConfig(&config); err == nil {
 		// Logger
 		if value, _ := json.MarshalToString(config); value != "" {
 			logger.Debug("Load application configuration: ", value)
