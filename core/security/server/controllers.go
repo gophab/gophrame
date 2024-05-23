@@ -18,6 +18,7 @@ import (
 	"github.com/wjshen/gophrame/core/security/model"
 	"github.com/wjshen/gophrame/core/security/server/config"
 	"github.com/wjshen/gophrame/core/security/token"
+	"github.com/wjshen/gophrame/core/util"
 	"github.com/wjshen/gophrame/core/webservice/request"
 	"github.com/wjshen/gophrame/core/webservice/response"
 
@@ -107,7 +108,7 @@ func (o *OAuth2Controller) Login(c *gin.Context) {
 		}
 
 		if userDetails == nil || err != nil {
-			response.FailMessage(c, http.StatusUnauthorized, "账号密码错误")
+			response.Unauthorized(c, "账号密码错误")
 			return
 		}
 
@@ -115,7 +116,7 @@ func (o *OAuth2Controller) Login(c *gin.Context) {
 		info, err = o.OAuth2Server.manager.GenerateAccessToken(c.Request.Context(), oauth2.PasswordCredentials, &oauth2.TokenGenerateRequest{
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
-			UserID:       userDetails.UserId,
+			UserID:       util.StringValue(userDetails.UserId),
 			RedirectURI:  "",
 			Scope:        "app",
 		})

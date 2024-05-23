@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/wjshen/gophrame/domain"
+	SecurityModel "github.com/wjshen/gophrame/core/security/model"
+	"github.com/wjshen/gophrame/core/util"
 	"github.com/wjshen/gophrame/errors"
+
 	"github.com/wjshen/gophrame/service"
 
 	"github.com/gin-gonic/gin"
@@ -51,15 +53,15 @@ func GetCurrentTenantId(c *gin.Context) string {
 
 	currentUser := GetCurrentUser(c)
 	if currentUser != nil {
-		c.Set("_CURRENT_TENANT_ID_", currentUser.TenantId)
-		return currentUser.TenantId
+		c.Set("_CURRENT_TENANT_ID_", util.StringValue(currentUser.TenantId))
+		return util.StringValue(currentUser.TenantId)
 	}
 	return ""
 }
 
-func GetCurrentUser(c *gin.Context) *domain.User {
+func GetCurrentUser(c *gin.Context) *SecurityModel.UserDetails {
 	if c.Value("_CURRENT_USER_") != nil {
-		return c.Value("_CURRENT_USER_").(*domain.User)
+		return c.Value("_CURRENT_USER_").(*SecurityModel.UserDetails)
 	}
 
 	currentUserId := GetCurrentUserId(c)
@@ -69,23 +71,15 @@ func GetCurrentUser(c *gin.Context) *domain.User {
 			if socialUser, _ := service.GetSocialUserService().GetById(strings.SplitN(currentUserId, ":", 2)[1]); socialUser != nil {
 				if socialUser.UserId == nil {
 					// 未绑定系统账号
-					currentUser := &domain.User{
-						UserBase: domain.UserBase{
-							Entity: domain.Entity{
-								Id: "sns:" + socialUser.Id,
-							},
-							DelFlag:       socialUser.DelFlag,
-							Name:          socialUser.Name,
-							Mobile:        socialUser.Mobile,
-							Email:         socialUser.Email,
-							Avatar:        socialUser.Avatar,
-							LoginTimes:    socialUser.LoginTimes,
-							LastLoginTime: socialUser.LastLoginTime,
-							LastLoginIp:   socialUser.LastLoginIp,
-						},
+					userDetail := &SecurityModel.UserDetails{
+						SocialId: socialUser.Id,
+						Name:     socialUser.Name,
+						Mobile:   socialUser.Mobile,
+						Email:    socialUser.Email,
+						Avatar:   socialUser.Avatar,
 					}
-					c.Set("_CURRENT_USER_", currentUser)
-					return currentUser
+					c.Set("_CURRENT_USER_", userDetail)
+					return userDetail
 				} else {
 					// 已绑定系统账号，则返回系统账户
 					currentUserId = *socialUser.UserId
@@ -96,9 +90,18 @@ func GetCurrentUser(c *gin.Context) *domain.User {
 		}
 
 		if currentUserId != "" {
-			currentUser, _ := service.GetUserService().GetById(currentUserId)
-			c.Set("_CURRENT_USER_", currentUser)
-			return currentUser
+			if currentUser, err := service.GetUserService().GetById(currentUserId); err == nil {
+				userDetails := &SecurityModel.UserDetails{
+					UserId:   currentUser.Id,
+					Login:    currentUser.Login,
+					Mobile:   currentUser.Mobile,
+					Email:    currentUser.Email,
+					SocialId: currentUser.SocialId,
+					TenantId: currentUser.TenantId,
+				}
+				c.Set("_CURRENT_USER_", userDetails)
+				return userDetails
+			}
 		}
 	}
 

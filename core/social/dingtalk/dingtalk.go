@@ -12,21 +12,20 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wjshen/gophrame/core/consts"
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/security/server"
+	"github.com/wjshen/gophrame/core/social"
 	"github.com/wjshen/gophrame/core/social/dingtalk/config"
 	"github.com/wjshen/gophrame/core/util"
 	"github.com/wjshen/gophrame/core/webservice/request"
 	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/domain"
 	"github.com/wjshen/gophrame/errors"
 
 	"github.com/ArtisanCloud/PowerLibs/v3/object"
 	"github.com/alibabacloud-go/tea/tea"
-
-	"github.com/patrickmn/go-cache"
-
 	"github.com/gin-gonic/gin"
+	"github.com/patrickmn/go-cache"
 )
 
 type Client struct {
@@ -458,7 +457,7 @@ func (s *DingtalkService) GetSignature(ctx context.Context, appId string, url st
 	return nil, nil
 }
 
-func (s *DingtalkService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *domain.SocialUser {
+func (s *DingtalkService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *social.SocialUser {
 	var appId string = ""
 	segments := strings.Split(socialChannelId, ":")
 	if len(segments) > 1 {
@@ -481,7 +480,7 @@ func (s *DingtalkService) GetSocialUserByCode(ctx context.Context, socialChannel
 	if token, b := s.GetAccessToken(appId); b {
 		if user, err := app.GetUserInfo(code, token); err == nil {
 			if user != nil {
-				var result *domain.SocialUser
+				var result *social.SocialUser
 				if userDetail, err := app.GetUserDetail(user.Result.UserId, token); err == nil {
 					mobile := userDetail.Result.Mobile
 					if mobile != "" {
@@ -489,7 +488,7 @@ func (s *DingtalkService) GetSocialUserByCode(ctx context.Context, socialChannel
 						mobile = util.SubString(mobile, len(mobile)-11, 11)
 					}
 
-					result = &domain.SocialUser{
+					result = &social.SocialUser{
 						Name:   util.StringAddr(userDetail.Result.Name),
 						Mobile: util.StringAddr(mobile),
 						Email:  util.StringAddr(userDetail.Result.Email),
@@ -497,17 +496,17 @@ func (s *DingtalkService) GetSocialUserByCode(ctx context.Context, socialChannel
 						OpenId: util.StringAddr(userDetail.Result.UserId),
 						Title:  util.StringAddr(userDetail.Result.Title),
 						Remark: util.StringAddr(userDetail.Result.Remark),
-						Status: &domain.STATUS_VALID,
+						Status: util.IntAddr(consts.STATUS_VALID),
 					}
 				} else {
 					logger.Warn("Get user detail error: ", err.Error())
-					result = &domain.SocialUser{
+					result = &social.SocialUser{
 						Name:   util.StringAddr(user.Result.Name),
 						OpenId: util.StringAddr(user.Result.UserId),
-						Status: &domain.STATUS_VALID,
+						Status: util.IntAddr(consts.STATUS_VALID),
 					}
 				}
-				result.SetSocialId("dt", user.Result.UnionId)
+				// result.SetSocialId("dt", user.Result.UnionId)
 				return result
 			}
 		} else {

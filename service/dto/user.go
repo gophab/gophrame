@@ -1,15 +1,14 @@
 package dto
 
-import (
-	"github.com/wjshen/gophrame/domain"
-)
-
 type User struct {
-	domain.User
-}
-
-func (a *User) GetMaps() map[string]interface{} {
-	maps := make(map[string]interface{})
-	maps["del_flag"] = false
-	return maps
+	Id         *string `json:"id"`
+	Login      *string `json:"login"`
+	Mobile     *string `json:"mobile"`
+	Email      *string `json:"email"`
+	Password   *string `json:"-"`
+	Name       *string `json:"name"`
+	InviteCode *string `json:"inviteCode"`
+	InviterId  *string `json:"inviterId"`
+	SocialId   *string `json:"socialId"`
+	TenantId   *string `json:"tenantId"`
 }

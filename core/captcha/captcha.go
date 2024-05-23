@@ -57,7 +57,7 @@ func (c *Captcha) GetImg(context *gin.Context) {
 	ext := path.Ext(file)
 	id := file[:len(file)-len(ext)]
 	if ext == "" || captchaId == "" {
-		response.Fail(context, CaptchaGetParamsInvalidCode, CaptchaGetParamsInvalidMsg)
+		response.FailMessage(context, CaptchaGetParamsInvalidCode, CaptchaGetParamsInvalidMsg)
 		return
 	}
 
@@ -95,13 +95,13 @@ func (c *Captcha) CheckCode(context *gin.Context) {
 	}
 
 	if captchaId == "" || value == "" {
-		response.Fail(context, CaptchaCheckParamsInvalidCode, CaptchaCheckParamsInvalidMsg)
+		response.FailMessage(context, CaptchaCheckParamsInvalidCode, CaptchaCheckParamsInvalidMsg)
 		return
 	}
 	if captcha.VerifyString(captchaId, value) {
 		response.Success(context, CaptchaCheckOkMsg)
 	} else {
-		response.Fail(context, CaptchaCheckFailCode, CaptchaCheckFailMsg)
+		response.FailMessage(context, CaptchaCheckFailCode, CaptchaCheckFailMsg)
 	}
 }
 
@@ -146,7 +146,7 @@ func HandleCaptchaVerify(force bool) gin.HandlerFunc {
 
 		if captchaId == "" || value == "" {
 			if force {
-				response.Fail(context, CaptchaCheckParamsInvalidCode, CaptchaCheckParamsInvalidMsg)
+				response.FailMessage(context, CaptchaCheckParamsInvalidCode, CaptchaCheckParamsInvalidMsg)
 				return
 			} else {
 				context.AddParam("captcha", "false")
@@ -159,7 +159,7 @@ func HandleCaptchaVerify(force bool) gin.HandlerFunc {
 			context.AddParam("captcha", "true")
 			context.Next()
 		} else {
-			response.Fail(context, CaptchaCheckFailCode, CaptchaCheckFailMsg)
+			response.FailMessage(context, CaptchaCheckFailCode, CaptchaCheckFailMsg)
 		}
 	}
 }

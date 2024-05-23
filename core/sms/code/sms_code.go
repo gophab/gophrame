@@ -105,7 +105,7 @@ func (v *SmsCodeValidator) HandleSmsCodeVerify(force bool) gin.HandlerFunc {
 
 		if phone == "" || value == "" {
 			if force {
-				response.Fail(context, SmsCodeCheckParamsInvalidCode, SmsCodeCheckParamsInvalidMsg)
+				response.FailMessage(context, SmsCodeCheckParamsInvalidCode, SmsCodeCheckParamsInvalidMsg)
 				return
 			} else {
 				context.AddParam("smscode", "false")
@@ -117,7 +117,7 @@ func (v *SmsCodeValidator) HandleSmsCodeVerify(force bool) gin.HandlerFunc {
 			context.AddParam("smscode", "true")
 			context.Next()
 		} else {
-			response.Fail(context, SmsCodeCheckFailCode, SmsCodeCheckFailMsg)
+			response.FailMessage(context, SmsCodeCheckFailCode, SmsCodeCheckFailMsg)
 		}
 	}
 }
@@ -148,7 +148,7 @@ func (s *SmsCodeController) GenerateCode(c *gin.Context) {
 		}
 	} /* else 验证码仍旧有效，忽略 */
 
-	response.OK(c, "验证码已发送")
+	response.Success(c, "验证码已发送")
 }
 
 func (s *SmsCodeController) CheckCode(c *gin.Context) {
@@ -166,7 +166,7 @@ func (s *SmsCodeController) CheckCode(c *gin.Context) {
 
 	scene := request.Param(c, "scene").DefaultString("register-pin")
 
-	response.OK(c, s.SmsCodeValidator.CheckCode(s.SmsCodeValidator, phone, scene, code))
+	response.Success(c, s.SmsCodeValidator.CheckCode(s.SmsCodeValidator, phone, scene, code))
 }
 
 /**

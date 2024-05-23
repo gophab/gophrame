@@ -31,7 +31,7 @@ const (
 
 // 参数校验错误
 func ErrorParam(c *gin.Context, wrongParam interface{}) {
-	response.Fail(c, ValidatorParamsCheckFailCode, ValidatorParamsCheckFailMsg)
+	response.FailMessage(c, ValidatorParamsCheckFailCode, ValidatorParamsCheckFailMsg)
 	c.Abort()
 }
 
@@ -39,14 +39,14 @@ func ErrorParam(c *gin.Context, wrongParam interface{}) {
 func ValidatorError(c *gin.Context, err error) {
 	if _, ok := err.(validator.ValidationErrors); ok {
 		//wrongParam := RemoveTopStruct(errs.Translate(Trans))
-		response.Fail(c, ValidatorParamsCheckFailCode, ValidatorParamsCheckFailMsg)
+		response.FailMessage(c, ValidatorParamsCheckFailCode, ValidatorParamsCheckFailMsg)
 	} else {
 		errStr := err.Error()
 		// multipart:nextpart:eof 错误表示验证器需要一些参数，但是调用者没有提交任何参数
 		if strings.ReplaceAll(strings.ToLower(errStr), " ", "") == "multipart:nextpart:eof" {
-			response.Fail(c, ValidatorParamsCheckFailCode, ErrorNotAllParamsIsBlank)
+			response.FailMessage(c, ValidatorParamsCheckFailCode, ErrorNotAllParamsIsBlank)
 		} else {
-			response.Fail(c, ValidatorParamsCheckFailCode, ValidatorParamsCheckFailMsg)
+			response.FailMessage(c, ValidatorParamsCheckFailCode, ValidatorParamsCheckFailMsg)
 		}
 	}
 	c.Abort()

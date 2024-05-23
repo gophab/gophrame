@@ -1,10 +1,13 @@
 package model
 
 type UserDetails struct {
-	UserId   string
-	Password string
-	Login    string
-	Mobile   string
-	Email    string
-	SocialId string
+	UserId   *string
+	Name     *string
+	Avatar   *string
+	Login    *string
+	Mobile   *string
+	Email    *string
+	SocialId *string
+	TenantId *string
+	Admin    bool
 }

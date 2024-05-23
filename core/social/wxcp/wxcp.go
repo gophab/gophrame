@@ -9,14 +9,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wjshen/gophrame/core/consts"
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/security/server"
+	"github.com/wjshen/gophrame/core/social"
 	"github.com/wjshen/gophrame/core/social/wxcp/config"
 	"github.com/wjshen/gophrame/core/social/wxcp/jssdk"
 	"github.com/wjshen/gophrame/core/util"
 	"github.com/wjshen/gophrame/core/webservice/request"
 	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/domain"
 	"github.com/wjshen/gophrame/errors"
 
 	"github.com/ArtisanCloud/PowerLibs/v3/object"
@@ -183,7 +184,7 @@ func (s *WxcpService) GetAgentSignature(ctx context.Context, corpId string, agen
 	return nil, nil
 }
 
-func (s *WxcpService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *domain.SocialUser {
+func (s *WxcpService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *social.SocialUser {
 	var corpId string = ""
 	var agentId int = 0
 	segments := strings.Split(socialChannelId, ":")
@@ -208,7 +209,7 @@ func (s *WxcpService) GetSocialUserByCode(ctx context.Context, socialChannelId s
 	if app := s.GetApp(corpId, agentId); app != nil {
 		if user, err := app.UserFromCode(code); err == nil {
 			if user != nil && user.GetID() != "" {
-				var result *domain.SocialUser
+				var result *social.SocialUser
 
 				mobile := user.GetMobile()
 				if mobile != "" {
@@ -216,7 +217,7 @@ func (s *WxcpService) GetSocialUserByCode(ctx context.Context, socialChannelId s
 					mobile = util.SubString(mobile, len(mobile)-11, 11)
 				}
 
-				result = &domain.SocialUser{
+				result = &social.SocialUser{
 					Mobile:   util.StringAddr(mobile),
 					Name:     util.StringAddr(user.GetName()),
 					Email:    util.StringAddr(user.GetEmail()),
@@ -224,7 +225,7 @@ func (s *WxcpService) GetSocialUserByCode(ctx context.Context, socialChannelId s
 					NickName: util.StringAddr(user.GetNickname()),
 					OpenId:   util.StringAddr(user.GetOpenID()),
 					Title:    util.StringAddr(user.GetString("title", "")),
-					Status:   &domain.STATUS_VALID,
+					Status:   util.IntAddr(consts.STATUS_VALID),
 				}
 				result.SetSocialId("ww", user.GetID()+"@"+corpId)
 				return result

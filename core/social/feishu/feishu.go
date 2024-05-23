@@ -4,14 +4,15 @@ import (
 	"context"
 	"time"
 
+	"github.com/wjshen/gophrame/core/consts"
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/security"
 	"github.com/wjshen/gophrame/core/security/server"
+	"github.com/wjshen/gophrame/core/social"
 	"github.com/wjshen/gophrame/core/social/feishu/config"
 	"github.com/wjshen/gophrame/core/util"
 	"github.com/wjshen/gophrame/core/webservice/request"
 	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/domain"
 	"github.com/wjshen/gophrame/errors"
 
 	"fmt"
@@ -163,7 +164,7 @@ func (s *FeishuService) SpeechToText(ctx context.Context, appId string, speech s
 	return "", errors.New("No such appId")
 }
 
-func (s *FeishuService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *domain.SocialUser {
+func (s *FeishuService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *social.SocialUser {
 	var appId string = ""
 	segments := strings.Split(socialChannelId, ":")
 	if len(segments) > 1 {
@@ -193,14 +194,14 @@ func (s *FeishuService) GetSocialUserByCode(ctx context.Context, socialChannelId
 					value := util.SubString(*mobile, len(*mobile)-11, 11)
 					mobile = &value
 				}
-				var result = &domain.SocialUser{
+				var result = &social.SocialUser{
 					Mobile:   mobile,
 					Name:     user.Data.Name,
 					Email:    user.Data.Email,
 					Avatar:   user.Data.AvatarUrl,
 					NickName: user.Data.EnName,
 					OpenId:   user.Data.OpenId,
-					Status:   &domain.STATUS_VALID,
+					Status:   util.IntAddr(consts.STATUS_VALID),
 				}
 				result.SetSocialId("fs", *user.Data.UnionId)
 				return result

@@ -6,6 +6,7 @@ import (
 	"github.com/wjshen/gophrame/core/inject"
 	SmsCode "github.com/wjshen/gophrame/core/sms/code"
 	"github.com/wjshen/gophrame/core/webservice/response"
+	"github.com/wjshen/gophrame/errors"
 	"github.com/wjshen/gophrame/service"
 	"github.com/wjshen/gophrame/service/dto"
 
@@ -14,9 +15,9 @@ import (
 
 type SecurityController struct {
 	controller.ResourceController
-	MobileValidator   *SmsCode.SmsCodeValidator  `inject:"smsCodeValidator"`
-	UserService       *service.UserService       `inject:"userService"`
-	InviteCodeService *service.InviteCodeService `inject:"inviteCodeService"`
+	MobileValidator   *SmsCode.SmsCodeValidator `inject:"smsCodeValidator"`
+	UserService       service.UserService       `inject:"userService"`
+	InviteCodeService service.InviteCodeService `inject:"inviteCodeService"`
 }
 
 var securityController = &SecurityController{}
@@ -44,7 +45,7 @@ type RegisterForm struct {
 func (u *SecurityController) Register(c *gin.Context) {
 	var form RegisterForm
 	if err := c.ShouldBind(&form); err != nil {
-		response.FailMessage(c, 400, err.Error())
+		response.FailMessage(c, errors.INVALID_PARAMS, err.Error())
 		return
 	}
 
@@ -54,17 +55,17 @@ func (u *SecurityController) Register(c *gin.Context) {
 	case "password":
 		{
 			if form.Username == "" || form.Password == "" {
-				response.FailMessage(c, 400, "用户名或密码不能为空")
+				response.FailMessage(c, errors.INVALID_PARAMS, "用户名或密码不能为空")
 				return
 			}
 
 			if form.Password != form.Password2 {
-				response.FailMessage(c, 400, "两次输入密码不一致")
+				response.FailMessage(c, errors.INVALID_PARAMS, "两次输入密码不一致")
 				return
 			}
 
 			user.Login = &form.Username
-			user.Password = form.Password
+			user.Password = &form.Password
 
 			if user.Name == nil {
 				user.Name = &form.Username
@@ -73,17 +74,17 @@ func (u *SecurityController) Register(c *gin.Context) {
 	case "mobile":
 		{
 			if form.Username == "" || form.Password == "" {
-				response.FailMessage(c, 400, "手机号或验证码不能为空")
+				response.FailMessage(c, errors.INVALID_PARAMS, "手机号或验证码不能为空")
 				return
 			}
 
 			if u.MobileValidator == nil {
-				response.FailMessage(c, 400, "不支持手机验证码登录")
+				response.FailMessage(c, errors.INVALID_PARAMS, "不支持手机验证码登录")
 				return
 			}
 
 			if !u.MobileValidator.CheckCode(u.MobileValidator, form.Username, "register-pin", form.Password) {
-				response.FailMessage(c, 400, "验证码不一致")
+				response.FailMessage(c, errors.INVALID_PARAMS, "验证码不一致")
 				return
 			}
 
@@ -97,23 +98,22 @@ func (u *SecurityController) Register(c *gin.Context) {
 	if form.InviteCode != "" {
 		// 验证邀请码
 		if iv, err := u.InviteCodeService.FindByInviteCode(form.InviteCode); err != nil {
-			response.FailMessage(c, 400, err.Error())
+			response.SystemErrorMessage(c, 400, err.Error())
 			return
 		} else if iv == nil {
-			response.FailMessage(c, 400, "无效的邀请码或邀请码已过期")
+			response.FailMessage(c, errors.INVALID_PARAMS, "无效的邀请码或邀请码已过期")
 			return
 		} else {
-			user.InviteCode = iv.InviteCode
+			user.InviteCode = &iv.InviteCode
 			user.InviterId = &iv.UserId
 		}
 	} else {
-		response.FailMessage(c, 400, "邀请码不能为空")
+		response.FailMessage(c, errors.INVALID_PARAMS, "邀请码不能为空")
 		return
 	}
 
 	if res, err := u.UserService.CreateUser(user); err != nil {
-		response.FailMessage(c, 400, err.Error())
-		return
+		response.SystemErrorMessage(c, errors.ERROR_CREATE_FAIL, err.Error())
 	} else {
 		response.Success(c, res)
 	}

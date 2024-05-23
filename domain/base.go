@@ -9,13 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	STATUS_INVALID int = 0
-	STATUS_VALID   int = 1
-	STATUS2        int = 2
-	STATUS3        int = 3
-)
-
 type Entity struct {
 	Id               string    `gorm:"column:id;primaryKey" json:"id" primaryKey:"yes"`
 	CreatedTime      time.Time `gorm:"column:created_time;autoCreateTime" json:"createdTime"`

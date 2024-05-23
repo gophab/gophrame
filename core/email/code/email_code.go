@@ -101,7 +101,7 @@ func (v *EmailCodeValidator) HandleSmsCodeVerify(force bool) gin.HandlerFunc {
 
 		if email == "" || value == "" || scene == "" {
 			if force {
-				response.Fail(context, EmailCodeCheckParamsInvalidCode, EmailCodeCheckParamsInvalidMsg)
+				response.FailMessage(context, EmailCodeCheckParamsInvalidCode, EmailCodeCheckParamsInvalidMsg)
 				return
 			} else {
 				context.AddParam("emailcode", "false")
@@ -113,7 +113,7 @@ func (v *EmailCodeValidator) HandleSmsCodeVerify(force bool) gin.HandlerFunc {
 			context.AddParam("emailcode", "true")
 			context.Next()
 		} else {
-			response.Fail(context, EmailCodeCheckFailCode, EmailCodeCheckFailMsg)
+			response.FailMessage(context, EmailCodeCheckFailCode, EmailCodeCheckFailMsg)
 		}
 	}
 }
@@ -141,7 +141,7 @@ func (e *EmailCodeController) GenerateCode(c *gin.Context) {
 		}
 	} /* else 验证码仍旧有效，忽略 */
 
-	response.OK(c, "验证码已发送")
+	response.Success(c, "验证码已发送")
 }
 
 func (e *EmailCodeController) CheckCode(c *gin.Context) {
@@ -158,7 +158,7 @@ func (e *EmailCodeController) CheckCode(c *gin.Context) {
 		return
 	}
 
-	response.OK(c, e.EmailCodeValidator.CheckCode(e.EmailCodeValidator, email, scene, code))
+	response.Success(c, e.EmailCodeValidator.CheckCode(e.EmailCodeValidator, email, scene, code))
 }
 
 /**

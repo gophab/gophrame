@@ -5,10 +5,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/wjshen/gophrame/core/consts"
 	"github.com/wjshen/gophrame/core/security/server"
+	"github.com/wjshen/gophrame/core/social"
 	"github.com/wjshen/gophrame/core/social/wxma/config"
 	"github.com/wjshen/gophrame/core/util"
-	"github.com/wjshen/gophrame/domain"
 
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/miniProgram"
 )
@@ -71,7 +72,7 @@ func (s *WxmaService) GetApp(appId string) *miniProgram.MiniProgram {
 	return nil
 }
 
-func (s *WxmaService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *domain.SocialUser {
+func (s *WxmaService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *social.SocialUser {
 	var appId string
 	segments := strings.Split(socialChannelId, ":")
 	if len(segments) > 1 {
@@ -87,9 +88,9 @@ func (s *WxmaService) GetSocialUserByCode(ctx context.Context, socialChannelId s
 
 	if app := s.GetApp(appId); app != nil {
 		if user, err := app.Auth.Session(ctx, code); err == nil && user != nil {
-			result := domain.SocialUser{
+			result := social.SocialUser{
 				OpenId: util.StringAddr(user.OpenID),
-				Status: &domain.STATUS_VALID,
+				Status: util.IntAddr(consts.STATUS_VALID),
 			}
 			if user.UnionID != "" {
 				result.SetSocialId("wx", user.UnionID)

@@ -14,7 +14,6 @@ require (
 	github.com/casbin/casbin/v2 v2.64.0
 	github.com/casbin/gorm-adapter/v3 v3.14.0
 	github.com/dchest/captcha v1.0.0
-	github.com/eatmoreapple/openwechat v1.4.0 // indirect
 	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-contrib/pprof v1.4.0
@@ -33,7 +32,6 @@ require (
 	github.com/larksuite/oapi-sdk-go/v3 v3.0.20
 	github.com/nacos-group/nacos-sdk-go v1.1.4
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/qingconglaixueit/wechatbot v0.0.0-20230109033015-326dc919d647
 	github.com/rabbitmq/amqp091-go v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0

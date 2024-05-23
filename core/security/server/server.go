@@ -11,6 +11,7 @@ import (
 	"github.com/wjshen/gophrame/core/security/config"
 	"github.com/wjshen/gophrame/core/security/model"
 	"github.com/wjshen/gophrame/core/security/token"
+	"github.com/wjshen/gophrame/core/util"
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
@@ -204,7 +205,7 @@ func (s *OAuth2Server) passwordAuthorizationHandler(ctx context.Context, clientI
 	}
 
 	if userDetails != nil {
-		return userDetails.UserId, err
+		return util.StringValue(userDetails.UserId), err
 	}
 
 	return "", errors.New("not found")

@@ -6,13 +6,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/wjshen/gophrame/core/consts"
 	"github.com/wjshen/gophrame/core/logger"
 	"github.com/wjshen/gophrame/core/security/server"
+	"github.com/wjshen/gophrame/core/social"
 	"github.com/wjshen/gophrame/core/social/wxmp/config"
 	"github.com/wjshen/gophrame/core/util"
 	"github.com/wjshen/gophrame/core/webservice/request"
 	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/domain"
 	"github.com/wjshen/gophrame/errors"
 
 	"github.com/ArtisanCloud/PowerLibs/v3/object"
@@ -91,7 +92,7 @@ type WxToken struct {
 	UnionId      string `json:"unionid"`
 }
 
-func (s *WxmpService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *domain.SocialUser {
+func (s *WxmpService) GetSocialUserByCode(ctx context.Context, socialChannelId string, code string) *social.SocialUser {
 	var appId string
 	segments := strings.Split(socialChannelId, ":")
 	if len(segments) > 1 {
@@ -119,14 +120,14 @@ func (s *WxmpService) GetSocialUserByCode(ctx context.Context, socialChannelId s
 						mobile = util.SubString(mobile, len(mobile)-11, 11)
 					}
 
-					result := &domain.SocialUser{
+					result := &social.SocialUser{
 						Mobile:   util.StringAddr(mobile),
 						Name:     util.StringAddr(user.GetName()),
 						Email:    util.StringAddr(user.GetEmail()),
 						Avatar:   util.StringAddr(user.GetAvatar()),
 						NickName: util.StringAddr(user.GetNickname()),
 						OpenId:   util.StringAddr(user.GetOpenID() + "@" + appId),
-						Status:   &domain.STATUS_VALID,
+						Status:   util.IntAddr(consts.STATUS_VALID),
 					}
 					// 判断是否存在UNIONID
 					result.SetSocialId("wx", wxToken.UnionId)
@@ -134,29 +135,27 @@ func (s *WxmpService) GetSocialUserByCode(ctx context.Context, socialChannelId s
 				}
 			} else {
 				if user, err := app.User.Get(ctx, wxToken.OpenId, "zh_CN"); err == nil && user != nil {
-					result := &domain.SocialUser{
+					result := &social.SocialUser{
 						OpenId: util.StringAddr(user.OpenID + "@" + appId),
 						Remark: util.StringAddr(user.Remark),
-						Status: &domain.STATUS_VALID,
+						Status: util.IntAddr(consts.STATUS_VALID),
 					}
 
 					if user.UnionID != "" {
 						result.SetSocialId("wx", user.UnionID)
 					} else if result.OpenId != nil {
-						result.Id = "wx_" + *result.OpenId
-						result.Type = "wx"
+						result.SetSocialId("wx", *result.OpenId)
 					}
 					return result
 				}
 			}
-			result := &domain.SocialUser{
+			result := &social.SocialUser{
 				OpenId: util.StringAddr(wxToken.OpenId + "@" + appId),
 			}
 			if wxToken.UnionId != "" {
 				result.SetSocialId("wx", wxToken.UnionId)
 			} else if result.OpenId != nil {
-				result.Id = "wx_" + *result.OpenId
-				result.Type = "wx"
+				result.SetSocialId("wx", *result.OpenId)
 			}
 			return result
 		}
