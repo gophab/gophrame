@@ -10,4 +10,5 @@ type UserDetails struct {
 	SocialId *string
 	TenantId *string
 	Admin    bool
+	Roles    []string
 }

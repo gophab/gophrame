@@ -74,5 +74,4 @@ func InitCasbinEnforcer() (*casbin.SyncedEnforcer, error) {
 // casbin 鉴权失败，返回 405 方法不允许访问
 func ErrorCasbinAuthFail(c *gin.Context, msg interface{}) {
 	response.ErrorMessage(c, http.StatusMethodNotAllowed, http.StatusMethodNotAllowed, ErrorsCasbinNoAuthorization)
-	c.Abort()
 }

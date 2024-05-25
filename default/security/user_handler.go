@@ -42,6 +42,53 @@ func Start() {
 	security.RegisterUserHandler(new(DefaultUserHandler))
 }
 
+func Map[S, T any](list []S, f func(item S) T) []T {
+	segs := make([]T, 0)
+	for _, item := range list {
+		segs = append(segs, f(item))
+	}
+	return segs
+}
+
+func Join[T any](list []T, f func(item T) string, delimeter string) string {
+	segs := Map(list, f)
+	return strings.Join(segs, delimeter)
+}
+
+func User2UserDetails(user *domain.User) *SecurityModel.UserDetails {
+	if user != nil {
+		return &SecurityModel.UserDetails{
+			UserId:   util.StringAddr(user.Id),
+			TenantId: util.StringAddr(user.TenantId),
+			Login:    user.Login,
+			Mobile:   user.Mobile,
+			Email:    user.Email,
+			Name:     user.Name,
+			Avatar:   user.Avatar,
+			Admin:    user.Admin,
+			Roles:    Map(user.Roles, func(item domain.Role) string { return item.Name }),
+		}
+	} else {
+		return nil
+	}
+}
+
+func SocialUser2UserDetails(exists *domain.SocialUser) *SecurityModel.UserDetails {
+	if exists != nil {
+		return &SecurityModel.UserDetails{
+			Name:     exists.Name,
+			Avatar:   exists.Avatar,
+			Email:    exists.Email,
+			Mobile:   exists.Mobile,
+			Admin:    false,
+			SocialId: util.StringAddr(exists.Id),
+			TenantId: util.StringAddr(exists.TenantId),
+		}
+	} else {
+		return nil
+	}
+}
+
 func (h *DefaultUserHandler) GetUserDetails(ctx context.Context, username, password string) (*SecurityModel.UserDetails, error) {
 	user, err := h.UserService.Get(username)
 	if err != nil {
@@ -57,16 +104,7 @@ func (h *DefaultUserHandler) GetUserDetails(ctx context.Context, username, passw
 	}
 
 	if user.Id != "" {
-		return &SecurityModel.UserDetails{
-			UserId:   util.StringAddr(user.Id),
-			TenantId: util.StringAddr(user.TenantId),
-			Login:    user.Login,
-			Mobile:   user.Mobile,
-			Email:    user.Email,
-			Name:     user.Name,
-			Avatar:   user.Avatar,
-			Admin:    user.Admin,
-		}, nil
+		return User2UserDetails(user), nil
 	}
 
 	return nil, errors.New("用户未注册")
@@ -100,16 +138,8 @@ func (h *DefaultUserHandler) GetMobileUserDetails(ctx context.Context, mobile st
 		}
 	}
 
-	if user != nil {
-		return &SecurityModel.UserDetails{
-			UserId:   util.StringAddr(user.Id),
-			TenantId: util.StringAddr(user.TenantId),
-			Name:     user.Name,
-			Avatar:   user.Avatar,
-			Mobile:   user.Mobile,
-			Email:    user.Email,
-			Admin:    user.Admin,
-		}, nil
+	if user != nil && user.Id != "" {
+		return User2UserDetails(user), nil
 	}
 
 	return nil, errors.New("该手机号用户未注册")
@@ -143,16 +173,8 @@ func (h *DefaultUserHandler) GetEmailUserDetails(ctx context.Context, email stri
 		}
 	}
 
-	if user != nil {
-		return &SecurityModel.UserDetails{
-			UserId:   util.StringAddr(user.Id),
-			TenantId: util.StringAddr(user.TenantId),
-			Name:     user.Name,
-			Avatar:   user.Avatar,
-			Mobile:   user.Mobile,
-			Email:    user.Email,
-			Admin:    user.Admin,
-		}, nil
+	if user != nil && user.Id != "" {
+		return User2UserDetails(user), nil
 	}
 
 	return nil, errors.New("该邮箱用户未注册")
@@ -206,15 +228,7 @@ func (h *DefaultUserHandler) GetSocialUserDetails(ctx context.Context, socialCha
 		h.getOrCreateSocialUser(*socialUser)
 	}
 
-	result := &SecurityModel.UserDetails{
-		Name:     exists.Name,
-		Avatar:   exists.Avatar,
-		Email:    exists.Email,
-		Mobile:   exists.Mobile,
-		Admin:    false,
-		SocialId: util.StringAddr(exists.Id),
-		TenantId: util.StringAddr(exists.TenantId),
-	}
+	result := SocialUser2UserDetails(exists)
 
 	if exists.SocialId != nil {
 		// 确定社交平台唯一账户
@@ -272,6 +286,10 @@ func (h *DefaultUserHandler) GetSocialUserDetails(ctx context.Context, socialCha
 
 	// SocialUser已生成
 	if exists.UserId != nil {
+		if user, err := h.UserService.GetById(*exists.UserId); err == nil {
+			// use User information
+			result = User2UserDetails(user)
+		}
 		result.UserId = exists.UserId
 	} else {
 		result.UserId = util.StringAddr("sns:" + exists.Id)
