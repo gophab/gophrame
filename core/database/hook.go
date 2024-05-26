@@ -4,9 +4,9 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/snowflake"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/snowflake"
 
 	"reflect"
 	"strings"

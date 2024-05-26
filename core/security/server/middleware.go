@@ -13,8 +13,8 @@ const (
 
 func ValidationBearerToken(c *gin.Context) (oauth2.TokenInfo, error) {
 	// 1. 若EnableServer
-	if theOAuth2Server != nil {
-		ti, err := theOAuth2Server.ValidationBearerToken(c.Request)
+	if theServer != nil {
+		ti, err := theServer.ValidationBearerToken(c.Request)
 		if err != nil {
 			return nil, err
 		}

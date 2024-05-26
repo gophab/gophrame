@@ -1,11 +1,11 @@
 package mapi
 
 import (
-	"github.com/wjshen/gophrame/default/controller/mapi/auth"
+	"github.com/gophab/gophrame/default/controller/mapi/auth"
 
-	"github.com/wjshen/gophrame/core/controller"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/security"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/permission"
+	"github.com/gophab/gophrame/core/security"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,9 +13,9 @@ import (
 var Resources = &controller.Controllers{
 	Base: "/mapi",
 	Handlers: []gin.HandlerFunc{
-		security.HandleTokenVerify(),    // oauth2 验证
-		security.CheckUserPermissions(), // 权限验证
-		security.NeedSystemUser(),
+		security.HandleTokenVerify(),      // oauth2 验证
+		permission.NeedSystemUser(),       // 需要系统用户
+		permission.CheckUserPermissions(), // 权限验证
 	},
 	Controllers: []controller.Controller{
 		userMController,
@@ -27,12 +27,4 @@ var Resources = &controller.Controllers{
 		tenantOptionMController,
 		auth.Resources,
 	},
-}
-
-func init() {
-	inject.InjectValue("Resources", Resources)
-}
-
-func InitRouter(engine *gin.Engine) {
-	Resources.InitRouter(engine.Group("/"))
 }

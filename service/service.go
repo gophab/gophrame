@@ -1,6 +1,6 @@
 package service
 
-import "github.com/wjshen/gophrame/core/inject"
+import "github.com/gophab/gophrame/core/inject"
 
 type __ struct {
 	RoleService       RoleService       `inject:"roleService"`

@@ -1,87 +1,72 @@
 package global
 
-import "time"
+import (
+	"log"
+	"os"
+	"strings"
 
-var ()
+	"github.com/casbin/casbin"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+)
 
-var global_values = make(map[string]interface{})
+const (
+	ERROR_BASE_PATH = 10011
+	ErrorBasePath   = "无法获取根路径"
+)
 
-func Set(name string, value interface{}) {
-	global_values[name] = value
+type CORS struct {
+	Mode      string          `mapstructure:"mode" json:"mode" yaml:"mode"`
+	Whitelist []CORSWhitelist `mapstructure:"whitelist" json:"whitelist" yaml:"whitelist"`
 }
 
-func Sets(vars map[string]interface{}) {
-	for key, value := range vars {
-		global_values[key] = value
+type CORSWhitelist struct {
+	AllowOrigin      string `mapstructure:"allow-origin" json:"allow-origin" yaml:"allow-origin"`
+	AllowMethods     string `mapstructure:"allow-methods" json:"allow-methods" yaml:"allow-methods"`
+	AllowHeaders     string `mapstructure:"allow-headers" json:"allow-headers" yaml:"allow-headers"`
+	ExposeHeaders    string `mapstructure:"expose-headers" json:"expose-headers" yaml:"expose-headers"`
+	AllowCredentials bool   `mapstructure:"allow-credentials" json:"allow-credentials" yaml:"allow-credentials"`
+}
+
+var (
+	BasePath string // 定义项目的根目录
+
+	Debug bool = false
+
+	EventDestroyPrefix = "Destroy_" //  程序退出时需要销毁的事件前缀
+	ConfigKeyPrefix    = "Config_"  //  配置文件键值缓存时，键的前缀
+
+	DateFormat = "2006-01-02 15:04:05" //  配置文件键值缓存时，键的前缀
+
+	//gorm 数据库客户端，如果您操作数据库使用的是gorm，请取消以下注释，在 bootstrap>init 文件，进行初始化即可使用
+	DB *gorm.DB // 全局gorm的客户端连接
+
+	//gin engine
+	Engine *gin.Engine
+
+	//websocket
+	WebsocketHub interface{}
+
+	//casbin 全局操作指针
+	Enforcer *casbin.SyncedEnforcer
+
+	// CORS
+	Cors *CORS = &CORS{
+		Mode: "allow-all",
 	}
-}
+)
 
-func Var(name string) interface{} {
-	if v, b := global_values[name]; b {
-		return v
-	} else {
-		return nil
-	}
-}
-
-func IntVar(name string) int {
-	return VarValue(name, int(0))
-}
-
-func IntVarDefault(name string, v int) int {
-	return VarValue(name, int(v))
-}
-
-func Int64Var(name string) int64 {
-	return VarValue(name, int64(0))
-}
-
-func Int64VarDefault(name string, v int64) int64 {
-	return VarValue(name, int64(v))
-}
-
-func StringVar(name string) string {
-	return VarValue(name, "")
-}
-
-func StringVarDefault(name string, v string) string {
-	return VarValue(name, v)
-}
-
-func DurationVar(name string) time.Duration {
-	if value := Var(name); value != nil {
-		return parserDuration(value)
-	}
-	return time.Duration(0)
-}
-
-func DurationVarDefault(name string, v interface{}) time.Duration {
-	if value := Var(name); value != nil {
-		return parserDuration(value)
-	}
-	return parserDuration(v)
-}
-
-func parserDuration(v interface{}) time.Duration {
-	switch v := v.(type) {
-	case int:
-		return time.Second * time.Duration(v)
-	case int32:
-		return time.Second * time.Duration(v)
-	case int64:
-		return time.Second * time.Duration(v)
-	case string:
-		if d, err := time.ParseDuration(v); err == nil {
-			return d
+func init() {
+	// 1.初始化程序根目录
+	if path, err := os.Getwd(); err == nil {
+		// 路径进行处理，兼容单元测试程序程序启动时的奇怪路径
+		if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "-test") {
+			BasePath = strings.Replace(strings.Replace(path, `\test`, "", 1), `/test`, "", 1)
+		} else {
+			BasePath = path
 		}
-	}
-	return time.Duration(0)
-}
-
-func VarValue[T any](name string, t T) T {
-	if v := Var(name); v != nil {
-		return v.(T)
+		log.Println("Base application path: ", BasePath)
 	} else {
-		return t
+		log.Fatal(ERROR_BASE_PATH, ErrorBasePath)
 	}
 }

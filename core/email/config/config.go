@@ -1,11 +1,8 @@
 package config
 
 import (
-	CodeConfig "github.com/wjshen/gophrame/core/code/config"
-	"github.com/wjshen/gophrame/core/config"
-	"github.com/wjshen/gophrame/core/logger"
-
-	EmailCodeConfig "github.com/wjshen/gophrame/core/email/code/config"
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
 )
 
 type RedisCodeStoreSetting struct {
@@ -22,14 +19,12 @@ type EmailSetting struct {
 	Enabled bool `json:"enabled" yaml:"enabled"`
 	Sender  struct {
 	}
-	Store *CodeConfig.CodeStoreSetting `json:"store" yaml:"store"`
 }
 
 var Setting *EmailSetting = &EmailSetting{
 	Enabled: false,
 	Sender: struct {
 	}{},
-	Store: EmailCodeConfig.Setting,
 }
 
 func init() {

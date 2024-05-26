@@ -1,15 +1,15 @@
 package auth
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/util"
 
-	"github.com/wjshen/gophrame/service"
+	"github.com/gophab/gophrame/service"
 
-	AuthModel "github.com/wjshen/gophrame/default/domain/auth"
-	AuthRepository "github.com/wjshen/gophrame/default/repository/auth"
-	DefaultService "github.com/wjshen/gophrame/default/service"
+	AuthModel "github.com/gophab/gophrame/default/domain/auth"
+	AuthRepository "github.com/gophab/gophrame/default/repository/auth"
+	DefaultService "github.com/gophab/gophrame/default/service"
 )
 
 type AuthorityService struct {

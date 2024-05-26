@@ -3,15 +3,15 @@ package auth
 import (
 	"strconv"
 
-	"github.com/wjshen/gophrame/core/controller"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/query"
-	"github.com/wjshen/gophrame/core/webservice/request"
-	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/core/webservice/request"
+	"github.com/gophab/gophrame/core/webservice/response"
+	"github.com/gophab/gophrame/errors"
 
-	AuthModel "github.com/wjshen/gophrame/default/domain/auth"
-	"github.com/wjshen/gophrame/default/service/auth"
+	AuthModel "github.com/gophab/gophrame/default/domain/auth"
+	"github.com/gophab/gophrame/default/service/auth"
 
 	"github.com/gin-gonic/gin"
 )

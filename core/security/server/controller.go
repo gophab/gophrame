@@ -8,19 +8,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/errors"
 
-	"github.com/wjshen/gophrame/core/captcha"
-	"github.com/wjshen/gophrame/core/eventbus"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/redis"
-	"github.com/wjshen/gophrame/core/security/model"
-	"github.com/wjshen/gophrame/core/security/server/config"
-	"github.com/wjshen/gophrame/core/security/token"
-	"github.com/wjshen/gophrame/core/util"
-	"github.com/wjshen/gophrame/core/webservice/request"
-	"github.com/wjshen/gophrame/core/webservice/response"
+	"github.com/gophab/gophrame/core/captcha"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/eventbus"
+	"github.com/gophab/gophrame/core/redis"
+	"github.com/gophab/gophrame/core/security/model"
+	"github.com/gophab/gophrame/core/security/token"
+	"github.com/gophab/gophrame/core/util"
+	"github.com/gophab/gophrame/core/webservice/request"
+	"github.com/gophab/gophrame/core/webservice/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-oauth2/oauth2/v4"
@@ -34,35 +32,26 @@ type LoginForm struct {
 	Password string `form:"password" json:"password"`
 }
 
-func InitRouter(g *gin.Engine) {
-	if config.Setting.Enabled {
-		// 前端接口
-		g.POST("/openapi/login", captcha.HandleCaptchaVerify(false), oauth2Controller.Login) // 登录
-
-		// 后端接口
-		g.GET("/openapi/auth", oauth2Controller.Auth) // 授权页面,选择需要授权的权限项
-
-		// 增加OAuth2 Server API
-		g.POST("/openapi/authorize", oauth2Controller.Authorize)      // 获取授权码 或 implicit方式请求token
-		g.POST("/openapi/token", oauth2Controller.HandleTokenRequest) // 应用程序通过此请求获取token
-		g.GET("/openapi/token", oauth2Controller.QueryToken)          // 根据授权码获取token
-	}
-}
-
 type OAuth2Controller struct {
+	controller.ResourceController
 	OAuth2Server *OAuth2Server     `inject:"oauth2Server"`
 	TokenStore   oauth2.TokenStore `inject:"tokenStore"`
 	reqCache     *cache.Cache
 }
 
-var oauth2Controller *OAuth2Controller
+func (c *OAuth2Controller) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
+	// 前端接口
+	g.POST("/oauth/login", captcha.HandleCaptchaVerify(false), c.Login) // 登录
 
-func StartControllers() {
-	if config.Setting.Enabled {
-		logger.Info("Initializing OAuth2 Controllers")
-		oauth2Controller = &OAuth2Controller{reqCache: cache.New(time.Minute*5, time.Minute*5)}
-		inject.InjectValue("oauth2Controller", oauth2Controller)
-	}
+	// 后端接口
+	g.GET("/oauth/auth", c.Auth) // 授权页面,选择需要授权的权限项
+
+	// 增加OAuth2 Server API
+	g.POST("/oauth/authorize", c.Authorize)      // 获取授权码 或 implicit方式请求token
+	g.POST("/oauth/token", c.HandleTokenRequest) // 应用程序通过此请求获取token
+	g.GET("/oauth/token", c.QueryToken)          // 根据授权码获取token
+
+	return g
 }
 
 /**

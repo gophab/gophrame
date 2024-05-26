@@ -1,6 +1,6 @@
 package auth
 
-import "github.com/wjshen/gophrame/domain"
+import "github.com/gophab/gophrame/domain"
 
 // 用户在指定页面已分配的按钮列表
 type Button struct {

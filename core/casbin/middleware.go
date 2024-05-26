@@ -1,4 +1,4 @@
-package middleware
+package casbin
 
 import (
 	"net/http"
@@ -7,15 +7,17 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
 
-	SecurityUtil "github.com/wjshen/gophrame/core/security/util"
-	"github.com/wjshen/gophrame/global"
-
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/webservice/response"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/inject"
+	SecurityUtil "github.com/gophab/gophrame/core/security/util"
+	"github.com/gophab/gophrame/core/webservice/response"
 )
 
+// CasbinHandler 拦截器
+// Casbin检查用户对应的角色权限是否允许访问接口
+
 var __ = struct {
-	Enforcer *casbin.Enforcer `inject:"enforcer"`
+	Enforcer *casbin.SyncedEnforcer `inject:"enforcer"`
 }{}
 
 func init() {
@@ -33,10 +35,8 @@ func CasbinHandler() gin.HandlerFunc {
 			}
 
 			//获取请求的PATH
-			path := c.Request.URL.Path
-
 			// 资源
-			resource := strings.TrimPrefix(path, global.StringVar("CONTEXT_ROOT"))
+			resource := strings.TrimPrefix(c.Request.URL.Path, global.StringVar("CONTEXT_ROOT"))
 
 			// 获取请求方法
 			action := c.Request.Method
@@ -50,7 +50,7 @@ func CasbinHandler() gin.HandlerFunc {
 
 			success, _ := __.Enforcer.Enforce(roles, resource, action)
 			if !success {
-				response.FailMessage(c, http.StatusForbidden, "权限不足")
+				response.ErrorMessage(c, http.StatusMethodNotAllowed, http.StatusMethodNotAllowed, "登录用户没有权限")
 				return
 			}
 		}

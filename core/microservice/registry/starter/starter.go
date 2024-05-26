@@ -1,15 +1,15 @@
 package starter
 
 import (
-	_ "github.com/wjshen/gophrame/core/microservice/registry/consul/starter"
-	_ "github.com/wjshen/gophrame/core/microservice/registry/dubbo/starter"
-	_ "github.com/wjshen/gophrame/core/microservice/registry/eureka/starter"
-	_ "github.com/wjshen/gophrame/core/microservice/registry/nacos/starter"
+	_ "github.com/gophab/gophrame/core/microservice/registry/consul/starter"
+	_ "github.com/gophab/gophrame/core/microservice/registry/dubbo/starter"
+	_ "github.com/gophab/gophrame/core/microservice/registry/eureka/starter"
+	_ "github.com/gophab/gophrame/core/microservice/registry/nacos/starter"
 
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/microservice/registry"
-	"github.com/wjshen/gophrame/core/microservice/registry/config"
-	"github.com/wjshen/gophrame/core/starter"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/microservice/registry"
+	"github.com/gophab/gophrame/core/microservice/registry/config"
+	"github.com/gophab/gophrame/core/starter"
 )
 
 func init() {

@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/wjshen/gophrame/core/eventbus"
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/redis/config"
+	"github.com/gophab/gophrame/core/eventbus"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/redis/config"
 
 	"github.com/gomodule/redigo/redis"
 )

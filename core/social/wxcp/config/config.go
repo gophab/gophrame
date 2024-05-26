@@ -1,5 +1,10 @@
 package config
 
+import (
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
+)
+
 type AgentSetting struct {
 	CorpId        string `json:"corpId" yaml:"corpId"`
 	AgentId       int    `json:"agentId" yaml:"agentId"`
@@ -21,4 +26,9 @@ type WxcpSetting struct {
 
 var Setting *WxcpSetting = &WxcpSetting{
 	Enabled: false,
+}
+
+func init() {
+	logger.Debug("Register Social Config - Wxcp")
+	config.RegisterConfig("social.wxcp", Setting, "Wxcp Settings")
 }

@@ -3,10 +3,11 @@ package code
 import (
 	"sync"
 
-	"github.com/wjshen/gophrame/core/code"
-	"github.com/wjshen/gophrame/core/email/config"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/starter"
+	"github.com/gophab/gophrame/core/code"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/email/code/config"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/starter"
 )
 
 var (
@@ -14,10 +15,10 @@ var (
 )
 
 func init() {
-	starter.RegisterStarter(Start)
+	starter.RegisterInitializor(Init)
 }
 
-func Start() {
+func Init() {
 	once.Do(func() {
 		initEmailCodeSender()
 		initEmailCodeStore()
@@ -37,12 +38,12 @@ func initEmailCodeSender() (sender code.CodeSender, err error) {
 
 func initEmailCodeStore() (store code.CodeStore, err error) {
 	if config.Setting.Enabled {
-		if config.Setting.Store.Redis != nil && config.Setting.Store.Redis.Enabled {
-			store, err = code.CreateRedisCodeStore(config.Setting.Store)
-		} else if config.Setting.Store.Cache != nil && config.Setting.Store.Cache.Enabled {
-			store, err = code.CreateCacheCodeStore(config.Setting.Store)
+		if config.Setting.Redis != nil && config.Setting.Redis.Enabled {
+			store, err = code.CreateRedisCodeStore(config.Setting)
+		} else if config.Setting.Cache != nil && config.Setting.Cache.Enabled {
+			store, err = code.CreateCacheCodeStore(config.Setting)
 		} else {
-			store, err = code.CreateMemoryCodeStore(config.Setting.Store)
+			store, err = code.CreateMemoryCodeStore(config.Setting)
 		}
 		if store != nil {
 			inject.InjectValue("emailCodeStore", store)
@@ -59,6 +60,8 @@ func initEmailCodeValidator() {
 
 func initEmailCodeController() {
 	if config.Setting.Enabled {
-		inject.InjectValue("emailCodeController", &EmailCodeController{})
+		var emailCodeController = &EmailCodeController{}
+		inject.InjectValue("emailCodeController", emailCodeController)
+		controller.AddController(emailCodeController)
 	}
 }

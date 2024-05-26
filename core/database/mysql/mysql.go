@@ -8,8 +8,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 
-	"github.com/wjshen/gophrame/core/database/mysql/config"
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/database/mysql/config"
+	"github.com/gophab/gophrame/core/logger"
 )
 
 func defaultDSN() string {

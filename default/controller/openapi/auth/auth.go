@@ -1,9 +1,7 @@
 package auth
 
 import (
-	"github.com/wjshen/gophrame/core/controller"
-
-	"github.com/gin-gonic/gin"
+	"github.com/gophab/gophrame/core/controller"
 )
 
 var Resources = &controller.Controllers{
@@ -13,8 +11,4 @@ var Resources = &controller.Controllers{
 		buttonOpenController,
 		menuOpenController,
 	},
-}
-
-func InitRouter(r *gin.RouterGroup) {
-	Resources.InitRouter(r)
 }

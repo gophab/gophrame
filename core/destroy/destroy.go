@@ -1,9 +1,9 @@
 package destroy
 
 import (
-	"github.com/wjshen/gophrame/core/eventbus"
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/eventbus"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/logger"
 
 	"os"
 	"os/signal"

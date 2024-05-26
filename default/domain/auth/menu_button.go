@@ -1,6 +1,6 @@
 package auth
 
-import "github.com/wjshen/gophrame/domain"
+import "github.com/gophab/gophrame/domain"
 
 type MenuButtonRelation struct {
 	domain.Relation

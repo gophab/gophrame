@@ -1,7 +1,7 @@
 package errors
 
 import (
-	module "github.com/wjshen/gophrame/default"
+	module "github.com/gophab/gophrame/default"
 )
 
 const (

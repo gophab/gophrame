@@ -13,6 +13,7 @@ type CacheCodeStoreSetting struct {
 }
 
 type CodeStoreSetting struct {
+	Enabled         bool                   `json:"enabled" yaml:"enabled"`
 	RequestInterval time.Duration          `json:"requestInterval" yaml:"requestInterval"`
 	ExpireIn        time.Duration          `json:"expireIn" yaml:"expireIn"`
 	Cache           *CacheCodeStoreSetting `json:"cache"`

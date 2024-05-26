@@ -1,17 +1,10 @@
 package code
 
 import (
-	"strings"
+	"github.com/gophab/gophrame/core/code"
+	"github.com/gophab/gophrame/core/email"
 
-	"github.com/wjshen/gophrame/core/captcha"
-	"github.com/wjshen/gophrame/core/code"
-	"github.com/wjshen/gophrame/core/email"
-	"github.com/wjshen/gophrame/core/email/config"
-	"github.com/wjshen/gophrame/core/webservice/request"
-	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/errors"
-
-	"github.com/gin-gonic/gin"
+	"github.com/gophab/gophrame/core/email/code/config"
 )
 
 const (
@@ -55,125 +48,16 @@ func (v *EmailCodeValidator) GetSender() code.CodeSender {
 func (v *EmailCodeValidator) GetStore() code.CodeStore {
 	if v.Store == nil {
 		if config.Setting.Enabled {
-			if config.Setting.Store.Redis != nil && config.Setting.Store.Redis.Enabled {
-				v.Store, _ = code.CreateRedisCodeStore(config.Setting.Store)
-			} else if config.Setting.Store.Cache != nil && config.Setting.Store.Cache.Enabled {
-				v.Store, _ = code.CreateCacheCodeStore(config.Setting.Store)
+			if config.Setting.Redis != nil && config.Setting.Redis.Enabled {
+				v.Store, _ = code.CreateRedisCodeStore(config.Setting)
+			} else if config.Setting.Cache != nil && config.Setting.Cache.Enabled {
+				v.Store, _ = code.CreateCacheCodeStore(config.Setting)
 			} else {
-				v.Store, _ = code.CreateMemoryCodeStore(config.Setting.Store)
+				v.Store, _ = code.CreateMemoryCodeStore(config.Setting)
 			}
 		} else {
 			return v.Validator.GetStore()
 		}
 	}
 	return v.Store
-}
-
-type EmailForm struct {
-	Email string `form:"phone"`
-	Code  string `form:"code"`
-}
-
-func (v *EmailCodeValidator) HandleSmsCodeVerify(force bool) gin.HandlerFunc {
-	return func(context *gin.Context) {
-		email := context.Param("email")
-		scene := context.Param("scene")
-		value := context.Param("code")
-
-		if email == "" || value == "" || scene == "" {
-			captcha := context.Request.Header.Get("X-Verification-Code")
-			if captcha != "" {
-				segs := strings.Split(captcha, ";")
-				for _, seg := range segs {
-					seg = strings.TrimSpace(seg)
-					if strings.HasPrefix(seg, "email=") {
-						email = strings.TrimPrefix(seg, "email=")
-					}
-					if strings.HasPrefix(seg, "scene=") {
-						scene = strings.TrimPrefix(seg, "scene=")
-					}
-					if strings.HasPrefix(seg, "code=") {
-						value = strings.TrimPrefix(seg, "code=")
-					}
-				}
-			}
-		}
-
-		if email == "" || value == "" || scene == "" {
-			if force {
-				response.FailMessage(context, EmailCodeCheckParamsInvalidCode, EmailCodeCheckParamsInvalidMsg)
-				return
-			} else {
-				context.AddParam("emailcode", "false")
-				context.Next()
-			}
-		}
-
-		if b := v.CheckCode(v, email, scene, value); b {
-			context.AddParam("emailcode", "true")
-			context.Next()
-		} else {
-			response.FailMessage(context, EmailCodeCheckFailCode, EmailCodeCheckFailMsg)
-		}
-	}
-}
-
-type EmailCodeController struct {
-	EmailCodeValidator *code.Validator `inject:"emailCodeValidator"`
-}
-
-func (e *EmailCodeController) GenerateCode(c *gin.Context) {
-	email, err := request.Param(c, "email").MustString()
-	scene := request.Param(c, "scene").DefaultString("register-pin")
-	force := request.Param(c, "force").DefaultBool(false)
-
-	if err != nil {
-		response.FailCode(c, errors.INVALID_PARAMS)
-		return
-	}
-
-	_, b := e.EmailCodeValidator.GetVerificationCode(e.EmailCodeValidator, email, scene)
-	if !b || force {
-		_, err = e.EmailCodeValidator.GenerateCode(e.EmailCodeValidator, email, scene)
-		if err != nil {
-			response.FailMessage(c, 400, err.Error())
-			return
-		}
-	} /* else 验证码仍旧有效，忽略 */
-
-	response.Success(c, "验证码已发送")
-}
-
-func (e *EmailCodeController) CheckCode(c *gin.Context) {
-	email, err := request.Param(c, "email").MustString()
-	scene := request.Param(c, "scene").DefaultString("register-pin")
-	if err != nil {
-		response.FailCode(c, errors.INVALID_PARAMS)
-		return
-	}
-
-	code, err := request.Param(c, "code").MustString()
-	if err != nil {
-		response.FailCode(c, errors.INVALID_PARAMS)
-		return
-	}
-
-	response.Success(c, e.EmailCodeValidator.CheckCode(e.EmailCodeValidator, email, scene, code))
-}
-
-/**
- * 处理WEB验证码的API路由
- */
-func (e *EmailCodeController) InitRouter(g *gin.Engine) {
-	if config.Setting.Enabled {
-		// 创建一个验证码路由
-		verifyCode := g.Group("email")
-		{
-			verifyCode.Use(captcha.HandleCaptchaVerify(false))
-
-			// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
-			verifyCode.GET("/code", e.GenerateCode)            // 发送验证码
-			verifyCode.GET("/check/:email/:code", e.CheckCode) // 校验验证码
-		}
-	}
 }

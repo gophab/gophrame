@@ -1,10 +1,13 @@
 package config
 
 import (
+	"reflect"
+	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/logger"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"
@@ -97,7 +100,7 @@ func loadConfig() error {
 			if key == "ROOT" {
 				// "ROOT" node
 				err = UnmarshalFromNode(config, value.Setting)
-			} else if node, ok := config[key]; ok {
+			} else if node, ok := getConfigNode(config, key); ok {
 				// Setting node
 				logger.Debug("Load module configuration: ", key)
 				err = UnmarshalFromNode(node, value.Setting)
@@ -115,4 +118,48 @@ func loadConfig() error {
 	}
 
 	return err
+}
+
+func getConfigNode(config interface{}, path string) (interface{}, bool) {
+	if config == nil {
+		return nil, false
+	}
+
+	segs := strings.SplitN(path, ".", 1)
+	if len(segs) == 2 {
+		if node, b := getConfigNode(config, segs[0]); b {
+			return getConfigNode(node, segs[1])
+		}
+	} else {
+		switch reflect.TypeOf(config).Kind() {
+		case reflect.Map:
+			value := reflect.ValueOf(config).MapIndex(reflect.ValueOf(path))
+			if value.IsValid() && !value.IsNil() && !value.IsZero() {
+				return value.Interface(), true
+			}
+		case reflect.Array:
+			if index, err := strconv.ParseInt(path, 10, 32); err == nil {
+				array := reflect.ValueOf(config)
+				if 0 <= index && index <= int64(array.Len()) {
+					value := reflect.ValueOf(config).Index(int(index))
+					if value.IsValid() && !value.IsNil() && !value.IsZero() {
+						return value.Interface(), true
+					}
+				}
+			}
+		case reflect.Struct:
+			value := reflect.ValueOf(config)
+			field := value.FieldByName(path)
+			if field.IsValid() && !field.IsNil() && !field.IsZero() {
+				return field.Interface(), true
+			}
+		case reflect.Ptr, reflect.Interface:
+			value := reflect.ValueOf(config).Elem()
+			if value.IsValid() && !value.IsNil() && !value.IsZero() {
+				return getConfigNode(value.Interface(), path)
+			}
+		default:
+		}
+	}
+	return nil, false
 }

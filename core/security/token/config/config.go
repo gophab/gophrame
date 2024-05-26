@@ -3,7 +3,8 @@ package config
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/core/security/token/jwt"
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/security/token/jwt"
 )
 
 type RedisTokenStoreSetting struct {
@@ -52,4 +53,8 @@ var Setting *TokenSetting = &TokenSetting{
 	Store: &TokeStoreSetting{
 		Mode: "default",
 	},
+}
+
+func init() {
+	config.RegisterConfig("security.token", Setting, "Token Settings")
 }

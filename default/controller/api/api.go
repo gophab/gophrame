@@ -1,11 +1,11 @@
 package api
 
 import (
-	"github.com/wjshen/gophrame/core/controller"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/security"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/security"
 
-	"github.com/wjshen/gophrame/default/controller/api/auth"
+	"github.com/gophab/gophrame/default/controller/api/auth"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,8 +13,7 @@ import (
 var Resources *controller.Controllers = &controller.Controllers{
 	Base: "/api",
 	Handlers: []gin.HandlerFunc{
-		security.HandleTokenVerify(),    // oauth2 验证
-		security.CheckUserPermissions(), // 权限验证
+		security.HandleTokenVerify(), // oauth2 验证
 	},
 	Controllers: []controller.Controller{
 		userController,
@@ -28,8 +27,4 @@ var Resources *controller.Controllers = &controller.Controllers{
 
 func init() {
 	inject.InjectValue("apiResources", Resources)
-}
-
-func InitRouter(engine *gin.Engine) {
-	Resources.InitRouter(engine.Group("/"))
 }

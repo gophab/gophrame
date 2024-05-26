@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/microservice/registry/config"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/microservice/registry/config"
 
 	"github.com/patrickmn/go-cache"
 )

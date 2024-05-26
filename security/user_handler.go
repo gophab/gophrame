@@ -3,9 +3,9 @@ package security
 import (
 	"context"
 
-	"github.com/wjshen/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/inject"
 
-	SecurityModel "github.com/wjshen/gophrame/core/security/model"
+	SecurityModel "github.com/gophab/gophrame/core/security/model"
 )
 
 type UserHandler interface {

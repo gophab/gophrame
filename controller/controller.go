@@ -1,26 +1,28 @@
 package controller
 
 import (
-	"github.com/wjshen/gophrame/core/controller"
+	"github.com/gophab/gophrame/config"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/starter"
+	"github.com/gophab/gophrame/core/webservice/middleware"
 
-	"github.com/gin-gonic/gin"
+	_ "github.com/gophab/gophrame/controller/security"
 )
 
-var Resources = &controller.Controllers{
-	Controllers: []controller.Controller{
-		// security APIs
-		securityController,
-	},
+func init() {
+	starter.RegisterInitializor(Init)
+	starter.RegisterStarter(Start)
 }
 
-func AddController(c controller.Controller) {
-	Resources.Controllers = append(Resources.Controllers, c)
+// Auto Initialize entrypoint
+func Init() {
 }
 
-func AddControllers(cs ...controller.Controller) {
-	Resources.Controllers = append(Resources.Controllers, cs...)
-}
-
-func InitRouter(engine *gin.Engine) {
-	Resources.InitRouter(engine.Group("/"))
+// Autostart entrypoint
+func Start() {
+	logger.Info("Starting Framework Controllers...")
+	logger.Info("Allow Cross Domain: ", config.Config.Server.AllowCrossDomain)
+	if config.Config.Server.AllowCrossDomain {
+		middleware.UseCors()
+	}
 }

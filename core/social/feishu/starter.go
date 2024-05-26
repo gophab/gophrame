@@ -1,28 +1,31 @@
 package feishu
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/core/social/feishu/config"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/social"
+	SocialConfig "github.com/gophab/gophrame/core/social/config"
+	"github.com/gophab/gophrame/core/social/feishu/config"
+	"github.com/gophab/gophrame/core/starter"
 )
 
-var feishuService *FeishuService
-var feishuController *FeishuController
-
-func Start() {
-	if config.Setting.Enabled {
-		if service, _ := initFeishuService(); service != nil {
-			social.RegisterSocialService("fs", service)
-		}
-	}
+func init() {
+	starter.RegisterInitializor(Init)
 }
 
-func initFeishuService() (*FeishuService, error) {
-	logger.Info("Initializing FeishuService...")
-	feishuService = &FeishuService{}
-	feishuController = &FeishuController{FeishuService: feishuService}
+func Init() {
+	logger.Debug("Initializing FeishuService: ...", SocialConfig.Setting.Enabled && config.Setting.Enabled)
+	if SocialConfig.Setting.Enabled && config.Setting.Enabled {
+		feishuService := &FeishuService{}
+		inject.InjectValue("feishuService", feishuService)
 
-	inject.InjectValue("feishuController", feishuController)
-	return feishuService, nil
+		social.RegisterSocialService("fs", feishuService)
+
+		feishuController := &FeishuController{FeishuService: feishuService}
+
+		inject.InjectValue("feishuController", feishuController)
+
+		controller.AddController(feishuController)
+	}
 }

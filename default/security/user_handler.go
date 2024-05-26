@@ -5,21 +5,21 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/wjshen/gophrame/core/consts"
-	EmailCode "github.com/wjshen/gophrame/core/email/code"
-	"github.com/wjshen/gophrame/core/logger"
-	SecurityConfig "github.com/wjshen/gophrame/core/security/config"
-	SecurityModel "github.com/wjshen/gophrame/core/security/model"
-	SmsCode "github.com/wjshen/gophrame/core/sms/code"
-	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/core/starter"
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/consts"
+	EmailCode "github.com/gophab/gophrame/core/email/code"
+	"github.com/gophab/gophrame/core/logger"
+	SecurityConfig "github.com/gophab/gophrame/core/security/config"
+	SecurityModel "github.com/gophab/gophrame/core/security/model"
+	SmsCode "github.com/gophab/gophrame/core/sms/code"
+	"github.com/gophab/gophrame/core/social"
+	"github.com/gophab/gophrame/core/starter"
+	"github.com/gophab/gophrame/core/util"
 
-	"github.com/wjshen/gophrame/security"
+	"github.com/gophab/gophrame/security"
 
-	"github.com/wjshen/gophrame/default/domain"
-	"github.com/wjshen/gophrame/default/service"
-	"github.com/wjshen/gophrame/default/service/dto"
+	"github.com/gophab/gophrame/default/domain"
+	"github.com/gophab/gophrame/default/service"
+	"github.com/gophab/gophrame/default/service/dto"
 
 	"gorm.io/gorm"
 )
@@ -38,7 +38,7 @@ func init() {
 }
 
 func Start() {
-	logger.Info("Initializing Default User Handler")
+	logger.Debug("Initializing Default User Handler")
 	security.RegisterUserHandler(new(DefaultUserHandler))
 }
 

@@ -5,11 +5,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wjshen/gophrame/core/consts"
-	"github.com/wjshen/gophrame/core/security/server"
-	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/core/social/wxma/config"
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/consts"
+	"github.com/gophab/gophrame/core/security/server"
+	"github.com/gophab/gophrame/core/social"
+	"github.com/gophab/gophrame/core/social/wxma/config"
+	"github.com/gophab/gophrame/core/util"
 
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/miniProgram"
 )

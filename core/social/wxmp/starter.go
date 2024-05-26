@@ -1,28 +1,27 @@
 package wxmp
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/core/social/wxmp/config"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/social"
+	SocialConfig "github.com/gophab/gophrame/core/social/config"
+	"github.com/gophab/gophrame/core/social/wxmp/config"
+	"github.com/gophab/gophrame/core/starter"
 )
 
-var wxmpService *WxmpService
-var wxmpController *WxmpController
-
-func Start() {
-	if config.Setting.Enabled {
-		if service, _ := initWxmpService(); service != nil {
-			social.RegisterSocialService("mp", service)
-		}
-	}
+func init() {
+	starter.RegisterInitializor(Init)
 }
 
-func initWxmpService() (*WxmpService, error) {
-	logger.Info("Initializing WxmpService...")
-	wxmpService = &WxmpService{}
-	wxmpController = &WxmpController{WxmpService: wxmpService}
+func Init() {
+	logger.Debug("Initializing WxmpService: ...", SocialConfig.Setting.Enabled && config.Setting.Enabled)
+	if SocialConfig.Setting.Enabled && config.Setting.Enabled {
+		wxmpService := &WxmpService{}
+		inject.InjectValue("wxmpService", wxmpService)
 
-	inject.InjectValue("wxmpController", wxmpController)
-	return wxmpService, nil
+		social.RegisterSocialService("wx", wxmpService)
+
+		wxmpController := &WxmpController{WxmpService: wxmpService}
+		inject.InjectValue("wxmpController", wxmpController)
+	}
 }

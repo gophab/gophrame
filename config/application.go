@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/wjshen/gophrame/core/config"
+	"github.com/gophab/gophrame/core/config"
 )
 
 type ApplicationSetting struct {

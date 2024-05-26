@@ -6,16 +6,16 @@ import (
 	"github.com/astaxie/beego/validation"
 	"github.com/gin-gonic/gin"
 
-	"github.com/wjshen/gophrame/core/controller"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/query"
-	"github.com/wjshen/gophrame/core/webservice/request"
-	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/core/webservice/request"
+	"github.com/gophab/gophrame/core/webservice/response"
+	"github.com/gophab/gophrame/errors"
 
-	"github.com/wjshen/gophrame/default/service"
-	"github.com/wjshen/gophrame/default/service/dto"
+	"github.com/gophab/gophrame/default/service"
+	"github.com/gophab/gophrame/default/service/dto"
 )
 
 type RoleController struct {

@@ -1,7 +1,7 @@
 package websocket
 
 import (
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"

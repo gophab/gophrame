@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wjshen/gophrame/core/database/config"
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/database/config"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/logger"
 
 	gormLog "gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"

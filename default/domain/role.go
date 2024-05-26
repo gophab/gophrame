@@ -1,6 +1,6 @@
 package domain
 
-import "github.com/wjshen/gophrame/domain"
+import "github.com/gophab/gophrame/domain"
 
 type Role struct {
 	domain.Entity

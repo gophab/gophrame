@@ -3,8 +3,8 @@ package topics
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/core/rabbitmq/config"
-	"github.com/wjshen/gophrame/core/rabbitmq/error_record"
+	"github.com/gophab/gophrame/core/rabbitmq/config"
+	"github.com/gophab/gophrame/core/rabbitmq/error_record"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )

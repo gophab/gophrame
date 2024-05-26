@@ -1,7 +1,7 @@
 package token
 
 import (
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/util"
 
 	"github.com/go-oauth2/oauth2/v4/models"
 )

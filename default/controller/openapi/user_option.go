@@ -3,14 +3,14 @@ package openapi
 import (
 	"encoding/json"
 
-	"github.com/wjshen/gophrame/core/controller"
-	"github.com/wjshen/gophrame/core/inject"
-	SecurityUtil "github.com/wjshen/gophrame/core/security/util"
-	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
+	SecurityUtil "github.com/gophab/gophrame/core/security/util"
+	"github.com/gophab/gophrame/core/webservice/response"
+	"github.com/gophab/gophrame/errors"
 
-	"github.com/wjshen/gophrame/default/domain"
-	"github.com/wjshen/gophrame/default/service"
+	"github.com/gophab/gophrame/default/domain"
+	"github.com/gophab/gophrame/default/service"
 
 	"github.com/gin-gonic/gin"
 )

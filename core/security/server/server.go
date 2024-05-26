@@ -6,12 +6,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/security/config"
-	"github.com/wjshen/gophrame/core/security/model"
-	"github.com/wjshen/gophrame/core/security/token"
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/security/model"
+	"github.com/gophab/gophrame/core/security/token"
+	TokenConfig "github.com/gophab/gophrame/core/security/token/config"
+	"github.com/gophab/gophrame/core/util"
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
@@ -35,20 +34,7 @@ type OAuth2Server struct {
 	SocialUserHandler ISocialUserHandler `inject:"userHandler"`
 }
 
-var theOAuth2Server *OAuth2Server
-
-func StartServer() {
-	if config.Setting.Server.Enabled {
-		logger.Info("Initializing OAuth2 Server")
-
-		theOAuth2Server = &OAuth2Server{
-			once: sync.Once{},
-		}
-		inject.InjectValue("oauth2Server", theOAuth2Server)
-
-		theOAuth2Server.init()
-	}
-}
+var theServer *OAuth2Server
 
 func (s *OAuth2Server) init() {
 	s.once.Do(func() {
@@ -61,8 +47,8 @@ func (s *OAuth2Server) initManager() oauth2.Manager {
 	s.manager = manage.NewDefaultManager()
 
 	s.manager.SetRefreshTokenCfg(&manage.RefreshingConfig{
-		AccessTokenExp:     config.Setting.Token.AccessTokenExpireTime,
-		RefreshTokenExp:    config.Setting.Token.RefreshTokenExpireTime,
+		AccessTokenExp:     TokenConfig.Setting.AccessTokenExpireTime,
+		RefreshTokenExp:    TokenConfig.Setting.RefreshTokenExpireTime,
 		IsGenerateRefresh:  false,
 		IsRemoveAccess:     true,
 		IsRemoveRefreshing: false,
@@ -70,8 +56,8 @@ func (s *OAuth2Server) initManager() oauth2.Manager {
 
 	// 配置
 	tokenConfig := &manage.Config{
-		AccessTokenExp:    config.Setting.Token.AccessTokenExpireTime,
-		RefreshTokenExp:   config.Setting.Token.RefreshTokenExpireTime,
+		AccessTokenExp:    TokenConfig.Setting.AccessTokenExpireTime,
+		RefreshTokenExp:   TokenConfig.Setting.RefreshTokenExpireTime,
 		IsGenerateRefresh: true,
 	}
 

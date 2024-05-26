@@ -1,12 +1,12 @@
 package service
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/query"
-	"github.com/wjshen/gophrame/service"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/service"
 
-	"github.com/wjshen/gophrame/default/domain"
-	"github.com/wjshen/gophrame/default/repository"
+	"github.com/gophab/gophrame/default/domain"
+	"github.com/gophab/gophrame/default/repository"
 )
 
 var organizationService *OrganizationService = &OrganizationService{}

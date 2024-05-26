@@ -1,11 +1,11 @@
 package config
 
 import (
-	"github.com/wjshen/gophrame/core/config"
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
 
-	ServerConfig "github.com/wjshen/gophrame/core/security/server/config"
-	TokenConfig "github.com/wjshen/gophrame/core/security/token/config"
+	ServerConfig "github.com/gophab/gophrame/core/security/server/config"
+	TokenConfig "github.com/gophab/gophrame/core/security/token/config"
 )
 
 type SecuritySetting struct {

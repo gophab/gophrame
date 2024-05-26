@@ -4,26 +4,21 @@ import (
 	"context"
 	"time"
 
-	"github.com/wjshen/gophrame/core/consts"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/security"
-	"github.com/wjshen/gophrame/core/security/server"
-	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/core/social/feishu/config"
-	"github.com/wjshen/gophrame/core/util"
-	"github.com/wjshen/gophrame/core/webservice/request"
-	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/core/consts"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/security/server"
+	"github.com/gophab/gophrame/core/social"
+	"github.com/gophab/gophrame/core/social/feishu/config"
+	"github.com/gophab/gophrame/core/util"
+	"github.com/gophab/gophrame/errors"
 
 	"fmt"
-	"net/url"
 	"strings"
 	"sync"
 
-	"github.com/wjshen/gophrame/core/json"
+	"github.com/gophab/gophrame/core/json"
 
 	"github.com/ArtisanCloud/PowerLibs/v3/object"
-	"github.com/gin-gonic/gin"
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
 	larkauthen "github.com/larksuite/oapi-sdk-go/v3/service/authen/v1"
@@ -212,67 +207,4 @@ func (s *FeishuService) GetSocialUserByCode(ctx context.Context, socialChannelId
 	}
 
 	return nil
-}
-
-type FeishuController struct {
-	FeishuService *FeishuService
-}
-
-func (c *FeishuController) GetSignature(ctx *gin.Context) {
-	appId := request.Param(ctx, "appId").DefaultString(ctx.Request.Header.Get("X-App-Id"))
-	uri, err := request.Param(ctx, "url").MustString()
-	if err != nil {
-		response.FailCode(ctx, errors.INVALID_PARAMS)
-		return
-	}
-	nonce := request.Param(ctx, "nonceStr").DefaultString("")
-	timestamp := request.Param(ctx, "timestamp").DefaultInt64(0)
-
-	if appId == "" {
-		appId = config.Setting.AppId
-	}
-
-	path, _ := url.QueryUnescape(uri)
-	if res, err := c.FeishuService.GetSignature(ctx, appId, path, nonce, timestamp); err != nil {
-		response.FailMessage(ctx, 400, err.Error())
-		return
-	} else {
-		response.Success(ctx, res)
-	}
-}
-
-func (c *FeishuController) SpeechToText(ctx *gin.Context) {
-	appId := request.Param(ctx, "appId").DefaultString(ctx.Request.Header.Get("X-App-Id"))
-	if appId == "" {
-		appId = config.Setting.AppId
-	}
-
-	//form表单
-	data := ctx.Request.Form.Get("speech")
-	if data == "" {
-		response.FailMessage(ctx, 400, "上传文件失败")
-		return
-	}
-
-	if res, err := c.FeishuService.SpeechToText(ctx, appId, data); err != nil {
-		response.FailMessage(ctx, 400, err.Error())
-		return
-	} else {
-		response.Success(ctx, map[string]string{"content": res})
-	}
-}
-
-/**
- * 处理JSAPI的API路由
- */
-func (e *FeishuController) InitRouter(g *gin.Engine) {
-	if config.Setting.Enabled {
-		// 创建一个验证码路由
-		feishu := g.Group("/openapi/social/feishu")
-		{
-			// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
-			feishu.GET("/signature", e.GetSignature)                                  // 发送
-			feishu.POST("/speech-text", security.HandleTokenVerify(), e.SpeechToText) // 发送
-		}
-	}
 }

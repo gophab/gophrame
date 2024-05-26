@@ -1,7 +1,7 @@
 package routing
 
 import (
-	"github.com/wjshen/gophrame/core/rabbitmq/config"
+	"github.com/gophab/gophrame/core/rabbitmq/config"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )

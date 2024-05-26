@@ -3,8 +3,8 @@ package domain
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/core/snowflake"
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/snowflake"
+	"github.com/gophab/gophrame/core/util"
 
 	"gorm.io/gorm"
 )

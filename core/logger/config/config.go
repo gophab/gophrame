@@ -1,6 +1,6 @@
 package config
 
-import "github.com/wjshen/gophrame/core/config"
+import "github.com/gophab/gophrame/core/config"
 
 type LogSetting struct {
 	LogName       string `json:"logName" yaml:"logName"`

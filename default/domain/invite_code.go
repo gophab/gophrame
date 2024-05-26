@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/domain"
+	"github.com/gophab/gophrame/domain"
 )
 
 type InviteCode struct {

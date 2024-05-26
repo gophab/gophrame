@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/util"
 
-	"github.com/wjshen/gophrame/default/domain/auth"
+	"github.com/gophab/gophrame/default/domain/auth"
 
 	"gorm.io/gorm"
 )

@@ -1,34 +1,30 @@
-package controller
+package security
 
 import (
-	"github.com/wjshen/gophrame/core/captcha"
-	"github.com/wjshen/gophrame/core/controller"
-	"github.com/wjshen/gophrame/core/inject"
-	SmsCode "github.com/wjshen/gophrame/core/sms/code"
-	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/errors"
-	"github.com/wjshen/gophrame/service"
-	"github.com/wjshen/gophrame/service/dto"
+	"github.com/gophab/gophrame/core/captcha"
+	"github.com/gophab/gophrame/core/controller"
+	EmailCode "github.com/gophab/gophrame/core/email/code"
+	SmsCode "github.com/gophab/gophrame/core/sms/code"
+	"github.com/gophab/gophrame/core/webservice/response"
+
+	"github.com/gophab/gophrame/errors"
+	"github.com/gophab/gophrame/service"
+	"github.com/gophab/gophrame/service/dto"
 
 	"github.com/gin-gonic/gin"
 )
 
 type SecurityController struct {
 	controller.ResourceController
-	MobileValidator   *SmsCode.SmsCodeValidator `inject:"smsCodeValidator"`
-	UserService       service.UserService       `inject:"userService"`
-	InviteCodeService service.InviteCodeService `inject:"inviteCodeService"`
+	MobileValidator   *SmsCode.SmsCodeValidator     `inject:"smsCodeValidator"`
+	EmailValidator    *EmailCode.EmailCodeValidator `inject:"emailCodeValidator"`
+	UserService       service.UserService           `inject:"userService"`
+	InviteCodeService service.InviteCodeService     `inject:"inviteCodeService"`
 }
 
-var securityController = &SecurityController{}
-
-func init() {
-	inject.InjectValue("securityController", securityController)
-}
-
-func (o *SecurityController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
-	g.POST("/openapi/register", captcha.HandleCaptchaVerify(false), o.Register)      // 注册
-	g.PUT("/openapi/register", captcha.HandleCaptchaVerify(false), o.ChangeRegister) // 注册
+func (c *SecurityController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
+	g.POST("/openapi/register", captcha.HandleCaptchaVerify(false), c.Register)      // 注册
+	g.PUT("/openapi/register", captcha.HandleCaptchaVerify(false), c.ChangeRegister) // 注册
 	return g
 }
 
@@ -89,6 +85,28 @@ func (u *SecurityController) Register(c *gin.Context) {
 			}
 
 			user.Mobile = &form.Username
+			if user.Name == nil {
+				user.Name = &form.Username
+			}
+		}
+	case "email":
+		{
+			if form.Username == "" || form.Password == "" {
+				response.FailMessage(c, errors.INVALID_PARAMS, "Email或验证码不能为空")
+				return
+			}
+
+			if u.EmailValidator == nil {
+				response.FailMessage(c, errors.INVALID_PARAMS, "不支持Email验证码登录")
+				return
+			}
+
+			if !u.EmailValidator.CheckCode(u.EmailValidator, form.Username, "register-pin", form.Password) {
+				response.FailMessage(c, errors.INVALID_PARAMS, "验证码不一致")
+				return
+			}
+
+			user.Email = &form.Username
 			if user.Name == nil {
 				user.Name = &form.Username
 			}

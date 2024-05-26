@@ -1,10 +1,10 @@
 package config
 
 import (
-	"github.com/wjshen/gophrame/core/config"
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
 
-	RegistryConfig "github.com/wjshen/gophrame/core/microservice/registry/config"
+	RegistryConfig "github.com/gophab/gophrame/core/microservice/registry/config"
 )
 
 type MicroserviceSetting struct {

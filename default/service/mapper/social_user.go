@@ -1,12 +1,12 @@
 package mapper
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/mapper"
-	"github.com/wjshen/gophrame/core/mapper/converter"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/mapper"
+	"github.com/gophab/gophrame/core/mapper/converter"
 
-	"github.com/wjshen/gophrame/default/domain"
-	"github.com/wjshen/gophrame/default/service/dto"
+	"github.com/gophab/gophrame/default/domain"
+	"github.com/gophab/gophrame/default/service/dto"
 )
 
 type SocialUserMapper struct {

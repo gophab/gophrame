@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"github.com/wjshen/gophrame/core/security/model"
+	"github.com/gophab/gophrame/core/security/model"
 )
 
 type IUserHandler interface {

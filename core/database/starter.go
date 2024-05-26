@@ -1,24 +1,21 @@
 package database
 
 import (
-	"github.com/wjshen/gophrame/core/database/config"
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/starter"
+	"github.com/gophab/gophrame/core/database/config"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/starter"
 )
 
 func init() {
-	starter.RegisterStarter(Start)
+	starter.RegisterInitializor(Init)
 }
 
-func Start() {
-	logger.Info("Initializing Database")
+func Init() {
+	logger.Debug("Initializing Database: ...", config.Setting.Enabled)
 	if config.Setting.Enabled {
-		logger.Info("Database Enabled")
 		global.DB = InitDB()
 		inject.InjectValue("database", global.DB)
-	} else {
-		logger.Info("Database Disabled")
 	}
 }

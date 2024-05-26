@@ -1,8 +1,8 @@
 package aliyun
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/sms/aliyun/config"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/sms/aliyun/config"
 )
 
 func Start() {

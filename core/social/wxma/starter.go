@@ -1,20 +1,24 @@
 package wxma
 
 import (
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/core/social/wxma/config"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/social"
+	SocialConfig "github.com/gophab/gophrame/core/social/config"
+	"github.com/gophab/gophrame/core/social/wxma/config"
+	"github.com/gophab/gophrame/core/starter"
 )
 
-func Start() {
-	if config.Setting.Enabled {
-		if service, _ := initWxmaService(); service != nil {
-			social.RegisterSocialService("wm", service)
-		}
-	}
+func init() {
+	starter.RegisterInitializor(Init)
 }
 
-func initWxmaService() (*WxmaService, error) {
-	logger.Info("Initializing WxmaService...")
-	return &WxmaService{}, nil
+func Init() {
+	logger.Info("Initializing WxmaService: ...", SocialConfig.Setting.Enabled && config.Setting.Enabled)
+	if SocialConfig.Setting.Enabled && config.Setting.Enabled {
+		wxmaService := &WxmaService{}
+		inject.InjectValue("wxmaService", wxmaService)
+
+		social.RegisterSocialService("wma", wxmaService)
+	}
 }

@@ -3,14 +3,14 @@ package service
 import (
 	"errors"
 
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/query"
-	"github.com/wjshen/gophrame/service"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/service"
 
-	"github.com/wjshen/gophrame/default/domain"
-	"github.com/wjshen/gophrame/default/repository"
-	"github.com/wjshen/gophrame/default/service/dto"
+	"github.com/gophab/gophrame/default/domain"
+	"github.com/gophab/gophrame/default/repository"
+	"github.com/gophab/gophrame/default/service/dto"
 
 	"github.com/casbin/casbin/v2"
 )

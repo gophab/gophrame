@@ -3,8 +3,8 @@ package dto
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/core/mapper"
-	"github.com/wjshen/gophrame/default/domain"
+	"github.com/gophab/gophrame/core/mapper"
+	"github.com/gophab/gophrame/default/domain"
 )
 
 type User struct {

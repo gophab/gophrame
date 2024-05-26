@@ -1,9 +1,9 @@
 package local
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/security/token"
-	SecurityUtil "github.com/wjshen/gophrame/core/security/util"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/security/token"
+	SecurityUtil "github.com/gophab/gophrame/core/security/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-oauth2/oauth2/v4"

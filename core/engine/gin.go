@@ -3,8 +3,6 @@ package engine
 import (
 	"sync"
 
-	"github.com/wjshen/gophrame/core/webservice"
-
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 )
@@ -18,8 +16,7 @@ func create() {
 	mutex.Lock()
 	if engine == nil {
 		engine = gin.New()
-		engine.Use(gin.Logger())      // 日志
-		engine.Use(webservice.Cors()) // 跨域请求
+		engine.Use(gin.Logger()) // 日志
 		engine.Use(gin.Recovery())
 	}
 	mutex.Unlock()

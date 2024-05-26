@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/wjshen/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/controller"
 
 	"github.com/gin-gonic/gin"
 )

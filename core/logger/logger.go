@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/wjshen/gophrame/core/global"
+	"github.com/gophab/gophrame/core/global"
 
 	"github.com/astaxie/beego/validation"
 )

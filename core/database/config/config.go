@@ -3,10 +3,10 @@ package config
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/core/config"
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
 
-	MysqlConfig "github.com/wjshen/gophrame/core/database/mysql/config"
+	MysqlConfig "github.com/gophab/gophrame/core/database/mysql/config"
 )
 
 type DatabaseSetting struct {

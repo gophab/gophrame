@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/wjshen/gophrame/core/mapper/converter"
+	"github.com/gophab/gophrame/core/mapper/converter"
 )
 
 var (

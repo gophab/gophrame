@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/domain"
+	"github.com/gophab/gophrame/core/social"
+	"github.com/gophab/gophrame/domain"
 )
 
 type SocialUser struct {

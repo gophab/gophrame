@@ -3,8 +3,8 @@ package aliyun
 import (
 	"errors"
 
-	"github.com/wjshen/gophrame/core/json"
-	"github.com/wjshen/gophrame/core/sms/aliyun/config"
+	"github.com/gophab/gophrame/core/json"
+	"github.com/gophab/gophrame/core/sms/aliyun/config"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
 	dysmsapi20170525 "github.com/alibabacloud-go/dysmsapi-20170525/v2/client"

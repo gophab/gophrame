@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/wjshen/gophrame/service/dto"
+	"github.com/gophab/gophrame/service/dto"
 )
 
 type SocialUserService interface {

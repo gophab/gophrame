@@ -1,7 +1,18 @@
 package redis
 
-import "github.com/wjshen/gophrame/core/redis/config"
+import (
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/redis/config"
+	"github.com/gophab/gophrame/core/starter"
+)
 
 func init() {
-	initRedisClientPool(config.Setting.Database)
+	starter.RegisterInitializor(Init)
+}
+
+func Init() {
+	logger.Debug("Initializing Redis: ...", config.Setting.Enabled)
+	if config.Setting.Enabled {
+		initRedisClientPool(config.Setting.Database)
+	}
 }

@@ -1,5 +1,10 @@
 package config
 
+import (
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
+)
+
 type AppSetting struct {
 	AppId         string `json:"appId" yaml:"appId"`
 	AppSecret     string `json:"appSecret" yaml:"appSecret"`
@@ -18,4 +23,9 @@ type WxmpSetting struct {
 
 var Setting *WxmpSetting = &WxmpSetting{
 	Enabled: false,
+}
+
+func init() {
+	logger.Debug("Register Social Config - Wxma")
+	config.RegisterConfig("social.wxmp", Setting, "Wxmp Settings")
 }

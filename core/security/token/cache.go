@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wjshen/gophrame/core/database"
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/redis"
-	"github.com/wjshen/gophrame/core/security/token/config"
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/database"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/redis"
+	"github.com/gophab/gophrame/core/security/token/config"
+	"github.com/gophab/gophrame/core/util"
 )
 
 // 本文件专门处理 token 缓存到 redis 的相关逻辑

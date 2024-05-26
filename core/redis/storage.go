@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wjshen/gophrame/core/json"
+	"github.com/gophab/gophrame/core/json"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/timandy/routine"

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/wjshen/gophrame/core/sms/qcloud/config"
+	"github.com/gophab/gophrame/core/sms/qcloud/config"
 )
 
 func CreateQcloudSmsSender() (*QcloudSmsSender, error) {

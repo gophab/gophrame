@@ -4,10 +4,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wjshen/gophrame/core/code/config"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/redis"
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/core/code/config"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/redis"
+	"github.com/gophab/gophrame/errors"
 
 	"github.com/patrickmn/go-cache"
 )

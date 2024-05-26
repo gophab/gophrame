@@ -1,8 +1,8 @@
 package qcloud
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/sms/qcloud/config"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/sms/qcloud/config"
 )
 
 func Start() {

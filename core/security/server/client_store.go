@@ -5,8 +5,8 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/wjshen/gophrame/core/database"
-	"github.com/wjshen/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/database"
+	"github.com/gophab/gophrame/core/inject"
 
 	"github.com/go-oauth2/oauth2/v4"
 )

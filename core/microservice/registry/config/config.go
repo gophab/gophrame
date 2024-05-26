@@ -1,10 +1,10 @@
 package config
 
 import (
-	ConsulConfig "github.com/wjshen/gophrame/core/microservice/registry/consul/config"
-	DubboConfig "github.com/wjshen/gophrame/core/microservice/registry/dubbo/config"
-	EurekaConfig "github.com/wjshen/gophrame/core/microservice/registry/eureka/config"
-	NacosConfig "github.com/wjshen/gophrame/core/microservice/registry/nacos/config"
+	ConsulConfig "github.com/gophab/gophrame/core/microservice/registry/consul/config"
+	DubboConfig "github.com/gophab/gophrame/core/microservice/registry/dubbo/config"
+	EurekaConfig "github.com/gophab/gophrame/core/microservice/registry/eureka/config"
+	NacosConfig "github.com/gophab/gophrame/core/microservice/registry/nacos/config"
 
 	"github.com/google/uuid"
 )

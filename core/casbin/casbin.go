@@ -4,13 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/wjshen/gophrame/core/casbin/config"
-	"github.com/wjshen/gophrame/core/database"
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/starter"
-	"github.com/wjshen/gophrame/core/webservice/response"
+	"github.com/gophab/gophrame/core/casbin/config"
+	"github.com/gophab/gophrame/core/database"
+	"github.com/gophab/gophrame/core/webservice/response"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
@@ -27,27 +23,11 @@ const (
 	ErrorsCasbinNoAuthorization       string = "Casbin 鉴权未通过，请在后台检查 casbin 设置参数"
 )
 
-func init() {
-	starter.RegisterStarter(Start)
-}
-
-func Start() {
-	if config.Setting.Enabled {
-		logger.Info("Initializing Casbin")
-		if enforcer, err := InitCasbinEnforcer(); err != nil {
-			logger.Error("Load Casbin Enforcer Error: ", err.Error())
-		} else if enforcer != nil {
-			global.Enforcer = enforcer
-
-			// inject
-			logger.Debug("Injected Enforcer")
-			inject.InjectValue("enforcer", enforcer)
-			logger.Info("Casbin initialized OK")
-		}
-	}
-}
-
-// 创建 casbin Enforcer(执行器)
+// 创建 Casbin Enforcer(执行器):
+// 初始化：
+// 1. 自动创建数据库表
+// 2. 加载策略
+// 3. 设置自动加载策略间隔
 func InitCasbinEnforcer() (*casbin.SyncedEnforcer, error) {
 	var Enforcer *casbin.SyncedEnforcer
 
@@ -73,5 +53,10 @@ func InitCasbinEnforcer() (*casbin.SyncedEnforcer, error) {
 
 // casbin 鉴权失败，返回 405 方法不允许访问
 func ErrorCasbinAuthFail(c *gin.Context, msg interface{}) {
-	response.ErrorMessage(c, http.StatusMethodNotAllowed, http.StatusMethodNotAllowed, ErrorsCasbinNoAuthorization)
+	response.ErrorMessage(c, http.StatusForbidden, http.StatusMethodNotAllowed, ErrorsCasbinNoAuthorization)
+}
+
+// CasbinService负责更新Casbin Enforce数据至
+type CasbinService interface {
+	LoadPolicy()
 }

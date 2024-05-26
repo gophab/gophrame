@@ -1,6 +1,6 @@
 package service
 
-import "github.com/wjshen/gophrame/service/dto"
+import "github.com/gophab/gophrame/service/dto"
 
 type InviteCodeService interface {
 	FindByInviteCode(code string) (*dto.InviteCode, error)

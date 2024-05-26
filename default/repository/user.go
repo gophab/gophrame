@@ -3,12 +3,12 @@ package repository
 import (
 	"errors"
 
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/query"
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/core/util"
 
-	"github.com/wjshen/gophrame/default/domain"
+	"github.com/gophab/gophrame/default/domain"
 
 	"gorm.io/gorm"
 )

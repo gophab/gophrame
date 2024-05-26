@@ -1,6 +1,6 @@
 package service
 
-import "github.com/wjshen/gophrame/service/dto"
+import "github.com/gophab/gophrame/service/dto"
 
 type UserService interface {
 	CreateUser(user *dto.User) (*dto.User, error)

@@ -1,7 +1,7 @@
 package inject
 
 import (
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/logger"
 )
 
 type AfterInitialize interface {

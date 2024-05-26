@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	SecurityModel "github.com/wjshen/gophrame/core/security/model"
-	"github.com/wjshen/gophrame/core/util"
-	"github.com/wjshen/gophrame/errors"
+	SecurityModel "github.com/gophab/gophrame/core/security/model"
+	"github.com/gophab/gophrame/core/util"
+	"github.com/gophab/gophrame/errors"
 
-	"github.com/wjshen/gophrame/service"
+	"github.com/gophab/gophrame/service"
 
 	"github.com/gin-gonic/gin"
 )

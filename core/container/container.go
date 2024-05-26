@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/errors"
 )
 
 // 定义一个全局键值对存储容器

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wjshen/gophrame/core/database/config"
-	MySQL "github.com/wjshen/gophrame/core/database/mysql"
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/database/config"
+	MySQL "github.com/gophab/gophrame/core/database/mysql"
+	"github.com/gophab/gophrame/core/logger"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"

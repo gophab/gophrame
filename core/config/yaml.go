@@ -1,11 +1,11 @@
 package config
 
 import (
-	"github.com/wjshen/gophrame/core/command"
-	"github.com/wjshen/gophrame/core/container"
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/core/command"
+	"github.com/gophab/gophrame/core/container"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/errors"
 
 	"io/ioutil"
 	"sync"

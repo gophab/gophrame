@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/websocket/config"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/websocket/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"

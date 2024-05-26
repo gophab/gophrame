@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wjshen/gophrame/core/snowflake/config"
+	"github.com/gophab/gophrame/core/snowflake/config"
 )
 
 const (

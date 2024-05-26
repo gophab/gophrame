@@ -3,9 +3,9 @@ package repository
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/inject"
 
-	"github.com/wjshen/gophrame/default/domain"
+	"github.com/gophab/gophrame/default/domain"
 
 	"gorm.io/gorm"
 )

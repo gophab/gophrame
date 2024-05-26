@@ -3,9 +3,9 @@ package domain
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/domain"
+	"github.com/gophab/gophrame/domain"
 
-	"github.com/wjshen/gophrame/core/util"
+	"github.com/gophab/gophrame/core/util"
 )
 
 type UserBase struct {

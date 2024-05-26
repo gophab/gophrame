@@ -1,11 +1,11 @@
 package auth
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/query"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/query"
 
-	AuthModel "github.com/wjshen/gophrame/default/domain/auth"
-	AuthRepository "github.com/wjshen/gophrame/default/repository/auth"
+	AuthModel "github.com/gophab/gophrame/default/domain/auth"
+	AuthRepository "github.com/gophab/gophrame/default/repository/auth"
 )
 
 type ButtonService struct {

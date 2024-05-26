@@ -1,11 +1,11 @@
 package websocket
 
 import (
-	"github.com/wjshen/gophrame/core/starter"
-	"github.com/wjshen/gophrame/core/websocket/config"
+	"github.com/gophab/gophrame/core/starter"
+	"github.com/gophab/gophrame/core/websocket/config"
 
-	"github.com/wjshen/gophrame/core/global"
-	"github.com/wjshen/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/logger"
 )
 
 func init() {
@@ -13,9 +13,9 @@ func init() {
 }
 
 func Start() {
+	logger.Debug("Enable websocket: ...", config.Setting.Enabled)
 	// websocket Hub中心启动
 	if config.Setting.Enabled {
-		logger.Info("Enable websocket")
 		// websocket 管理中心hub全局初始化一份
 		global.WebsocketHub = CreateHubFactory()
 		if WebsocketHub, ok := global.WebsocketHub.(*Hub); ok {

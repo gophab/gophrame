@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wjshen/gophrame/core/form"
+	"github.com/gophab/gophrame/core/form"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

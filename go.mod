@@ -1,4 +1,4 @@
-module github.com/wjshen/gophrame
+module github.com/gophab/gophrame
 
 go 1.18
 
@@ -45,6 +45,7 @@ require (
 )
 
 require (
+	github.com/casbin/casbin v1.9.1
 	github.com/json-iterator/go v1.1.12
 	github.com/modern-go/reflect2 v1.0.2
 )

@@ -3,13 +3,17 @@ package starter
 import (
 	"sync"
 
-	"github.com/wjshen/gophrame/core/social/dingtalk"
-	"github.com/wjshen/gophrame/core/social/feishu"
-	"github.com/wjshen/gophrame/core/social/wxcp"
-	"github.com/wjshen/gophrame/core/social/wxma"
-	"github.com/wjshen/gophrame/core/social/wxmp"
+	_ "github.com/gophab/gophrame/core/social"
+	_ "github.com/gophab/gophrame/core/social/dingtalk"
+	_ "github.com/gophab/gophrame/core/social/feishu"
+	_ "github.com/gophab/gophrame/core/social/wxcp"
+	_ "github.com/gophab/gophrame/core/social/wxma"
+	_ "github.com/gophab/gophrame/core/social/wxmp"
 
-	"github.com/wjshen/gophrame/core/starter"
+	"github.com/gophab/gophrame/core/social/config"
+
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/starter"
 )
 
 var (
@@ -21,11 +25,11 @@ func init() {
 }
 
 func Start() {
-	once.Do(func() {
-		dingtalk.Start()
-		feishu.Start()
-		wxcp.Start()
-		wxmp.Start()
-		wxma.Start()
-	})
+	logger.Debug("Starting Social: ...", config.Setting.Enabled)
+	if config.Setting.Enabled {
+		once.Do(func() {
+			// ...
+		})
+
+	}
 }

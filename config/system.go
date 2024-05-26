@@ -3,21 +3,21 @@ package config
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/core/config"
+	"github.com/gophab/gophrame/core/config"
 
-	_ "github.com/wjshen/gophrame/core/captcha/config"
-	_ "github.com/wjshen/gophrame/core/casbin/config"
-	_ "github.com/wjshen/gophrame/core/database/config"
-	_ "github.com/wjshen/gophrame/core/email/config"
-	_ "github.com/wjshen/gophrame/core/logger/config"
-	_ "github.com/wjshen/gophrame/core/microservice/config"
-	_ "github.com/wjshen/gophrame/core/rabbitmq/config"
-	_ "github.com/wjshen/gophrame/core/redis/config"
-	_ "github.com/wjshen/gophrame/core/security/config"
-	_ "github.com/wjshen/gophrame/core/sms/config"
-	_ "github.com/wjshen/gophrame/core/snowflake/config"
-	_ "github.com/wjshen/gophrame/core/social/config"
-	_ "github.com/wjshen/gophrame/core/websocket/config"
+	_ "github.com/gophab/gophrame/core/captcha/config"
+	_ "github.com/gophab/gophrame/core/casbin/config"
+	_ "github.com/gophab/gophrame/core/database/config"
+	_ "github.com/gophab/gophrame/core/email/config"
+	_ "github.com/gophab/gophrame/core/logger/config"
+	_ "github.com/gophab/gophrame/core/microservice/config"
+	_ "github.com/gophab/gophrame/core/rabbitmq/config"
+	_ "github.com/gophab/gophrame/core/redis/config"
+	_ "github.com/gophab/gophrame/core/security/config"
+	_ "github.com/gophab/gophrame/core/sms/config"
+	_ "github.com/gophab/gophrame/core/snowflake/config"
+	_ "github.com/gophab/gophrame/core/social/config"
+	_ "github.com/gophab/gophrame/core/websocket/config"
 )
 
 /**

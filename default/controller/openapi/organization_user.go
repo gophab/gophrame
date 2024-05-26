@@ -1,13 +1,13 @@
 package openapi
 
 import (
-	"github.com/wjshen/gophrame/core/controller"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/query"
-	"github.com/wjshen/gophrame/core/webservice/request"
-	"github.com/wjshen/gophrame/core/webservice/response"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/core/webservice/request"
+	"github.com/gophab/gophrame/core/webservice/response"
 
-	"github.com/wjshen/gophrame/default/service"
+	"github.com/gophab/gophrame/default/service"
 
 	"github.com/gin-gonic/gin"
 )

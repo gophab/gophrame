@@ -1,28 +1,30 @@
 package dingtalk
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/core/social/dingtalk/config"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/social"
+	SocialConfig "github.com/gophab/gophrame/core/social/config"
+	"github.com/gophab/gophrame/core/social/dingtalk/config"
+	"github.com/gophab/gophrame/core/starter"
 )
 
-var dingtalkService *DingtalkService
-var dingtalkController *DingtalkController
-
-func Start() {
-	if config.Setting.Enabled {
-		if service, _ := initDingtalkService(); service != nil {
-			social.RegisterSocialService("dt", service)
-		}
-	}
+func init() {
+	starter.RegisterInitializor(Init)
 }
 
-func initDingtalkService() (*DingtalkService, error) {
-	logger.Info("Initializing DingtalkService...")
-	dingtalkService = &DingtalkService{}
-	dingtalkController = &DingtalkController{DingtalkService: dingtalkService}
+func Init() {
+	logger.Debug("Initializing DingtalkService: ...", SocialConfig.Setting.Enabled && config.Setting.Enabled)
+	if SocialConfig.Setting.Enabled && config.Setting.Enabled {
+		dingtalkService := &DingtalkService{}
+		inject.InjectValue("dingtalkService", dingtalkService)
 
-	inject.InjectValue("dingtalkController", dingtalkController)
-	return dingtalkService, nil
+		social.RegisterSocialService("dt", dingtalkService)
+
+		dingtalkController := &DingtalkController{DingtalkService: dingtalkService}
+		inject.InjectValue("dingtalkController", dingtalkController)
+
+		controller.AddController(dingtalkController)
+	}
 }

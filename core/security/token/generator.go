@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/security/token/config"
-	JWT "github.com/wjshen/gophrame/core/security/token/jwt"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/security/token/config"
+	JWT "github.com/gophab/gophrame/core/security/token/jwt"
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/golang-jwt/jwt"

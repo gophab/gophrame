@@ -1,15 +1,15 @@
 package auth
 
 import (
-	"github.com/wjshen/gophrame/core/controller"
-	"github.com/wjshen/gophrame/core/inject"
-	SecurityUtils "github.com/wjshen/gophrame/core/security/util"
-	"github.com/wjshen/gophrame/core/webservice/request"
-	"github.com/wjshen/gophrame/core/webservice/response"
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
+	SecurityUtils "github.com/gophab/gophrame/core/security/util"
+	"github.com/gophab/gophrame/core/webservice/request"
+	"github.com/gophab/gophrame/core/webservice/response"
 
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/errors"
 
-	"github.com/wjshen/gophrame/default/service/auth"
+	"github.com/gophab/gophrame/default/service/auth"
 
 	"github.com/gin-gonic/gin"
 )

@@ -4,15 +4,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wjshen/gophrame/core/consts"
-	"github.com/wjshen/gophrame/core/eventbus"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/util"
-	"github.com/wjshen/gophrame/service"
+	"github.com/gophab/gophrame/core/consts"
+	"github.com/gophab/gophrame/core/eventbus"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/util"
+	"github.com/gophab/gophrame/service"
 
-	"github.com/wjshen/gophrame/default/domain"
-	"github.com/wjshen/gophrame/default/repository"
+	"github.com/gophab/gophrame/default/domain"
+	"github.com/gophab/gophrame/default/repository"
 )
 
 type SocialUserService struct {

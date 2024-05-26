@@ -1,6 +1,6 @@
 package token
 
-func Start() {
+func Init() {
 	InitTokenResolver()
 	InitTokenStore()
 }

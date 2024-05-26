@@ -2,23 +2,18 @@ package wxmp
 
 import (
 	"context"
-	"net/url"
 	"strings"
 	"sync"
 
-	"github.com/wjshen/gophrame/core/consts"
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/security/server"
-	"github.com/wjshen/gophrame/core/social"
-	"github.com/wjshen/gophrame/core/social/wxmp/config"
-	"github.com/wjshen/gophrame/core/util"
-	"github.com/wjshen/gophrame/core/webservice/request"
-	"github.com/wjshen/gophrame/core/webservice/response"
-	"github.com/wjshen/gophrame/errors"
+	"github.com/gophab/gophrame/core/consts"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/security/server"
+	"github.com/gophab/gophrame/core/social"
+	"github.com/gophab/gophrame/core/social/wxmp/config"
+	"github.com/gophab/gophrame/core/util"
 
 	"github.com/ArtisanCloud/PowerLibs/v3/object"
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
-	"github.com/gin-gonic/gin"
 )
 
 type WxmpService struct {
@@ -170,45 +165,4 @@ func (s *WxmpService) GetSignature(ctx context.Context, appId string, url string
 	}
 
 	return nil, nil
-}
-
-type WxmpController struct {
-	WxmpService *WxmpService
-}
-
-func (c *WxmpController) GetSignature(ctx *gin.Context) {
-	appId := request.Param(ctx, "appId").DefaultString(ctx.Request.Header.Get("X-App-Id"))
-	uri, err := request.Param(ctx, "url").MustString()
-	if err != nil {
-		response.FailCode(ctx, errors.INVALID_PARAMS)
-		return
-	}
-	nonce := request.Param(ctx, "nonceStr").DefaultString("")
-	timestamp := request.Param(ctx, "timestamp").DefaultInt64(0)
-
-	if appId == "" {
-		appId = config.Setting.AppId
-	}
-
-	path, _ := url.QueryUnescape(uri)
-	if res, err := c.WxmpService.GetSignature(ctx, appId, path, nonce, timestamp); err != nil {
-		response.FailMessage(ctx, 400, err.Error())
-		return
-	} else {
-		response.Success(ctx, res)
-	}
-}
-
-/**
- * 处理WEB验证码的API路由
- */
-func (e *WxmpController) InitRouter(g *gin.Engine) {
-	if config.Setting.Enabled {
-		// 创建一个验证码路由
-		wxmp := g.Group("/openapi/social/wxmp")
-		{
-			// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
-			wxmp.GET("/signature", e.GetSignature) // 发送
-		}
-	}
 }

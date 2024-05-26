@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wjshen/gophrame/core/microservice/registry"
-	"github.com/wjshen/gophrame/core/microservice/registry/eureka/config"
+	"github.com/gophab/gophrame/core/microservice/registry"
+	"github.com/gophab/gophrame/core/microservice/registry/eureka/config"
 )
 
 func CreateEurekaDiscoveryClient() (*EurekaDiscoveryClient, error) {

@@ -4,10 +4,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/wjshen/gophrame/core/feign"
-	"github.com/wjshen/gophrame/core/inject"
-	"github.com/wjshen/gophrame/core/microservice/registry"
-	"github.com/wjshen/gophrame/core/microservice/registry/config"
+	"github.com/gophab/gophrame/core/feign"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/microservice/registry"
+	"github.com/gophab/gophrame/core/microservice/registry/config"
 
 	"github.com/patrickmn/go-cache"
 )

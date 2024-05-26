@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wjshen/gophrame/core/json"
-	"github.com/wjshen/gophrame/core/logger"
-	SecurityUtil "github.com/wjshen/gophrame/core/security/util"
+	"github.com/gophab/gophrame/core/json"
+	"github.com/gophab/gophrame/core/logger"
+	SecurityUtil "github.com/gophab/gophrame/core/security/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-oauth2/oauth2/v4"

@@ -1,5 +1,10 @@
 package config
 
+import (
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
+)
+
 type AppSetting struct {
 	CorpId        string `json:"corpId" yaml:"corpId"`
 	AgentId       int    `json:"agentId" yaml:"agentId"`
@@ -23,4 +28,9 @@ type DingtalkSetting struct {
 
 var Setting *DingtalkSetting = &DingtalkSetting{
 	Enabled: false,
+}
+
+func init() {
+	logger.Debug("Register Social Config - Dingtalk")
+	config.RegisterConfig("social.dingtalk", Setting, "Dingtalk Settings")
 }

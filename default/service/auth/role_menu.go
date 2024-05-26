@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"github.com/wjshen/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/inject"
 
-	AuthModel "github.com/wjshen/gophrame/default/domain/auth"
-	AuthRepository "github.com/wjshen/gophrame/default/repository/auth"
+	AuthModel "github.com/gophab/gophrame/default/domain/auth"
+	AuthRepository "github.com/gophab/gophrame/default/repository/auth"
 
-	"github.com/wjshen/gophrame/service"
+	"github.com/gophab/gophrame/service"
 )
 
 type RoleMenuService struct {

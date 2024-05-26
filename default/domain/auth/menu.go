@@ -3,7 +3,7 @@ package auth
 import (
 	"time"
 
-	"github.com/wjshen/gophrame/domain"
+	"github.com/gophab/gophrame/domain"
 )
 
 type BaseMenu struct {

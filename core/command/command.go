@@ -3,7 +3,7 @@ package command
 import (
 	"github.com/spf13/pflag"
 
-	"github.com/wjshen/gophrame/core/global"
+	"github.com/gophab/gophrame/core/global"
 )
 
 var Mode string = "production"

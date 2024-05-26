@@ -1,24 +1,22 @@
 package security
 
 import (
-	"github.com/wjshen/gophrame/core/logger"
-	"github.com/wjshen/gophrame/core/starter"
+	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/starter"
 
-	"github.com/wjshen/gophrame/core/security/server"
-	"github.com/wjshen/gophrame/core/security/token"
+	"github.com/gophab/gophrame/core/security/server"
+	"github.com/gophab/gophrame/core/security/token"
 )
 
 func init() {
-	starter.RegisterStarter(Start)
+	starter.RegisterInitializor(Init)
 }
 
 /**
  * 安全框架启动
  */
-func Start() {
+func Init() {
 	logger.Info("Initializing GOES Security Starter")
-	token.Start()
-	server.StartServer()
-	server.StartControllers()
-
+	token.Init()
+	server.Init()
 }
