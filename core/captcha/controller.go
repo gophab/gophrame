@@ -97,7 +97,7 @@ func (c *CaptchaController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
 	captcha := g.Group("openapi/captcha")
 	{
 		// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
-		captcha.GET("/", c.GenerateId)                          //  获取验证码ID
+		captcha.GET("", c.GenerateId)                           //  获取验证码ID
 		captcha.GET("/:captcha_id", c.GetImg)                   // 获取图像地址
 		captcha.GET("/:captcha_id/:captcha_value", c.CheckCode) // 校验验证码
 	}
