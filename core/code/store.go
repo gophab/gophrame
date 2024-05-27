@@ -12,7 +12,15 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+type CodeStore interface {
+	CreateRequest(id string) error
+	CreateCode(id string, scene string, code string) error
+	GetCode(id string, scene string, remove bool) (string, bool)
+	RemoveCode(id string, scene string)
+}
+
 type CacheCodeStore struct {
+	CodeStore
 	codeCache *cache.Cache
 	reqCache  *cache.Cache
 }
@@ -25,25 +33,28 @@ func CreateCacheCodeStore(config *config.CodeStoreSetting) (*CacheCodeStore, err
 	return result, nil
 }
 
-func (s *CacheCodeStore) CreateRequest(phone string) error {
-	return s.reqCache.Add(phone, time.Now(), 0)
+func (s *CacheCodeStore) CreateRequest(id string) error {
+	return s.reqCache.Add(id, time.Now(), 0)
 }
 
-func (s *CacheCodeStore) CreateCode(phone string, scene string, code string) error {
-	s.codeCache.Set(phone+":"+scene, code, 0)
+func (s *CacheCodeStore) CreateCode(id string, scene string, code string) error {
+	s.codeCache.Set(id+":"+scene, code, 0)
 	return nil
 }
 
-func (s *CacheCodeStore) GetCode(phone string, scene string) (string, bool) {
-	value, ok := s.codeCache.Get(phone + ":" + scene)
+func (s *CacheCodeStore) GetCode(id string, scene string, remove bool) (string, bool) {
+	value, ok := s.codeCache.Get(id + ":" + scene)
 	if ok {
+		if remove {
+			s.RemoveCode(id, scene)
+		}
 		return value.(string), true
 	}
 	return "", false
 }
 
-func (s *CacheCodeStore) RemoveCode(phone string, scene string) {
-	s.codeCache.Delete(phone + ":" + scene)
+func (s *CacheCodeStore) RemoveCode(id string, scene string) {
+	s.codeCache.Delete(id + ":" + scene)
 }
 
 type ExpireCode struct {
@@ -76,30 +87,33 @@ func CreateMemoryCodeStore(config *config.CodeStoreSetting) (*MemoryCodeStore, e
 	return result, nil
 }
 
-func (s *MemoryCodeStore) CreateRequest(phone string) error {
-	value, b := s.data.Load("req:" + phone)
+func (s *MemoryCodeStore) CreateRequest(id string) error {
+	value, b := s.data.Load("req:" + id)
 	if b && value.(ExpireCode).Expiration.After(time.Now()) {
 		return errors.New("调用过于频繁")
 	}
 
-	s.data.Store("req:"+phone, ExpireCode{
+	s.data.Store("req:"+id, ExpireCode{
 		Code:       "1",
 		Expiration: time.Now().Add(time.Second * 60), /* 三分钟过期 */
 	})
 	return nil
 }
 
-func (s *MemoryCodeStore) CreateCode(phone string, scene string, code string) error {
-	s.data.Store("code:"+phone+":"+scene, ExpireCode{
+func (s *MemoryCodeStore) CreateCode(id string, scene string, code string) error {
+	s.data.Store("code:"+id+":"+scene, ExpireCode{
 		Code:       code,
 		Expiration: time.Now().Add(time.Second * 180), /* 三分钟过期 */
 	})
 	return nil
 }
 
-func (s *MemoryCodeStore) GetCode(phone string, scene string) (string, bool) {
-	value, ok := s.data.Load("code:" + phone + ":" + scene)
+func (s *MemoryCodeStore) GetCode(id string, scene string, remove bool) (string, bool) {
+	value, ok := s.data.Load("code:" + id + ":" + scene)
 	if ok {
+		if remove {
+			s.RemoveCode(id, scene)
+		}
 		if time.Now().After(value.(ExpireCode).Expiration) {
 			return value.(ExpireCode).Code, true
 		}
@@ -134,38 +148,41 @@ func CreateRedisCodeStore(config *config.CodeStoreSetting) (result CodeStore, er
 	return result, nil
 }
 
-func (s *RedisCodeStore) CreateRequest(phone string) error {
-	if b, err := s.redisClient.Execute("EXISTS", s.RedisKey(REQUEST_REDIS_KEY_PREFIX, phone, "req")); err != nil {
+func (s *RedisCodeStore) CreateRequest(id string) error {
+	if b, err := s.redisClient.Execute("EXISTS", s.RedisKey(REQUEST_REDIS_KEY_PREFIX, id, "req")); err != nil {
 		return err
 	} else if b.(int64) != 0 {
 		// 键值存在
 		return errors.New("请求频繁")
 	}
 
-	if _, err := s.redisClient.Execute("SETEX", s.RedisKey(REQUEST_REDIS_KEY_PREFIX, phone, "req"), s.requestInterval.Seconds(), "1"); err != nil {
+	if _, err := s.redisClient.Execute("SETEX", s.RedisKey(REQUEST_REDIS_KEY_PREFIX, id, "req"), s.requestInterval.Seconds(), "1"); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *RedisCodeStore) CreateCode(phone string, scene string, code string) error {
-	if _, err := s.redisClient.Execute("SETEX", s.RedisKey(CODE_REDIS_KEY_PREFIX, phone, scene), s.expireIn.Seconds(), code); err != nil {
+func (s *RedisCodeStore) CreateCode(id string, scene string, code string) error {
+	if _, err := s.redisClient.Execute("SETEX", s.RedisKey(CODE_REDIS_KEY_PREFIX, id, scene), s.expireIn.Seconds(), code); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *RedisCodeStore) GetCode(phone string, scene string) (string, bool) {
-	if code, err := s.redisClient.String(s.redisClient.Execute("GET", s.RedisKey(CODE_REDIS_KEY_PREFIX, phone, scene))); err != nil {
+func (s *RedisCodeStore) GetCode(id string, scene string, remove bool) (string, bool) {
+	if code, err := s.redisClient.String(s.redisClient.Execute("GET", s.RedisKey(CODE_REDIS_KEY_PREFIX, id, scene))); err != nil {
 		return "", false
 	} else {
+		if remove {
+			s.RemoveCode(id, scene)
+		}
 		return code, code != ""
 	}
 }
 
-func (s *RedisCodeStore) RemoveCode(phone string, scene string) {
-	s.redisClient.Execute("DEL", s.RedisKey(CODE_REDIS_KEY_PREFIX, phone, scene))
+func (s *RedisCodeStore) RemoveCode(id string, scene string) {
+	s.redisClient.Execute("DEL", s.RedisKey(CODE_REDIS_KEY_PREFIX, id, scene))
 }
 
 func (s *RedisCodeStore) RedisKey(name string, key string, scene string) string {

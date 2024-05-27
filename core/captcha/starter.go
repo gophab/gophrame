@@ -3,6 +3,7 @@ package captcha
 import (
 	"github.com/gophab/gophrame/core/captcha/config"
 	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/starter"
 )
@@ -26,6 +27,13 @@ func init() {
 func Init() {
 	logger.Debug("Initializing Captcha ...", config.Setting.Enabled)
 	if config.Setting.Enabled {
-		controller.AddController(&CaptchaController{})
+		service := &CaptchaService{}
+		inject.InjectValue("captchaService", service)
+
+		service.Init()
+
+		controller.AddController(&CaptchaController{
+			CaptchaService: service,
+		})
 	}
 }

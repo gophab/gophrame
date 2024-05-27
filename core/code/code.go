@@ -7,39 +7,9 @@ import (
 	"time"
 )
 
-type CodeStore interface {
-	CreateRequest(phone string) error
-	CreateCode(mobile string, scene string, code string) error
-	GetCode(mobile string, scene string) (string, bool)
-	RemoveCode(mobile string, scene string)
-}
-
 type CodeSender interface {
 	SendVerificationCode(dest string, scene string, code string) error
 }
-
-type nop struct{}
-
-func (*nop) CreateRequest(phone string) error {
-	return nil
-}
-
-func (*nop) CreateCode(mobile string, scene string, code string) error {
-	return nil
-}
-
-func (*nop) GetCode(mobile string, scene string) (string, bool) {
-	return "", false
-}
-
-func (*nop) RemoveCode(mobile string, scene string) {
-}
-
-func (*nop) SendVerificationCode(dest string, scene string, code string) error {
-	return nil
-}
-
-var Nop = nop{}
 
 type CodeValidator interface {
 	GetStore() CodeStore
@@ -99,7 +69,7 @@ func (v *Validator) CreateRandCode() string {
 }
 
 func (v *Validator) GetVerificationCode(target CodeValidator, dest string, scene string) (string, bool) {
-	return target.GetStore().GetCode(dest, scene)
+	return target.GetStore().GetCode(dest, scene, false)
 }
 
 func (v *Validator) CheckCode(target CodeValidator, dest string, scene string, code string) bool {

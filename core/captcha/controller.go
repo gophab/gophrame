@@ -10,30 +10,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gophab/gophrame/core/captcha/config"
 	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
 )
 
 type CaptchaController struct {
 	controller.ResourceController
+	CaptchaService *CaptchaService `inject:"captchaService"`
 }
 
-// 生成验证码ID
-func (c *CaptchaController) GenerateId(context *gin.Context) {
-	// 设置验证码的数字长度（个数）
-	var length = config.Setting.Length
-	var captchaId, imgUrl, refresh, verify string
+// 生成验证码
+func (c *CaptchaController) Generate(context *gin.Context) {
+	var gtype = request.Param(context, "type").DefaultString("image")
 
-	captchaId = captcha.NewLen(length)
-	imgUrl = "/openapi/captcha/" + captchaId + ".png"
-	refresh = imgUrl + "?reload=1"
-	verify = "/openapi/captcha/" + captchaId + "/{code}"
-
-	response.Success(context, gin.H{
-		"id":      captchaId,
-		"imgUrl":  imgUrl,
-		"refresh": refresh,
-		"verify":  verify,
-	})
+	if captcha, err := c.CaptchaService.Generate(gtype); err == nil {
+		response.Success(context, captcha)
+	} else {
+		response.SystemErrorMessage(context, 500, err.Error())
+	}
 }
 
 // 获取验证码图像
@@ -85,7 +79,8 @@ func (c *CaptchaController) CheckCode(context *gin.Context) {
 		response.FailMessage(context, CaptchaCheckParamsInvalidCode, CaptchaCheckParamsInvalidMsg)
 		return
 	}
-	if captcha.VerifyString(captchaId, value) {
+
+	if c.CaptchaService.Verify(captchaId, value) {
 		response.Success(context, CaptchaCheckOkMsg)
 	} else {
 		response.FailMessage(context, CaptchaCheckFailCode, CaptchaCheckFailMsg)
@@ -97,7 +92,7 @@ func (c *CaptchaController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
 	captcha := g.Group("openapi/captcha")
 	{
 		// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
-		captcha.GET("", c.GenerateId)                           //  获取验证码ID
+		captcha.GET("", c.Generate)                             //  获取验证码ID
 		captcha.GET("/:captcha_id", c.GetImg)                   // 获取图像地址
 		captcha.GET("/:captcha_id/:captcha_value", c.CheckCode) // 校验验证码
 	}
