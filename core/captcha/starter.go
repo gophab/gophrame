@@ -2,6 +2,7 @@ package captcha
 
 import (
 	"github.com/gophab/gophrame/core/captcha/config"
+	"github.com/gophab/gophrame/core/code"
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
@@ -27,7 +28,20 @@ func init() {
 func Init() {
 	logger.Debug("Initializing Captcha ...", config.Setting.Enabled)
 	if config.Setting.Enabled {
-		service := &CaptchaService{}
+		var store code.CodeStore
+		if config.Setting.Store.Enabled {
+			if config.Setting.Store.Cache != nil && config.Setting.Store.Cache.Enabled {
+				store, _ = code.CreateCacheCodeStore(config.Setting.Store)
+			} else if config.Setting.Store.Redis != nil && config.Setting.Store.Redis.Enabled {
+				store, _ = code.CreateRedisCodeStore(config.Setting.Store)
+			} else {
+				store, _ = code.CreateMemoryCodeStore(config.Setting.Store)
+			}
+		}
+
+		service := &CaptchaService{
+			Store: store,
+		}
 		inject.InjectValue("captchaService", service)
 
 		service.Init()

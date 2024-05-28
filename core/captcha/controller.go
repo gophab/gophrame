@@ -32,12 +32,11 @@ func (c *CaptchaController) Generate(context *gin.Context) {
 
 // 获取验证码图像
 func (c *CaptchaController) GetImg(context *gin.Context) {
-	captchaIdKey := config.Setting.CaptchaId
-	captchaId := context.Param(captchaIdKey)
-	_, file := path.Split(context.Request.URL.Path)
+	captchaId := context.Param("captcha_id")
+	_, file := path.Split(captchaId)
 	ext := path.Ext(file)
 	id := file[:len(file)-len(ext)]
-	if ext == "" || captchaId == "" {
+	if captchaId == "" {
 		response.FailMessage(context, CaptchaGetParamsInvalidCode, CaptchaGetParamsInvalidMsg)
 		return
 	}
@@ -49,12 +48,11 @@ func (c *CaptchaController) GetImg(context *gin.Context) {
 	context.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 	context.Header("Pragma", "no-cache")
 	context.Header("Expires", "0")
+	context.Header("Content-Type", "image/png")
 
 	var vBytes bytes.Buffer
-	if ext == ".png" {
-		context.Header("Content-Type", "image/png")
-		// 设置实际业务需要的验证码图片尺寸（宽 X 高），captcha.StdWidth, captcha.StdHeight 为默认值，请自行修改为具体数字即可
-		_ = captcha.WriteImage(&vBytes, id, captcha.StdWidth, captcha.StdHeight)
+	// 设置实际业务需要的验证码图片尺寸（宽 X 高），captcha.StdWidth, captcha.StdHeight 为默认值，请自行修改为具体数字即可
+	if err := captcha.WriteImage(&vBytes, id, captcha.StdWidth, captcha.StdHeight); err == nil {
 		http.ServeContent(context.Writer, context.Request, id+ext, time.Time{}, bytes.NewReader(vBytes.Bytes()))
 	}
 }
@@ -64,8 +62,8 @@ func (c *CaptchaController) CheckCode(context *gin.Context) {
 	captchaIdKey := config.Setting.CaptchaId
 	captchaValueKey := config.Setting.CaptchaValue
 
-	captchaId := context.Param(captchaIdKey)
-	value := context.Param(captchaValueKey)
+	captchaId := context.Param("captcha_id")
+	value := context.Param("captcha_value")
 
 	if captchaId == "" {
 		captchaId = context.Request.Header.Get(captchaIdKey)

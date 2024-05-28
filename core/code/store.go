@@ -114,7 +114,7 @@ func (s *MemoryCodeStore) GetCode(id string, scene string, remove bool) (string,
 		if remove {
 			s.RemoveCode(id, scene)
 		}
-		if time.Now().After(value.(ExpireCode).Expiration) {
+		if time.Now().Before(value.(ExpireCode).Expiration) {
 			return value.(ExpireCode).Code, true
 		}
 	}
