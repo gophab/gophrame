@@ -21,8 +21,7 @@ var Resources *controller.Controllers = &controller.Controllers{
 var PublicResources *controller.Controllers = &controller.Controllers{
 	Base: "/openapi/public",
 	Handlers: []gin.HandlerFunc{
-		security.CheckTokenVerify(),       // oauth2 验证
-		permission.CheckUserPermissions(), // 权限验证
+		security.CheckTokenVerify(), // oauth2 验证
 	},
 	Controllers: []controller.Controller{
 		publicSystemOptionOpenController,

@@ -92,7 +92,7 @@ func CheckUserRole(roles ...string) gin.HandlerFunc {
 func CheckUserPermissions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if __.PermissionService == nil {
-			c.Abort()
+			response.ErrorMessage(c, http.StatusForbidden, http.StatusFailedDependency, "权限服务没有初始化")
 			return
 		}
 
