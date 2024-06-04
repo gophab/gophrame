@@ -20,6 +20,12 @@ func HandleCaptchaVerify(force bool) gin.HandlerFunc {
 	captchaIdKey := config.Setting.CaptchaId
 	captchaValueKey := config.Setting.CaptchaValue
 
+	if !config.Setting.Enabled {
+		return func(context *gin.Context) {
+			context.Next()
+		}
+	}
+
 	return func(context *gin.Context) {
 		captchaId := context.Param(captchaIdKey)
 		value := context.Param(captchaValueKey)
@@ -61,7 +67,7 @@ func HandleCaptchaVerify(force bool) gin.HandlerFunc {
 			}
 		}
 
-		if captcha.VerifyString(captchaId, value) {
+		if captcha.Verify(captchaId, []byte(value)) {
 			context.AddParam("captcha", "true")
 			context.Next()
 		} else {

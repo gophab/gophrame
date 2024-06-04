@@ -75,15 +75,15 @@ func (o *OAuth2Controller) Login(c *gin.Context) {
 		var userDetails *model.UserDetails
 		switch loginForm.Mode {
 		case "password": // 使用用户名/密码登录
-			if c.Param("captcha") == "true" && o.OAuth2Server.UserHandler != nil {
+			if o.OAuth2Server.UserHandler != nil {
 				userDetails, err = o.OAuth2Server.UserHandler.GetUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
 			}
 		case "mobile": // 使用手机/验证码登录
-			if c.Param("captcha") == "true" && o.OAuth2Server.MobileUserHandler != nil {
+			if o.OAuth2Server.MobileUserHandler != nil {
 				userDetails, err = o.OAuth2Server.MobileUserHandler.GetMobileUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
 			}
 		case "email": // 使用邮箱登录
-			if c.Param("captcha") == "true" && o.OAuth2Server.EmailUserHandler != nil {
+			if o.OAuth2Server.EmailUserHandler != nil {
 				userDetails, err = o.OAuth2Server.EmailUserHandler.GetEmailUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
 			}
 		case "social": // 使用社交账号登录
