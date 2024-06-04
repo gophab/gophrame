@@ -6,6 +6,7 @@ import (
 
 	"github.com/gophab/gophrame/core/global"
 	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
 	SecurityUtil "github.com/gophab/gophrame/core/security/util"
 	"github.com/gophab/gophrame/core/webservice/response"
 
@@ -92,7 +93,8 @@ func CheckUserRole(roles ...string) gin.HandlerFunc {
 func CheckUserPermissions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if __.PermissionService == nil {
-			response.ErrorMessage(c, http.StatusForbidden, http.StatusFailedDependency, "权限服务没有初始化")
+			logger.Error("权限服务没有初始化")
+			c.Next()
 			return
 		}
 

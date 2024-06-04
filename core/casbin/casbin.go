@@ -7,6 +7,7 @@ import (
 	"github.com/gophab/gophrame/core/casbin/config"
 	"github.com/gophab/gophrame/core/database"
 	"github.com/gophab/gophrame/core/webservice/response"
+	"github.com/gophab/gophrame/service"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
@@ -57,6 +58,12 @@ func ErrorCasbinAuthFail(c *gin.Context, msg interface{}) {
 }
 
 // CasbinService负责更新Casbin Enforce数据至
-type CasbinService interface {
-	LoadPolicy()
+type CasbinService struct {
+	Enforcer *casbin.SyncedEnforcer `inject:"enforcer"`
+}
+
+func (s *CasbinService) onUserEvent() {
+
+	service.GetUserService().LoadPolicy(res.Id)
+
 }

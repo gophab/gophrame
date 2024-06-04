@@ -3,6 +3,7 @@ package mapi
 import "C"
 import (
 	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/query"
@@ -154,7 +155,7 @@ func (u *UserMController) AddUser(c *gin.Context) {
 	}
 
 	if res, err := service.GetUserService().CreateUser(&user); err == nil {
-		service.GetUserService().LoadPolicy(res.Id)
+		eventbus.PublishEvent("USER_CREATED", res)
 		response.Success(c, res)
 	} else {
 		response.SystemErrorMessage(c, errors.ERROR_CREATE_FAIL, err.Error())

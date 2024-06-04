@@ -33,7 +33,7 @@ var (
 
 	Debug bool = false
 
-	Swagger bool = false
+	Swagger bool = true
 
 	EnableRegister bool = false
 

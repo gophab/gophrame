@@ -42,7 +42,7 @@ func (m *UserController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/user", Handler: m.GetCurrentUser},
 		{HttpMethod: "GET", ResourcePath: "/users", Handler: m.GetUsers},
 		{HttpMethod: "GET", ResourcePath: "/user/:id", Handler: m.GetUser},
-		{HttpMethod: "POST", ResourcePath: "/user", Handler: m.AddUser},
+		{HttpMethod: "POST", ResourcePath: "/user", Handler: m.CreateUser},
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
 		{HttpMethod: "DELETE", ResourcePath: "/user/:id", Handler: m.DeleteUser},
 	})
@@ -142,7 +142,7 @@ func (u *UserController) GetUser(c *gin.Context) {
 // @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
 // @Failure 400 {string} json
 // @Router /api/v1/users  [POST]
-func (u *UserController) AddUser(c *gin.Context) {
+func (u *UserController) CreateUser(c *gin.Context) {
 	var user dto.User
 	if err := c.BindJSON(&user); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
@@ -162,7 +162,6 @@ func (u *UserController) AddUser(c *gin.Context) {
 	}
 
 	if res, err := service.GetUserService().CreateUser(&user); err == nil {
-		service.GetUserService().LoadPolicy(res.Id)
 		response.Success(c, res)
 	} else {
 		response.SystemErrorMessage(c, errors.ERROR_CREATE_FAIL, err.Error())

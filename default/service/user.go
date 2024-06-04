@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/gophab/gophrame/core/consts"
@@ -24,7 +23,6 @@ type UserService struct {
 	service.BaseService
 	UserRepository *repository.UserRepository `inject:"userRepository"`
 	Enforcer       *casbin.SyncedEnforcer     `inject:"enforcer"`
-	service.UserService
 }
 
 var userService *UserService = &UserService{}
@@ -73,8 +71,8 @@ func (s *UserService) CreateUser(user *dto.User) (*domain.User, error) {
 		return nil, err
 	}
 
-	if user.InviteCode != "" {
-		res.InviteCode = user.InviteCode
+	if user.InviteCode != nil {
+		res.InviteCode = *user.InviteCode
 	}
 
 	eventbus.PublishEvent("USER_REGISTERED", res)
@@ -130,7 +128,7 @@ func (s *UserService) UpdateUser(user *dto.User) (*domain.User, error) {
 	}
 
 	if err = s.UserRepository.UpdateUser(exists); err == nil {
-		err = s.LoadPolicy(*user.Id)
+		eventbus.PublishEvent("USER_UPDATED", user)
 	}
 
 	return exists, err
@@ -140,7 +138,12 @@ func (s *UserService) Update(id string, column string, value interface{}) (*doma
 	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).Update(column, value); res.Error != nil {
 		return nil, res.Error
 	} else {
-		return s.GetById(id)
+		if user, err := s.GetById(id); err == nil {
+			eventbus.PublishEvent("USER_UPDATED", user)
+			return user, err
+		} else {
+			return nil, err
+		}
 	}
 }
 
@@ -228,44 +231,7 @@ func (s *UserService) Count(user *dto.User) (int64, error) {
 	return s.UserRepository.GetUserTotal(user.GetMaps())
 }
 
-// LoadAllPolicy 加载所有的用户策略
-func (s *UserService) LoadAllPolicy() error {
-	if s.Enforcer != nil {
-		users, err := s.UserRepository.GetUsersAll()
-		if err != nil {
-			return err
-		}
-		for _, user := range users {
-			if len(user.Roles) != 0 {
-				err = s.LoadPolicy(user.Id)
-				if err != nil {
-					return err
-				}
-			}
-		}
-		fmt.Println("角色权限关系", s.Enforcer.GetGroupingPolicy())
-	}
-	return nil
-}
-
-// LoadPolicy 加载用户权限策略
-func (s *UserService) LoadPolicy(id string) error {
-	if s.Enforcer != nil {
-		user, err := s.UserRepository.GetUserById(id)
-		if err != nil {
-			return err
-		}
-
-		s.Enforcer.DeleteRolesForUser(user.Id)
-		for _, ro := range user.Roles {
-			s.Enforcer.AddRoleForUser(user.Id, ro.Name)
-		}
-		fmt.Println("更新角色权限关系", s.Enforcer.GetGroupingPolicy())
-	}
-	return nil
-}
-
-func (s *UserService) onUserLogin(args ...interface{}) {
+func (s *UserService) onUserLogin(event string, args ...interface{}) {
 	userId := ""
 	data := map[string]string{}
 

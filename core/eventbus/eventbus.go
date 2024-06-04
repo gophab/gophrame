@@ -9,6 +9,8 @@ import (
 	"github.com/gophab/gophrame/errors"
 )
 
+type EventListener func(event string, args ...interface{})
+
 // 公共消息总线
 var theEventbus *eventbus = CreateEventbus()
 
@@ -16,40 +18,40 @@ func init() {
 	inject.InjectValue("eventbus", theEventbus)
 }
 
-func RegisterEventListener(key string, keyFunc func(args ...interface{})) bool {
-	return theEventbus.RegisterEventListener(key, keyFunc)
+func RegisterEventListener(event string, listener EventListener) bool {
+	return theEventbus.RegisterEventListener(event, listener)
 }
 
-func RemoveEventListener(key string, keyFunc func(args ...interface{})) {
-	theEventbus.RegisterEventListener(key, keyFunc)
+func RemoveEventListener(event string, listener EventListener) {
+	theEventbus.RegisterEventListener(event, listener)
 }
 
 /**
  * 同步分发消息
  */
-func PublishEvent(key string, args ...interface{}) {
-	theEventbus.PublishEvent(key, args...)
+func PublishEvent(event string, args ...interface{}) {
+	theEventbus.PublishEvent(event, args...)
 }
 
 /**
  *	异步分发消息
  */
-func DispatchEvent(key string, args ...interface{}) {
-	theEventbus.DispatchEvent(key, args...)
+func DispatchEvent(event string, args ...interface{}) {
+	theEventbus.DispatchEvent(event, args...)
 }
 
 /**
  * 模糊匹配分发消息
  */
-func FuzzyPublishEvent(keyPre string, args ...interface{}) {
-	theEventbus.FuzzyPublishEvent(keyPre, args...)
+func FuzzyPublishEvent(eventPre string, args ...interface{}) {
+	theEventbus.FuzzyPublishEvent(eventPre, args...)
 }
 
 /**
  * 模糊匹配分发消息
  */
-func FuzzyDispatchEvent(keyPre string, args ...interface{}) {
-	theEventbus.FuzzyDispatchEvent(keyPre, args...)
+func FuzzyDispatchEvent(eventPre string, args ...interface{}) {
+	theEventbus.FuzzyDispatchEvent(eventPre, args...)
 }
 
 // 创建一个事件管理工厂
@@ -64,74 +66,74 @@ type eventbus struct {
 }
 
 // 1.注册事件
-func (e *eventbus) RegisterEventListener(key string, keyFunc func(args ...interface{})) bool {
+func (e *eventbus) RegisterEventListener(event string, listener EventListener) bool {
 	//判断key下是否已有事件
-	if queue, exists := e.GetEventListeners(key); !exists {
-		e.eventListeners.Store(key, []func(args ...interface{}){keyFunc})
+	if queue, exists := e.GetEventListeners(event); !exists {
+		e.eventListeners.Store(event, []EventListener{listener})
 		return true
 	} else {
-		e.eventListeners.Store(key, append(queue, keyFunc))
+		e.eventListeners.Store(event, append(queue, listener))
 	}
 	return false
 }
 
 // 2.获取事件
-func (e *eventbus) GetEventListeners(key string) ([]func(args ...interface{}), bool) {
-	if queue, exists := e.eventListeners.Load(key); exists {
-		return queue.([]func(args ...interface{})), exists
+func (e *eventbus) GetEventListeners(event string) ([]EventListener, bool) {
+	if queue, exists := e.eventListeners.Load(event); exists {
+		return queue.([]EventListener), exists
 	}
 	return nil, false
 }
 
 // 3.执行事件
-func (e *eventbus) PublishEvent(key string, args ...interface{}) {
-	if queue, exists := e.GetEventListeners(key); exists {
+func (e *eventbus) PublishEvent(event string, args ...interface{}) {
+	if queue, exists := e.GetEventListeners(event); exists {
 		for _, fn := range queue {
-			fn(args...)
+			fn(event, args...)
 		}
 	} else {
-		logger.Error(errors.ERROR_FUNC_EVENT_NOT_REGISTER, ", 键名：", key)
+		logger.Error(errors.ERROR_FUNC_EVENT_NOT_REGISTER, ", 键名：", event)
 	}
 }
 
 // 3.执行事件
-func (e *eventbus) DispatchEvent(key string, args ...interface{}) {
-	if queue, exists := e.GetEventListeners(key); exists {
+func (e *eventbus) DispatchEvent(event string, args ...interface{}) {
+	if queue, exists := e.GetEventListeners(event); exists {
 		for _, fn := range queue {
-			go func(cb func(args ...interface{})) {
-				cb(args...)
+			go func(cb EventListener) {
+				cb(event, args...)
 			}(fn)
 		}
 	} else {
-		logger.Error(errors.ERROR_FUNC_EVENT_NOT_REGISTER, ", 键名：", key)
+		logger.Error(errors.ERROR_FUNC_EVENT_NOT_REGISTER, ", 键名：", event)
 	}
 }
 
 // 4.删除事件
-func (e *eventbus) RemoveEventListeners(key string) {
-	e.eventListeners.Delete(key)
+func (e *eventbus) RemoveEventListeners(event string) {
+	e.eventListeners.Delete(event)
 }
 
 // 4.删除事件
-func (e *eventbus) RemoveEventListener(key string, keyFunc func(args ...interface{})) {
-	if queue, exists := e.GetEventListeners(key); exists {
+func (e *eventbus) RemoveEventListener(event string, listener EventListener) {
+	if queue, exists := e.GetEventListeners(event); exists {
 		var j = 0
 		for _, v := range queue {
-			if &keyFunc != &v {
+			if &listener != &v {
 				queue[j] = v
 				j++
 			}
 		}
-		e.eventListeners.Store(key, queue[:j])
+		e.eventListeners.Store(event, queue[:j])
 	}
 }
 
 // 5.根据键的前缀，模糊调用. 使用请谨慎.
-func (e *eventbus) FuzzyPublishEvent(keyPre string, args ...interface{}) {
-	e.eventListeners.Range(func(key, value interface{}) bool {
-		if keyName, ok := key.(string); ok {
-			if strings.HasPrefix(keyName, keyPre) {
-				e.PublishEvent(keyName, args...)
+func (e *eventbus) FuzzyPublishEvent(eventPre string, args ...interface{}) {
+	e.eventListeners.Range(func(eventKey, value interface{}) bool {
+		if event, ok := eventKey.(string); ok {
+			if strings.HasPrefix(event, eventPre) {
+				e.PublishEvent(event, args...)
 			}
 		}
 		return true
@@ -139,11 +141,11 @@ func (e *eventbus) FuzzyPublishEvent(keyPre string, args ...interface{}) {
 }
 
 // 6.根据键的前缀，模糊调用. 使用请谨慎.
-func (e *eventbus) FuzzyDispatchEvent(keyPre string, args ...interface{}) {
-	e.eventListeners.Range(func(key, value interface{}) bool {
-		if keyName, ok := key.(string); ok {
-			if strings.HasPrefix(keyName, keyPre) {
-				e.DispatchEvent(keyName, args...)
+func (e *eventbus) FuzzyDispatchEvent(eventPre string, args ...interface{}) {
+	e.eventListeners.Range(func(eventKey, value interface{}) bool {
+		if event, ok := eventKey.(string); ok {
+			if strings.HasPrefix(event, eventPre) {
+				e.DispatchEvent(event, args...)
 			}
 		}
 		return true

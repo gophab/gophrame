@@ -135,7 +135,7 @@ func (o *OAuth2Controller) Login(c *gin.Context) {
 		json.NewEncoder(c.Writer).Encode(o.OAuth2Server.GetTokenData(info))
 
 		// 发送用户登录事件
-		eventbus.PublishEvent("USER_LOGIN", userDetails.UserId, map[string]string{"IP": strings.Split(c.Request.RemoteAddr, ":")[0]})
+		eventbus.PublishEvent("USER_LOGIN", *userDetails.UserId, map[string]string{"IP": strings.Split(c.Request.RemoteAddr, ":")[0]})
 	} else {
 		http.Error(c.Writer, err.Error(), http.StatusNonAuthoritativeInfo)
 		return

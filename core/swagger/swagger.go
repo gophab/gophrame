@@ -6,8 +6,8 @@ import (
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/starter"
 
+	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 func init() {

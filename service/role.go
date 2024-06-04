@@ -1,7 +1,6 @@
 package service
 
 type RoleService interface {
-	LoadAllPolicy() error
 }
 
 func GetRoleService() RoleService {

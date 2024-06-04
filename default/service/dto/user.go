@@ -5,28 +5,20 @@ import (
 
 	"github.com/gophab/gophrame/core/mapper"
 	"github.com/gophab/gophrame/default/domain"
+	"github.com/gophab/gophrame/service/dto"
 )
 
 type User struct {
-	Id               *string    `json:"id"`
+	dto.User
 	CreatedTime      *time.Time `json:"createdTime"`
 	LastModifiedTime *time.Time `json:"lastModifiedTime"`
-	TenantId         *string    `json:"tenantId"`
 	DelFlag          *bool      `json:"del_flag"`
-	Login            *string    `json:"login,omitempty"`
-	Mobile           *string    `json:"mobile,omitempty"`
-	Email            *string    `json:"email,omitempty"`
-	Name             *string    `json:"name,omitempty"`
 	Status           *int       `json:"status"`
 	Avatar           *string    `json:"avatar,omitempty"`
 	Remark           *string    `json:"remark,omitempty"`
 	LoginTimes       *int       `json:"loginTimes"`
 	LastLoginTime    *time.Time `json:"lastLoginTime,omitempty"`
 	LastLoginIp      *string    `json:"lastLoginIp,omitempty"`
-	Password         *string    `json:"-"`
-	Admin            *bool      `json:"admin"`
-	InviterId        *string    `json:"inviterId,omitempty"`
-	InviteCode       string     `json:"inviteCode,omitempty"`
 	Roles            []Role     `json:"roles,omitempty"`
 }
 

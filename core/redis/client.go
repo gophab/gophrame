@@ -53,7 +53,7 @@ func initRedisClientPool(databaseIndex int) *redis.Pool {
 	}
 
 	// 将redis的关闭事件，注册在全局事件统一管理器，由程序退出时统一销毁
-	eventbus.RegisterEventListener(global.EventDestroyPrefix+"Redis"+strconv.Itoa(databaseIndex), func(args ...interface{}) {
+	eventbus.RegisterEventListener(global.EventDestroyPrefix+"Redis"+strconv.Itoa(databaseIndex), func(event string, args ...interface{}) {
 		_ = result.Close()
 	})
 

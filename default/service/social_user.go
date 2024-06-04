@@ -157,7 +157,7 @@ func (s *SocialUserService) BoundSocialUser(socialUserId string, userId string, 
 	}
 }
 
-func (s *SocialUserService) onUserLogin(args ...interface{}) {
+func (s *SocialUserService) onUserLogin(event string, args ...interface{}) {
 	userId := ""
 	data := map[string]string{}
 
