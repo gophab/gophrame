@@ -28,6 +28,21 @@ func Map(src, dst interface{}) (err error) {
 	return
 }
 
+func MapAs[T any](src interface{}, dst T) (result T, err error) {
+	key := fmt.Sprintf("%v_%v", reflect.TypeOf(src).String(), reflect.TypeOf(dst).String())
+	if _, ok := converters[key]; !ok {
+		mutex.Lock()
+		defer mutex.Unlock()
+		if converters[key], err = converter.NewConverter(result, src); err != nil {
+			return
+		}
+	}
+	if err = converters[key].Convert(result, src); err != nil {
+		return
+	}
+	return
+}
+
 func MapOption(src, dst interface{}, option *converter.StructOption) (err error) {
 	key := fmt.Sprintf("%v_%v", reflect.TypeOf(src).String(), reflect.TypeOf(dst).String())
 	if _, ok := converters[key]; !ok {

@@ -16,7 +16,7 @@ import (
 type InviteCodeService struct {
 	service.BaseService
 	InviteCodeRepository *repository.InviteCodeRepository `inject:"inviteCodeRepository"`
-	UserService          *UserService                     `inject:"userService"`
+	UserRepository       *repository.UserRepository       `inject:"userRepository"`
 }
 
 var inviteCodeService = &InviteCodeService{}
@@ -37,7 +37,7 @@ func (s *InviteCodeService) GetUserInviteCode(userId string, channel string) (*d
 
 	if inviteCode == nil {
 		// 实际用户
-		if user, _ := userService.GetById(userId); user != nil {
+		if user, _ := s.UserRepository.GetUserById(userId); user != nil {
 
 			if channel == "INVITE_REGISTER" {
 				// 非受邀用户可以邀请注册

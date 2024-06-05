@@ -75,7 +75,7 @@ func (s *UserService) CreateUser(user *dto.User) (*domain.User, error) {
 		res.InviteCode = *user.InviteCode
 	}
 
-	eventbus.PublishEvent("USER_REGISTERED", res)
+	eventbus.PublishEvent("USER_CREATED", res)
 	return res, nil
 }
 

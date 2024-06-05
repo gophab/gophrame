@@ -158,7 +158,6 @@ func (r *RoleController) EditRole(c *gin.Context) {
 	}
 
 	if err := r.RoleService.Edit(&data); err == nil {
-		r.RoleService.LoadPolicy(data.Id)
 		response.Success(c, data)
 	} else {
 		response.SystemErrorMessage(c, errors.ERROR_UPDATE_FAIL, err.Error())

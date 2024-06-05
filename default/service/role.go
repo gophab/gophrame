@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 
+	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/query"
@@ -11,14 +12,11 @@ import (
 	"github.com/gophab/gophrame/default/domain"
 	"github.com/gophab/gophrame/default/repository"
 	"github.com/gophab/gophrame/default/service/dto"
-
-	"github.com/casbin/casbin/v2"
 )
 
 type RoleService struct {
 	service.BaseService
-	RoleResposity *repository.RoleRepository `inject:"roleRepository"`
-	Enforcer      *casbin.SyncedEnforcer     `inject:"enforcer"`
+	RoleRepository *repository.RoleRepository `inject:"roleRepository"`
 }
 
 var roleService *RoleService = &RoleService{}
@@ -31,12 +29,12 @@ func init() {
 }
 
 func (s *RoleService) Add(role *dto.Role) (*domain.Role, error) {
-	name, _ := s.RoleResposity.CheckRoleName(role.Name)
+	name, _ := s.RoleRepository.CheckRoleName(role.Name)
 	if name {
 		return nil, errors.New("name 名字重复,请更改！")
 	}
 
-	res, err := s.RoleResposity.AddRole(map[string]interface{}{
+	res, err := s.RoleRepository.AddRole(map[string]interface{}{
 		"name": role.Name,
 	})
 
@@ -44,37 +42,60 @@ func (s *RoleService) Add(role *dto.Role) (*domain.Role, error) {
 		return nil, err
 	}
 
-	err = s.LoadPolicy(role.Id)
-	if err != nil {
-		return res, errors.New("load policy failed")
-	}
+	eventbus.PublishEvent("ROLE_CREATED", res)
 
 	return res, nil
 }
 
 func (s *RoleService) Edit(role *dto.Role) error {
-	name, _ := s.RoleResposity.CheckRoleNameId(role.Name, role.Id)
+	name, _ := s.RoleRepository.CheckRoleNameId(role.Name, role.Id)
 	if name {
 		return errors.New("name 名字重复,请更改！")
 	}
 
-	err := s.RoleResposity.EditRole(role.Id, map[string]interface{}{
+	err := s.RoleRepository.EditRole(role.Id, map[string]interface{}{
 		"name": role.Name,
 	})
 	if err != nil {
 		return err
 	}
 
+	eventbus.PublishEvent("ROLE_UPDATED", role)
+
+	return nil
+}
+
+func (s *RoleService) Delete(id string) error {
+	role, err := s.RoleRepository.GetRole(id)
+	if err != nil {
+		return err
+	}
+
+	if role != nil {
+		err := s.RoleRepository.DeleteRole(id)
+		if err != nil {
+			return err
+		}
+
+		eventbus.PublishEvent("ROLE_DELETED", role)
+	}
+
 	return nil
 }
 
 func (s *RoleService) Get(id string) (*domain.Role, error) {
-	role, err := s.RoleResposity.GetRole(id)
+	role, err := s.RoleRepository.GetRole(id)
 	if err != nil {
 		return nil, err
 	}
 
 	return role, nil
+}
+
+func (s *RoleService) GetUserRoles(userId string) ([]*domain.Role, error) {
+	var params = make(map[string]interface{})
+	params["user_id"] = userId
+	return s.RoleRepository.FindRolesAll(params)
 }
 
 func (s *RoleService) GetAll(role *dto.Role, pageable query.Pageable) ([]*domain.Role, error) {
@@ -83,14 +104,14 @@ func (s *RoleService) GetAll(role *dto.Role, pageable query.Pageable) ([]*domain
 		maps["del_flag"] = false
 		maps["id"] = role.Id
 
-		roles, err := s.RoleResposity.GetRoles(maps, pageable)
+		roles, err := s.RoleRepository.FindRoles(maps, pageable)
 		if err != nil {
 			return nil, err
 		}
 
 		return roles, nil
 	} else {
-		roles, err := s.RoleResposity.GetRoles(role.GetMaps(), pageable)
+		roles, err := s.RoleRepository.FindRoles(role.GetMaps(), pageable)
 		if err != nil {
 			return nil, err
 		}
@@ -98,69 +119,10 @@ func (s *RoleService) GetAll(role *dto.Role, pageable query.Pageable) ([]*domain
 	}
 }
 
-func (s *RoleService) Delete(id string) error {
-	role, err := s.RoleResposity.GetRole(id)
-	if err != nil {
-		return err
-	}
-
-	if role != nil {
-		err := s.RoleResposity.DeleteRole(id)
-		if err != nil {
-			return err
-		}
-		s.Enforcer.DeletePermissionsForUser(role.Name)
-	}
-
-	return nil
-}
-
 func (s *RoleService) ExistByID(id string) (bool, error) {
-	return s.RoleResposity.ExistRoleByID(id)
+	return s.RoleRepository.ExistRoleByID(id)
 }
 
 func (s *RoleService) Count(role *dto.Role) (int64, error) {
-	return s.RoleResposity.GetRoleTotal(role.GetMaps())
-}
-
-// LoadAllPolicy 加载所有的角色策略
-func (s *RoleService) LoadAllPolicy() error {
-	if s.Enforcer != nil {
-		roles, err := s.RoleResposity.GetRolesAll()
-		if err != nil {
-			return err
-		}
-
-		for _, role := range roles {
-			err = s.loadPolicy(role)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadPolicy 加载角色权限策略
-func (s *RoleService) LoadPolicy(id string) error {
-	if s.Enforcer != nil {
-		role, err := s.RoleResposity.GetRole(id)
-		if err != nil {
-			return err
-		}
-
-		return s.loadPolicy(role)
-	}
-
-	return nil
-}
-
-// LoadPolicy 加载角色权限策略
-func (s *RoleService) loadPolicy(role *domain.Role) error {
-	if s.Enforcer != nil {
-		s.Enforcer.DeleteRole(role.Name)
-	}
-
-	return nil
+	return s.RoleRepository.GetRoleTotal(role.GetMaps())
 }

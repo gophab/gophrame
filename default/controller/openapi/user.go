@@ -44,7 +44,7 @@ func (m *UserOpenController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/user/invite-code", Handler: m.GetUserInviteCode},
 		{HttpMethod: "GET", ResourcePath: "/users", Handler: m.GetUsers},
 		{HttpMethod: "GET", ResourcePath: "/user/:id", Handler: m.GetUser},
-		{HttpMethod: "POST", ResourcePath: "/user", Handler: m.AddUser},
+		{HttpMethod: "POST", ResourcePath: "/user", Handler: m.CreateUser},
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
 		{HttpMethod: "DELETE", ResourcePath: "/user/:id", Handler: m.DeleteUser},
 	})
@@ -145,7 +145,7 @@ func (u *UserOpenController) GetUser(c *gin.Context) {
 // @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
 // @Failure 400 {string} json
 // @Router /api/v1/users  [POST]
-func (u *UserOpenController) AddUser(c *gin.Context) {
+func (u *UserOpenController) CreateUser(c *gin.Context) {
 	var user dto.User
 	if err := c.BindJSON(&user); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
@@ -167,12 +167,6 @@ func (u *UserOpenController) AddUser(c *gin.Context) {
 	res, err := service.GetUserService().CreateUser(&user)
 	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_CREATE_FAIL)
-		return
-	}
-
-	err = service.GetUserService().LoadPolicy(res.Id)
-	if err != nil {
-		response.SystemErrorCode(c, errors.ERROR_UPDATE_FAIL)
 		return
 	}
 

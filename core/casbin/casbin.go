@@ -7,7 +7,6 @@ import (
 	"github.com/gophab/gophrame/core/casbin/config"
 	"github.com/gophab/gophrame/core/database"
 	"github.com/gophab/gophrame/core/webservice/response"
-	"github.com/gophab/gophrame/service"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
@@ -55,15 +54,4 @@ func InitCasbinEnforcer() (*casbin.SyncedEnforcer, error) {
 // casbin 鉴权失败，返回 405 方法不允许访问
 func ErrorCasbinAuthFail(c *gin.Context, msg interface{}) {
 	response.ErrorMessage(c, http.StatusForbidden, http.StatusMethodNotAllowed, ErrorsCasbinNoAuthorization)
-}
-
-// CasbinService负责更新Casbin Enforce数据至
-type CasbinService struct {
-	Enforcer *casbin.SyncedEnforcer `inject:"enforcer"`
-}
-
-func (s *CasbinService) onUserEvent() {
-
-	service.GetUserService().LoadPolicy(res.Id)
-
 }

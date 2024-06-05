@@ -5,21 +5,19 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/gophab/gophrame/core/consts"
 	EmailCode "github.com/gophab/gophrame/core/email/code"
 	"github.com/gophab/gophrame/core/logger"
-	SecurityConfig "github.com/gophab/gophrame/core/security/config"
 	SecurityModel "github.com/gophab/gophrame/core/security/model"
 	SmsCode "github.com/gophab/gophrame/core/sms/code"
 	"github.com/gophab/gophrame/core/social"
 	"github.com/gophab/gophrame/core/starter"
 	"github.com/gophab/gophrame/core/util"
+	"github.com/gophab/gophrame/core/util/array"
 
 	"github.com/gophab/gophrame/security"
 
 	"github.com/gophab/gophrame/default/domain"
 	"github.com/gophab/gophrame/default/service"
-	"github.com/gophab/gophrame/default/service/dto"
 
 	"gorm.io/gorm"
 )
@@ -42,19 +40,6 @@ func Start() {
 	security.RegisterUserHandler(new(DefaultUserHandler))
 }
 
-func Map[S, T any](list []S, f func(item S) T) []T {
-	segs := make([]T, 0)
-	for _, item := range list {
-		segs = append(segs, f(item))
-	}
-	return segs
-}
-
-func Join[T any](list []T, f func(item T) string, delimeter string) string {
-	segs := Map(list, f)
-	return strings.Join(segs, delimeter)
-}
-
 func User2UserDetails(user *domain.User) *SecurityModel.UserDetails {
 	if user != nil {
 		return &SecurityModel.UserDetails{
@@ -66,7 +51,7 @@ func User2UserDetails(user *domain.User) *SecurityModel.UserDetails {
 			Name:     user.Name,
 			Avatar:   user.Avatar,
 			Admin:    user.Admin,
-			Roles:    Map(user.Roles, func(item domain.Role) string { return item.Name }),
+			Roles:    array.Map(user.Roles, func(item domain.Role) string { return item.Name }),
 		}
 	} else {
 		return nil
@@ -124,20 +109,6 @@ func (h *DefaultUserHandler) GetMobileUserDetails(ctx context.Context, mobile st
 		return nil, err
 	}
 
-	if user == nil {
-		// 是否支持自动注册
-		if SecurityConfig.Setting.AutoRegister && (SecurityConfig.Setting.MobileAutoRegister == nil || *SecurityConfig.Setting.MobileAutoRegister) {
-			// 用手机号/
-			if user, err = h.UserService.CreateUser(&dto.User{
-				Mobile:   util.StringAddr(mobile),
-				Password: util.StringAddr("####*****####"),
-				Status:   util.IntAddr(consts.STATUS_VALID),
-			}); err != nil {
-				return nil, err
-			}
-		}
-	}
-
 	if user != nil && user.Id != "" {
 		return User2UserDetails(user), nil
 	}
@@ -157,20 +128,6 @@ func (h *DefaultUserHandler) GetEmailUserDetails(ctx context.Context, email stri
 	user, err := h.UserService.GetByEmail(email)
 	if err != nil {
 		return nil, err
-	}
-
-	if user == nil {
-		// 是否支持自动注册
-		if SecurityConfig.Setting.AutoRegister && (SecurityConfig.Setting.EmailAutoRegister == nil || *SecurityConfig.Setting.EmailAutoRegister) {
-			// 用Email
-			if user, err = h.UserService.CreateUser(&dto.User{
-				Email:    util.StringAddr(email),
-				Status:   util.IntAddr(consts.STATUS_VALID),
-				Password: util.StringAddr("####*****####"),
-			}); err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	if user != nil && user.Id != "" {
@@ -248,38 +205,8 @@ func (h *DefaultUserHandler) GetSocialUserDetails(ctx context.Context, socialCha
 				}
 			}
 
-			if !matched && SecurityConfig.Setting.AutoRegister && (SecurityConfig.Setting.SocialAutoRegister == nil || *SecurityConfig.Setting.SocialAutoRegister) {
-				// 自动注册
-				user := &dto.User{
-					Name:     exists.Name,
-					Mobile:   exists.Mobile,
-					Email:    exists.Email,
-					Status:   exists.Status,
-					Avatar:   exists.Avatar,
-					Remark:   exists.Remark,
-					Password: util.StringAddr("*****+++*****"),
-				}
-				if user, err := h.UserService.CreateUser(user); err == nil && user != nil {
-					exists.UserId = util.StringAddr(user.Id)
-				}
-			}
-
 			if exists.UserId != nil {
 				h.SocialUserService.BoundSocialUser(exists.Id, *exists.UserId, exists)
-			}
-		} else {
-			// 更新已存在的用户信息 (Merge方式）
-			user := &dto.User{
-				Id:     exists.UserId,
-				Name:   exists.Name,
-				Mobile: exists.Mobile,
-				Email:  exists.Email,
-				Status: exists.Status,
-				Avatar: exists.Avatar,
-				Remark: exists.Remark,
-			}
-			if u, _ := h.UserService.UpdateUser(user); u != nil {
-				result.Admin = u.Admin
 			}
 		}
 	}

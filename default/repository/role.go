@@ -52,7 +52,17 @@ func (r *RoleRepository) GetRoleTotal(maps interface{}) (int64, error) {
 	return count, nil
 }
 
-func (r *RoleRepository) GetRoles(maps interface{}, pageable query.Pageable) ([]*domain.Role, error) {
+func (r *RoleRepository) GetRolesAll() ([]*domain.Role, error) {
+	var role []*domain.Role
+	err := r.Preload("Menus").Find(&role).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+func (r *RoleRepository) FindRoles(maps interface{}, pageable query.Pageable) ([]*domain.Role, error) {
 	var role []*domain.Role
 	err := query.Page(r.Preload("Menus").Where(maps), pageable).Find(&role).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -60,6 +70,16 @@ func (r *RoleRepository) GetRoles(maps interface{}, pageable query.Pageable) ([]
 	}
 
 	return role, nil
+}
+
+func (r *RoleRepository) FindRolesAll(maps interface{}) ([]*domain.Role, error) {
+	var roles []*domain.Role
+	err := r.Preload("Menus").Where(maps).Find(&roles).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	return roles, nil
 }
 
 func (r *RoleRepository) GetRole(id string) (*domain.Role, error) {
@@ -134,14 +154,4 @@ func (r *RoleRepository) CleanAllRole() error {
 	}
 
 	return nil
-}
-
-func (r *RoleRepository) GetRolesAll() ([]*domain.Role, error) {
-	var role []*domain.Role
-	err := r.Preload("Menus").Find(&role).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, err
-	}
-
-	return role, nil
 }
