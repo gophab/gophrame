@@ -1,6 +1,8 @@
 package openapi
 
 import (
+	"strings"
+
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
@@ -58,22 +60,23 @@ func (m *UserOpenController) AfterInitialize() {
 // @Failure 400 {string} json
 // @Router /api/v1/userInfo  [GET]
 func (u *UserOpenController) GetCurrentUser(c *gin.Context) {
-	userDetails := SecurityUtil.GetCurrentUser(c)
+	userId := SecurityUtil.GetCurrentUserId(c)
 
-	if userDetails == nil {
-		response.Unauthorized(c, "")
+	if userId == "" {
+		response.Unauthorized(c, "未登录")
 		return
 	}
 
-	if userDetails.UserId != nil {
-		if user, err := u.UserService.GetById(*userDetails.UserId); err == nil {
-			response.Success(c, u.UserMapper.AsDto(user))
+	if strings.HasPrefix(userId, "sns_") {
+		// 社交账户登录
+		if user, err := u.SocialUserService.GetById(userId); err == nil {
+			response.Success(c, u.SocialUserMapper.AsDto(user))
 		} else {
 			response.SystemErrorMessage(c, errors.ERROR_GET_S_FAIL, err.Error())
 		}
 	} else {
-		if user, err := u.SocialUserService.GetById(*userDetails.SocialId); err == nil {
-			response.Success(c, u.SocialUserMapper.AsDto(user))
+		if user, err := u.UserService.GetById(userId); err == nil {
+			response.Success(c, u.UserMapper.AsDto(user))
 		} else {
 			response.SystemErrorMessage(c, errors.ERROR_GET_S_FAIL, err.Error())
 		}
