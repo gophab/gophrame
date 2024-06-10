@@ -14,7 +14,7 @@ import (
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/redis"
-	"github.com/gophab/gophrame/core/security/model"
+	SecurityModel "github.com/gophab/gophrame/core/security/model"
 	"github.com/gophab/gophrame/core/security/token"
 	"github.com/gophab/gophrame/core/util"
 	"github.com/gophab/gophrame/core/webservice/request"
@@ -72,7 +72,7 @@ func (o *OAuth2Controller) Login(c *gin.Context) {
 			return
 		}
 
-		var userDetails *model.UserDetails
+		var userDetails *SecurityModel.UserDetails
 		switch loginForm.Mode {
 		case "password": // 使用用户名/密码登录
 			if o.OAuth2Server.UserHandler != nil {

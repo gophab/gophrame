@@ -65,7 +65,7 @@ func cvtStringBytes(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
 	*(*[]byte)(dPtr) = ([]byte)(*(*string)(sPtr))
 }
 
-func Copy(dPtr, sPtr unsafe.Pointer, size uintptr) {
+func Copy(sPtr, dPtr unsafe.Pointer, size uintptr) {
 	align := uintptr(0)
 	if size >= intAlign {
 		for ; align < size; align += intAlign {

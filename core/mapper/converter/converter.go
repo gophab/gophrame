@@ -7,8 +7,8 @@ import (
 )
 
 type convertType struct {
-	dstTyp reflect.Type
 	srcTyp reflect.Type
+	dstTyp reflect.Type
 	option *structOption
 }
 
@@ -19,7 +19,7 @@ type convertType struct {
 // all methods in converter are thread-safe.
 // we can define a global variable to hold a converter and use it in any goroutine.
 type converter interface {
-	convert(dPtr, sPtr unsafe.Pointer)
+	convert(sPtr, dPtr unsafe.Pointer)
 }
 
 type Converter struct {
@@ -27,7 +27,7 @@ type Converter struct {
 	converter
 }
 
-func (d *Converter) Convert(dst, src interface{}) error {
+func (d *Converter) Convert(src, dst interface{}) error {
 	if dst == nil || src == nil || reflect.ValueOf(dst).IsNil() || reflect.ValueOf(src).IsNil() {
 		return nil
 	}
@@ -50,6 +50,6 @@ func (d *Converter) Convert(dst, src interface{}) error {
 		return fmt.Errorf("[MAPPER]invalid source type. [expected:%v] [actual:%v]", d.srcTyp, sv.Type())
 	}
 
-	d.converter.convert(unsafe.Pointer(dv.UnsafeAddr()), unsafe.Pointer(sv.UnsafeAddr()))
+	d.converter.convert(unsafe.Pointer(sv.UnsafeAddr()), unsafe.Pointer(dv.UnsafeAddr()))
 	return nil
 }

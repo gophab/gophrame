@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gophab/gophrame/core/global"
+
 	"github.com/casbin/casbin"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -29,9 +31,9 @@ type CORSWhitelist struct {
 }
 
 var (
-	BasePath string // 定义项目的根目录
+	BasePath *string = &global.BasePath // 定义项目的根目录
 
-	Debug bool = false
+	Debug *bool = &global.Debug
 
 	EventDestroyPrefix = "Destroy_" //  程序退出时需要销毁的事件前缀
 	ConfigKeyPrefix    = "Config_"  //  配置文件键值缓存时，键的前缀
@@ -61,9 +63,9 @@ func init() {
 	if path, err := os.Getwd(); err == nil {
 		// 路径进行处理，兼容单元测试程序程序启动时的奇怪路径
 		if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "-test") {
-			BasePath = strings.Replace(strings.Replace(path, `\test`, "", 1), `/test`, "", 1)
+			*BasePath = strings.Replace(strings.Replace(path, `\test`, "", 1), `/test`, "", 1)
 		} else {
-			BasePath = path
+			*BasePath = path
 		}
 		log.Println("Base application path: ", BasePath)
 	} else {

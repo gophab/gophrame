@@ -1,4 +1,4 @@
-package securityUtil
+package SecurityUtil
 
 import (
 	"fmt"
@@ -91,19 +91,19 @@ func GetCurrentUser(c *gin.Context) *SecurityModel.UserDetails {
 
 		if currentUserId != "" {
 			if service.GetUserService() != nil {
-			if currentUser, err := service.GetUserService().GetById(currentUserId); err == nil {
-				userDetails := &SecurityModel.UserDetails{
-					UserId:   currentUser.Id,
-					Login:    currentUser.Login,
-					Mobile:   currentUser.Mobile,
-					Email:    currentUser.Email,
-					SocialId: currentUser.SocialId,
-					TenantId: currentUser.TenantId,
+				if currentUser, err := service.GetUserService().GetById(currentUserId); err == nil {
+					userDetails := &SecurityModel.UserDetails{
+						UserId:   currentUser.Id,
+						Login:    currentUser.Login,
+						Mobile:   currentUser.Mobile,
+						Email:    currentUser.Email,
+						SocialId: currentUser.SocialId,
+						TenantId: currentUser.TenantId,
+					}
+					c.Set("_CURRENT_USER_", userDetails)
+					return userDetails
 				}
-				c.Set("_CURRENT_USER_", userDetails)
-				return userDetails
 			}
-		}
 			return &SecurityModel.UserDetails{
 				UserId: &currentUserId,
 			}

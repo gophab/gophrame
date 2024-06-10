@@ -36,7 +36,7 @@ func newStructConverter(convertType *convertType) (s converter) {
 			if convertType.option != nil && convertType.option.NestedOption != nil {
 				nestOption = convertType.option.NestedOption[df.Name]
 			}
-			if fieldConverter := newFieldConverter(*df, *sf, nestOption); fieldConverter != nil {
+			if fieldConverter := newFieldConverter(*sf, *df, nestOption); fieldConverter != nil {
 				fieldConverters = append(fieldConverters, fieldConverter)
 			}
 		}
@@ -84,16 +84,16 @@ func aliasField(fields []*reflect.StructField, aliasFields map[string]string) []
 // convert only affects fields stored in fieldConverters, the rest will remain unchanged.
 // dPtr and sPtr must pointed to a non-pointer value,
 // it is assured by Converter.Convert() and elemConverter.convert()
-func (s *structConverter) convert(dPtr, sPtr unsafe.Pointer) {
+func (s *structConverter) convert(sPtr, dPtr unsafe.Pointer) {
 	if s.dstTyp == s.srcTyp {
-		Copy(dPtr, sPtr, s.size)
+		Copy(sPtr, dPtr, s.size)
 		return
 	}
 
 	for _, fieldConverter := range s.fieldConverters {
 		dPtr := unsafe.Pointer(uintptr(dPtr) + fieldConverter.dOffset)
 		sPtr := unsafe.Pointer(uintptr(sPtr) + fieldConverter.sOffset)
-		fieldConverter.convert(dPtr, sPtr)
+		fieldConverter.convert(sPtr, dPtr)
 	}
 }
 
@@ -105,8 +105,8 @@ type fieldConverter struct {
 	dName   string
 }
 
-func newFieldConverter(df, sf reflect.StructField, option *structOption) (f *fieldConverter) {
-	if elemConverter, ok := newElemConverter(df.Type, sf.Type, option); ok {
+func newFieldConverter(sf, df reflect.StructField, option *structOption) (f *fieldConverter) {
+	if elemConverter, ok := newElemConverter(sf.Type, df.Type, option); ok {
 		return &fieldConverter{
 			elemConverter: elemConverter,
 			sOffset:       sf.Offset,

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/gophab/gophrame/core/mock"
 )
 
 var (
@@ -29,6 +30,8 @@ func Init(debug bool) *gin.Engine {
 	if debug {
 		gin.SetMode(gin.DebugMode)
 		pprof.Register(engine)
+
+		engine.Use(mock.Mock())
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}

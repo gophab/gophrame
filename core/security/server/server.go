@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/gophab/gophrame/core/inject"
-	"github.com/gophab/gophrame/core/security/model"
+	SecurityModel "github.com/gophab/gophrame/core/security/model"
 	"github.com/gophab/gophrame/core/security/token"
 	TokenConfig "github.com/gophab/gophrame/core/security/token/config"
 	"github.com/gophab/gophrame/core/util"
@@ -159,7 +159,7 @@ func (s *OAuth2Server) passwordAuthorizationHandler(ctx context.Context, clientI
 		return userID, nil
 	}
 
-	var userDetails *model.UserDetails
+	var userDetails *SecurityModel.UserDetails
 	if mobile, b := strings.CutPrefix(username, "mobile:"); b {
 		if s.MobileUserHandler != nil {
 			userDetails, err = s.MobileUserHandler.GetMobileUserDetails(ctx, mobile, password)

@@ -24,11 +24,11 @@ type Gin struct {
 	C *gin.Context
 }
 
-func (g *Gin) Response(httpCode, errCode int, data interface{}) {
-	Response(g.C, httpCode, errCode, data)
+func (g *Gin) Response(httpCode, errCode int, data interface{}) *gin.Context {
+	return Response(g.C, httpCode, errCode, data)
 }
 
-func Response(c *gin.Context, httpCode, errCode int, data interface{}) {
+func Response(c *gin.Context, httpCode, errCode int, data interface{}) *gin.Context {
 	if errCode != 0 {
 		c.JSON(httpCode, gin.H{
 			"code":    errCode,
@@ -42,12 +42,15 @@ func Response(c *gin.Context, httpCode, errCode int, data interface{}) {
 			c.Status(httpCode)
 		}
 	}
+
+	return c
 }
 
 // 将json字符窜以标准json格式返回（例如，从redis读取json、格式的字符串，返回给浏览器json格式）
-func ResponseWithJson(c *gin.Context, httpCode int, jsonStr string) {
+func ResponseWithJson(c *gin.Context, httpCode int, jsonStr string) *gin.Context {
 	c.Header("Content-Type", "application/json; charset=utf-8")
 	c.String(httpCode, jsonStr)
+	return c
 }
 
 func Error(c *gin.Context, httpCode int) {
@@ -72,8 +75,8 @@ func ErrorMessage(c *gin.Context, httpCode int, dataCode int, msg string) {
 
 // 语法糖函数封装
 // 仅提交对象数据，不Abort()
-func OK(c *gin.Context, data interface{}) {
-	Response(c, http.StatusOK, 0, data)
+func OK(c *gin.Context, data interface{}) *gin.Context {
+	return Response(c, http.StatusOK, 0, data)
 }
 
 func Bad(c *gin.Context, errCode int, errMsg string) {
@@ -86,6 +89,18 @@ func NotFound(c *gin.Context, msg string) {
 
 func Unauthorized(c *gin.Context, msg string) {
 	ErrorMessage(c, http.StatusUnauthorized, http.StatusUnauthorized, msg)
+}
+
+func Forbidden(c *gin.Context, msg string) {
+	ErrorMessage(c, http.StatusForbidden, http.StatusForbidden, msg)
+}
+
+func Unprocessable(c *gin.Context, msg string) {
+	ErrorMessage(c, http.StatusUnprocessableEntity, http.StatusUnprocessableEntity, msg)
+}
+
+func NowAllowed(c *gin.Context, msg string) {
+	ErrorMessage(c, http.StatusMethodNotAllowed, http.StatusMethodNotAllowed, msg)
 }
 
 // 返回成功: OK() + Abort()

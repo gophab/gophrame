@@ -18,7 +18,7 @@ type elemConverter struct {
 	converter           converter
 }
 
-func newElemConverter(dt, st reflect.Type, option *structOption) (e *elemConverter, ok bool) {
+func newElemConverter(st, dt reflect.Type, option *structOption) (e *elemConverter, ok bool) {
 	e = &elemConverter{
 		sTyp:        st,
 		dTyp:        dt,
@@ -32,7 +32,7 @@ func newElemConverter(dt, st reflect.Type, option *structOption) (e *elemConvert
 	e.sDereferTyp, e.sReferDeep = referDeep(e.sDereferTyp)
 	e.dDereferTyp, e.dReferDeep = referDeep(e.dDereferTyp)
 
-	if converter := newConverter(e.dDereferTyp, e.sDereferTyp, option, false); converter != nil {
+	if converter := newConverter(e.sDereferTyp, e.dDereferTyp, option, false); converter != nil {
 		e.converter = converter
 		e.sEmptyDereferValPtr = newValuePtr(e.sDereferTyp)
 		ok = true
@@ -43,7 +43,7 @@ func newElemConverter(dt, st reflect.Type, option *structOption) (e *elemConvert
 
 // convert accepts non-nil dPtr and sPtr pointer,
 // it is assured by structConverter, sliceConverter and mapConverter
-func (e *elemConverter) convert(dPtr, sPtr unsafe.Pointer) {
+func (e *elemConverter) convert(sPtr, dPtr unsafe.Pointer) {
 	for d := 0; d < e.sReferDeep; d++ {
 		sPtr = unsafe.Pointer(*((**int)(sPtr)))
 		if sPtr == nil {
@@ -68,14 +68,14 @@ func (e *elemConverter) convert(dPtr, sPtr unsafe.Pointer) {
 
 	if deep := e.dReferDeep - deep; deep > 0 {
 		v := newValuePtr(e.dDereferTyp)
-		e.converter.convert(v, sPtr)
+		e.converter.convert(sPtr, v)
 		for d := 0; d < deep; d++ {
 			tmp := v
 			v = unsafe.Pointer(&tmp)
 		}
 		*(**int)(dPtr) = *(**int)(v)
 	} else {
-		e.converter.convert(dPtr, sPtr)
+		e.converter.convert(sPtr, dPtr)
 	}
 }
 

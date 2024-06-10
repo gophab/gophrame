@@ -20,7 +20,7 @@ func newSliceConverter(convertType *convertType) (s converter) {
 	}
 	if convertType.srcTyp == convertType.dstTyp {
 		s = c
-	} else if elemConverter, ok := newElemConverter(convertType.dstTyp.Elem(), convertType.srcTyp.Elem(), convertType.option); ok {
+	} else if elemConverter, ok := newElemConverter(convertType.srcTyp.Elem(), convertType.dstTyp.Elem(), convertType.option); ok {
 		c.elemConverter = elemConverter
 		s = c
 	}
@@ -30,7 +30,7 @@ func newSliceConverter(convertType *convertType) (s converter) {
 // convert will overwrite the whole destination slice.
 // dPtr and sPtr must pointed to a non-pointer value,
 // it is assured by Converter.Convert() and elemConverter.convert()
-func (s *sliceConverter) convert(dPtr, sPtr unsafe.Pointer) {
+func (s *sliceConverter) convert(sPtr, dPtr unsafe.Pointer) {
 	dSlice := (*sliceHeader)(dPtr)
 	sSlice := (*sliceHeader)(sPtr)
 
@@ -44,14 +44,14 @@ func (s *sliceConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	}
 
 	if s.srcTyp == s.dstTyp {
-		Copy(dSlice.Data, sSlice.Data, uintptr(length)*s.sElemSize)
+		Copy(sSlice.Data, dSlice.Data, uintptr(length)*s.sElemSize)
 		return
 	}
 
 	for dOffset, sOffset, i := uintptr(0), uintptr(0), 0; i < length; i++ {
 		dElemPtr := unsafe.Pointer(uintptr(dSlice.Data) + dOffset)
 		sElemPtr := unsafe.Pointer(uintptr(sSlice.Data) + sOffset)
-		s.elemConverter.convert(dElemPtr, sElemPtr)
+		s.elemConverter.convert(sElemPtr, dElemPtr)
 		dOffset += s.dElemSize
 		sOffset += s.sElemSize
 	}

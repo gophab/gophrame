@@ -20,8 +20,8 @@ func newMapConverter(convertType *convertType) (m converter) {
 	dKeyTyp := convertType.dstTyp.Key()
 	sValTyp := convertType.srcTyp.Elem()
 	dValTyp := convertType.dstTyp.Elem()
-	if keyConverter, ok := newElemConverter(dKeyTyp, sKeyTyp, convertType.option); ok {
-		if valueConverter, ok := newElemConverter(dValTyp, sValTyp, convertType.option); ok {
+	if keyConverter, ok := newElemConverter(sKeyTyp, dKeyTyp, convertType.option); ok {
+		if valueConverter, ok := newElemConverter(sValTyp, dValTyp, convertType.option); ok {
 			sEmpty := reflect.New(convertType.srcTyp).Interface()
 			dEmpty := reflect.New(convertType.dstTyp).Interface()
 			m = &mapConverter{
@@ -41,7 +41,7 @@ func newMapConverter(convertType *convertType) (m converter) {
 // convert only affects destination map with keys that source map has, the rest will remain unchanged.
 // dPtr and sPtr must pointed to a non-pointer value,
 // it is assured by Converter.Convert() and elemConverter.convert()
-func (m *mapConverter) convert(dPtr, sPtr unsafe.Pointer) {
+func (m *mapConverter) convert(sPtr, dPtr unsafe.Pointer) {
 	sv := ptrToMapValue(m.sEmptyMapInterface, sPtr)
 	dv := ptrToMapValue(m.dEmptyMapInterface, dPtr)
 
@@ -55,8 +55,8 @@ func (m *mapConverter) convert(dPtr, sPtr unsafe.Pointer) {
 		sKeyPtr := valuePtr(sKey)
 		dKey := reflect.New(m.dKeyTyp).Elem()
 		dVal := reflect.New(m.dValTyp).Elem()
-		m.keyConverter.convert(unsafe.Pointer(dKey.UnsafeAddr()), sKeyPtr)
-		m.valConverter.convert(unsafe.Pointer(dVal.UnsafeAddr()), sValPtr)
+		m.keyConverter.convert(sKeyPtr, unsafe.Pointer(dKey.UnsafeAddr()))
+		m.valConverter.convert(sValPtr, unsafe.Pointer(dVal.UnsafeAddr()))
 		dv.SetMapIndex(dKey, dVal)
 	}
 

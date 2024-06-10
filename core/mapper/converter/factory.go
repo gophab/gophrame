@@ -11,29 +11,29 @@ var (
 	createdConverters   = make(map[convertType]*Converter)
 )
 
-func NewConverter(dst, src interface{}) (*Converter, error) {
+func NewConverter(src, dst interface{}) (*Converter, error) {
 	dstTyp := reflect.TypeOf(dst)
 	srcTyp := reflect.TypeOf(src)
 
-	if c := newConverter(dstTyp, srcTyp, nil, true); c == nil {
+	if c := newConverter(srcTyp, dstTyp, nil, true); c == nil {
 		return nil, fmt.Errorf("[MAPPER]can't convert source type %s to destination type %s", srcTyp, dstTyp)
 	} else {
 		return c, nil
 	}
 }
 
-func NewConverterOption(dst, src interface{}, option *StructOption) (*Converter, error) {
+func NewConverterOption(src, dst interface{}, option *StructOption) (*Converter, error) {
 	dstTyp := reflect.TypeOf(dst)
 	srcTyp := reflect.TypeOf(src)
 
-	if c := newConverter(dstTyp, srcTyp, option.convert(), true); c == nil {
+	if c := newConverter(srcTyp, dstTyp, option.convert(), true); c == nil {
 		return nil, fmt.Errorf("can't convert source type %s to destination type %s", srcTyp, dstTyp)
 	} else {
 		return c, nil
 	}
 }
 
-func newConverter(dstTyp, srcTyp reflect.Type, option *structOption, lock bool) *Converter {
+func newConverter(srcTyp, dstTyp reflect.Type, option *structOption, lock bool) *Converter {
 	if lock {
 		createdConvertersMu.Lock()
 		defer createdConvertersMu.Unlock()
@@ -42,7 +42,7 @@ func newConverter(dstTyp, srcTyp reflect.Type, option *structOption, lock bool) 
 	dstTyp = dereferencedType(dstTyp)
 	srcTyp = dereferencedType(srcTyp)
 
-	cTyp := &convertType{dstTyp, srcTyp, option}
+	cTyp := &convertType{srcTyp, dstTyp, option}
 	if dc, ok := createdConverters[*cTyp]; ok {
 		return dc
 	}

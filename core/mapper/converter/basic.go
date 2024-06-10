@@ -24,6 +24,6 @@ func newBasicConverter(convertType *convertType) (c converter) {
 // convert assigns converted source value to destination.
 // dPtr and sPtr must pointed to a non-pointer value,
 // it is assured by Converter.Convert() and elemConverter.convert()
-func (g *basicConverter) convert(dPtr, sPtr unsafe.Pointer) {
+func (g *basicConverter) convert(sPtr, dPtr unsafe.Pointer) {
 	g.cvtOp(sPtr, dPtr)
 }

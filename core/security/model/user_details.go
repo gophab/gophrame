@@ -1,4 +1,4 @@
-package model
+package SecurityModel
 
 type UserDetails struct {
 	UserId   *string
