@@ -100,34 +100,26 @@ type UUIDTokenGenerator struct {
 	TokenStore ITokenStore `inject:"tokenStore"`
 }
 
-func (g *UUIDTokenGenerator) Token(ctx context.Context, data *oauth2.GenerateBasic, isGenRefresh bool) (string, string, error) {
-	var authentication Authentication = Authentication{
-		UserId:        data.UserID,
-		Authenticated: true,
-		Request: TokenRequest{
-			ClientId: data.TokenInfo.GetClientID(),
-			Scope:    data.TokenInfo.GetScope(),
-		},
-	}
-
-	access := uuid.NewString()
-	refresh := uuid.NewString()
-
-	if config.Setting.ReuseAccessToken {
-		// authentication => Token
-		token, err := g.TokenStore.GetToken(ctx, authentication.GetId())
-		if err != nil {
-			return "", "", err
+func (g *UUIDTokenGenerator) Token(ctx context.Context, data *oauth2.GenerateBasic, isGenRefresh bool) (access string, refresh string, err error) {
+	access = uuid.NewString()
+	refresh = uuid.NewString()
+	if !isGenRefresh {
+		token := data.TokenInfo
+		if token == nil {
+			var authentication Authentication = Authentication{
+				UserId:        data.UserID,
+				Authenticated: true,
+				Request: TokenRequest{
+					ClientId: data.TokenInfo.GetClientID(),
+					Scope:    data.TokenInfo.GetScope(),
+				},
+			}
+			token, _ = g.TokenStore.GetToken(ctx, authentication.GetId())
 		}
 
-		if token != nil && !isRefreshExpired(token) && config.Setting.ReuseRefreshToken {
-			// 1. RefreshToekn is not expired, reuse refresh
+		if token != nil && !isRefreshExpired(token) && token.GetRefresh() != "" {
+			// 2. RefreshToekn is not expired, reuse refresh
 			refresh = token.GetRefresh()
-
-			if !isExpired(token) && config.Setting.ReuseAccessToken {
-				// 2. AccessToken is not expired, reuse access
-				access = token.GetAccess()
-			}
 		}
 	}
 

@@ -26,6 +26,8 @@ func getConverter(src, dst interface{}) (*converter.Converter, error) {
 			converters[key] = converter
 			return converter, nil
 		}
+	} else {
+		return converters[key], nil
 	}
 
 	return nil, fmt.Errorf("[MAPPER] can't convert source type %s to destination type %s", reflect.TypeOf(src).String(), reflect.TypeOf(dst).String())

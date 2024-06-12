@@ -182,7 +182,7 @@ func (s *DatabaseTokenStore) Create(ctx context.Context, info oauth2.TokenInfo) 
 		} else if rows <= 0 {
 			// 已存在授权
 			// 1. 删除已有的refresh_token
-			database.DB().Exec(`DELETE FROM oauth_refresh_token WHERE refresh_token IN (SELECT refresh_token FROM oauth_access_token WHERE authentication_id=?)`, authentication.GetId())
+			// database.DB().Exec(`DELETE FROM oauth_refresh_token WHERE refresh_token IN (SELECT refresh_token FROM oauth_access_token WHERE authentication_id=?)`, authentication.GetId())
 
 			// 2. 获取现有
 			if exist, _ := s.GetToken(ctx, authentication.GetId()); exist != nil {
