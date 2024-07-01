@@ -2,6 +2,8 @@ package aliyun
 
 import (
 	"mime/multipart"
+	"net/url"
+	"path/filepath"
 	"regexp"
 	"time"
 
@@ -25,8 +27,9 @@ func CreateAliyunOSS() (*AliyunOSS, error) {
 		endpoint,
 		config.Setting.AccessKeyId,
 		config.Setting.AccessKeySecret,
+		// oss.AuthVersion(oss.AuthV4),
 		oss.UseCname(config.Setting.UseCname),
-		oss.AuthVersion(oss.AuthV4))
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +44,11 @@ func CreateAliyunOSS() (*AliyunOSS, error) {
 	}, nil
 }
 
+var (
+	_re = regexp.MustCompile(("^/"))
+	re_ = regexp.MustCompile(("/.$"))
+)
+
 func (s *AliyunOSS) Upload(file *multipart.FileHeader, prefix string) (string, string, error) {
 	// 读取本地文件。
 	f, err := file.Open()
@@ -50,13 +58,11 @@ func (s *AliyunOSS) Upload(file *multipart.FileHeader, prefix string) (string, s
 	defer f.Close() // 创建文件 defer 关闭
 	// 上传阿里云路径 文件名格式 自己可以改 建议保证唯一性
 	// yunFileTmpPath := filepath.Join("uploads", time.Now().Format("2006-01-02")) + "/" + file.Filename
-	_re := regexp.MustCompile(("^/"))
-	re_ := regexp.MustCompile(("/.$"))
+	ext := filepath.Ext(file.Filename)
 	yunFileTmpPath := _re.ReplaceAllString(
 		re_.ReplaceAllString(re_.ReplaceAllString(config.Setting.Path, "")+"/"+_re.ReplaceAllString(prefix, ""), "")+
 			"/"+
-			time.Now().Format("YYYYMMDDhhmmss")+
-			util.GenerateRandomString(6),
+			time.Now().Format("20060102/150405_")+util.GenerateRandomString(6)+ext,
 		"")
 
 	// 上传文件流。
@@ -66,6 +72,11 @@ func (s *AliyunOSS) Upload(file *multipart.FileHeader, prefix string) (string, s
 	}
 
 	if len(config.Setting.BucketUrl) == 0 {
+		u, err := url.Parse(config.Setting.Endpoint)
+		if err == nil {
+			u.Host = config.Setting.Bucket + "." + u.Host
+			return re_.ReplaceAllString(u.String(), "") + "/" + yunFileTmpPath, yunFileTmpPath, nil
+		}
 		return re_.ReplaceAllString(config.Setting.Endpoint, "") + "/" + yunFileTmpPath, yunFileTmpPath, nil
 	} else {
 		return re_.ReplaceAllString(config.Setting.BucketUrl, "") + "/" + yunFileTmpPath, yunFileTmpPath, nil

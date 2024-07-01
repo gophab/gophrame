@@ -14,6 +14,7 @@ import (
 	_ "github.com/gophab/gophrame/core/email"
 	_ "github.com/gophab/gophrame/core/email/code"
 	_ "github.com/gophab/gophrame/core/microservice"
+	_ "github.com/gophab/gophrame/core/oss"
 	_ "github.com/gophab/gophrame/core/rabbitmq"
 	_ "github.com/gophab/gophrame/core/redis"
 	_ "github.com/gophab/gophrame/core/sms"

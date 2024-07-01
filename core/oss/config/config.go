@@ -9,18 +9,16 @@ import (
 )
 
 type OssSetting struct {
-	Enabled   bool `json:"enabled" yaml:"enabled"`
-	Signature string
-	Product   string
-	Sender    struct {
+	Enabled bool `json:"enabled" yaml:"enabled"`
+	Storage struct {
 		Aliyun *AliyunConfig.AliyunSetting `json:"aliyun" yaml:"aliyun"`
 		Qcloud *QcloudConfig.QcloudSetting `json:"qcloud" yaml:"qcloud"`
-	}
+	} `json:"storage" yaml:"storage"`
 }
 
 var Setting *OssSetting = &OssSetting{
 	Enabled: false,
-	Sender: struct {
+	Storage: struct {
 		Aliyun *AliyunConfig.AliyunSetting `json:"aliyun" yaml:"aliyun"`
 		Qcloud *QcloudConfig.QcloudSetting `json:"qcloud" yaml:"qcloud"`
 	}{
@@ -30,6 +28,6 @@ var Setting *OssSetting = &OssSetting{
 }
 
 func init() {
-	logger.Debug("Register SMS Config")
-	config.RegisterConfig("sms", Setting, "SMS Settings")
+	logger.Debug("Register OSS Config")
+	config.RegisterConfig("oss", Setting, "OSS Settings")
 }

@@ -3,6 +3,8 @@ package oss
 import (
 	"sync"
 
+	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/oss/aliyun"
 	"github.com/gophab/gophrame/core/oss/config"
@@ -11,19 +13,25 @@ import (
 )
 
 var (
-	once sync.Once
+	once          sync.Once
+	ossController *OssController
 )
 
 func init() {
-	starter.RegisterStarter(Start)
+	starter.RegisterInitializor(Init)
 }
 
-func Start() {
+func Init() {
 	logger.Debug("Enable OSS: ...", config.Setting.Enabled)
 	if config.Setting.Enabled {
 		once.Do(func() {
+			ossController = &OssController{}
+			inject.InjectValue("ossController", ossController)
+
 			aliyun.Start()
 			qcloud.Start()
+
+			controller.AddController(ossController)
 		})
 	}
 }

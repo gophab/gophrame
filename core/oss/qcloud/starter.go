@@ -1,15 +1,15 @@
-package aliyun
+package qcloud
 
 import (
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
-	"github.com/gophab/gophrame/core/oss/aliyun/config"
+	"github.com/gophab/gophrame/core/oss/qcloud/config"
 )
 
 func Start() {
 	if config.Setting.Enabled {
-		logger.Info("Start Aliyun OSS...")
-		if oss, err := CreateAliyunOSS(); err == nil && oss != nil {
+		logger.Info("Start Qcloud OSS...")
+		if oss, err := CreateQcloudOSS(); err == nil && oss != nil {
 			inject.InjectValue("oss", oss)
 		}
 	}
