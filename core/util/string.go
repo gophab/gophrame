@@ -1,6 +1,10 @@
 package util
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
 
 func StringAddr(s string) *string {
 	if s == "" {
@@ -84,4 +88,19 @@ func Capitalize(str string) string {
 		}
 	}
 	return upperStr
+}
+
+func GenerateRandomString(length int) string {
+	rand.Seed(time.Now().UnixNano()) // 设置随机数种子
+
+	// 定义字符串字符集
+	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	// 生成字符串
+	result := make([]byte, length)
+	for i := 0; i < length; i++ {
+		result[i] = charset[rand.Intn(len(charset))]
+	}
+
+	return string(result)
 }
