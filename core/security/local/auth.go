@@ -1,6 +1,8 @@
 package local
 
 import (
+	"strings"
+
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/security/token"
 	SecurityUtil "github.com/gophab/gophrame/core/security/util"
@@ -30,7 +32,11 @@ func ValidationBearerToken(ctx *gin.Context) (oauth2.TokenInfo, error) {
 	if tokenValidator.TokenResolver != nil {
 		if ti, err := tokenValidator.TokenResolver.Resolve(ctx, tokenValue); err == nil {
 			if ti != nil {
-				ctx.Set("_CURRENT_USER_ID_", ti.GetUserID())
+				var uid = strings.Split(ti.GetUserID(), "@")
+				ctx.Set("_CURRENT_USER_ID_", uid[0])
+				if len(uid) > 1 {
+					ctx.Set("_CURRENT_TENANT_ID_", uid[1])
+				}
 			}
 			return ti, err
 		} else {

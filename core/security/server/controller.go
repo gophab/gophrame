@@ -105,7 +105,7 @@ func (o *OAuth2Controller) Login(c *gin.Context) {
 		info, err = o.OAuth2Server.manager.GenerateAccessToken(c.Request.Context(), oauth2.PasswordCredentials, &oauth2.TokenGenerateRequest{
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
-			UserID:       util.StringValue(userDetails.UserId),
+			UserID:       util.StringValue(userDetails.UserId) + "@" + util.StringValue(userDetails.TenantId),
 			RedirectURI:  "",
 			Scope:        "app",
 		})

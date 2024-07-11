@@ -39,11 +39,27 @@ func init() {
 	logger.Info("Initialized UserService")
 }
 
-func (s *UserService) Check(username, password string) (bool, error) {
-	return s.UserRepository.CheckUser(username, util.MD5(password))
+func (s *UserService) GetById(id string) (*domain.User, error) {
+	user, err := s.UserRepository.GetUserById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-func (s *UserService) CreateUser(user *dto.User) (*domain.User, error) {
+func (s *UserService) GetAll(user *dto.User, pageable query.Pageable) (int64, []domain.User) {
+	if user.Id != nil {
+		maps := make(map[string]interface{})
+		maps["del_flag"] = false
+		maps["id"] = user.Id
+		return s.UserRepository.GetUsers(maps, pageable)
+	} else {
+		return s.UserRepository.GetUsers(user.GetMaps(), pageable)
+	}
+}
+
+func (s *UserService) Create(user *dto.User) (*domain.User, error) {
 	if user.Login != nil {
 		if b, _ := s.UserRepository.CheckUserLogin(*user.Login); b {
 			return nil, errors.New("用户名重复,请更改！")
@@ -79,7 +95,7 @@ func (s *UserService) CreateUser(user *dto.User) (*domain.User, error) {
 	return res, nil
 }
 
-func (s *UserService) UpdateUser(user *dto.User) (*domain.User, error) {
+func (s *UserService) Update(user *dto.User) (*domain.User, error) {
 	if user.Id == nil {
 		return nil, errors.New("Id为空")
 	}
@@ -134,8 +150,8 @@ func (s *UserService) UpdateUser(user *dto.User) (*domain.User, error) {
 	return exists, err
 }
 
-func (s *UserService) Update(id string, column string, value interface{}) (*domain.User, error) {
-	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).Update(column, value); res.Error != nil {
+func (s *UserService) Patch(id string, column string, value interface{}) (*domain.User, error) {
+	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumn(column, value); res.Error != nil {
 		return nil, res.Error
 	} else {
 		if user, err := s.GetById(id); err == nil {
@@ -145,6 +161,43 @@ func (s *UserService) Update(id string, column string, value interface{}) (*doma
 			return nil, err
 		}
 	}
+}
+
+func (s *UserService) PatchAll(id string, kv map[string]interface{}) (*domain.User, error) {
+	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumns(kv); res.Error != nil {
+		return nil, res.Error
+	}
+
+	if user, err := s.GetById(id); err != nil {
+		return nil, err
+	} else {
+		eventbus.PublishEvent("USER_UPDATED", user)
+		return user, err
+	}
+}
+
+func (s *UserService) Delete(user *domain.User) error {
+	err := s.UserRepository.DeleteUser(user.Id)
+	if err != nil {
+		return err
+	}
+
+	if s.Enforcer != nil {
+		s.Enforcer.DeleteUser(user.Id)
+	}
+	return nil
+}
+
+func (s *UserService) DeleteById(id string) error {
+	user, _ := s.GetById(id)
+	if user != nil {
+		return s.Delete(user)
+	}
+	return nil
+}
+
+func (s *UserService) Check(username, password string) (bool, error) {
+	return s.UserRepository.CheckUser(username, util.MD5(password))
 }
 
 func (s *UserService) Get(username string) (*domain.User, error) {
@@ -183,44 +236,9 @@ func (s *UserService) GetByEmail(email string) (*domain.User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetById(id string) (*domain.User, error) {
-	user, err := s.UserRepository.GetUserById(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (s *UserService) GetAll(user *dto.User, pageable query.Pageable) (int64, []domain.User) {
-	if user.Id != nil {
-		maps := make(map[string]interface{})
-		maps["del_flag"] = false
-		maps["id"] = user.Id
-		return s.UserRepository.GetUsers(maps, pageable)
-	} else {
-		return s.UserRepository.GetUsers(user.GetMaps(), pageable)
-	}
-}
-
 // 查询用户信息(带岗位)
 func (a *UserService) GetAllWithOrganization(name string, pageable query.Pageable) (int64, []domain.UserWithOrganization) {
 	return a.UserRepository.GetUserWithOrganizations(name, pageable)
-}
-
-func (s *UserService) Delete(id string) error {
-	user, _ := s.GetById(id)
-	if user != nil {
-		err := s.UserRepository.DeleteUser(id)
-		if err != nil {
-			return err
-		}
-
-		if s.Enforcer != nil {
-			s.Enforcer.DeleteUser(user.Id)
-		}
-	}
-	return nil
 }
 
 func (s *UserService) ExistByID(id string) (bool, error) {

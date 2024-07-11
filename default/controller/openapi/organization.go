@@ -17,12 +17,19 @@ import (
 )
 
 var organizationOpenController *OrganizationOpenController = &OrganizationOpenController{}
+var adminOrganizationOpenController *AdminOrganizationOpenController = &AdminOrganizationOpenController{}
 
 func init() {
 	inject.InjectValue("organizationOpenController", organizationOpenController)
+	inject.InjectValue("adminOrganizationOpenController", adminOrganizationOpenController)
 }
 
 type OrganizationOpenController struct {
+	controller.ResourceController
+	OrganizationService *service.OrganizationService `inject:"organizationService"`
+}
+
+type AdminOrganizationOpenController struct {
 	controller.ResourceController
 	OrganizationService *service.OrganizationService `inject:"organizationService"`
 }
@@ -33,9 +40,6 @@ func (m *OrganizationOpenController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/organizations", Handler: m.GetList},
 		{HttpMethod: "GET", ResourcePath: "/organizations/:id", Handler: m.GetSubList},
 		{HttpMethod: "GET", ResourcePath: "/organization/:id", Handler: m.GetOrganization},
-		{HttpMethod: "POST", ResourcePath: "/organization", Handler: m.CreateOrganization},
-		{HttpMethod: "PUT", ResourcePath: "/organization", Handler: m.UpdateOrganization},
-		{HttpMethod: "DELETE", ResourcePath: "/organization/:id", Handler: m.DeleteOrganization},
 	})
 }
 
@@ -84,8 +88,65 @@ func (a *OrganizationOpenController) GetSubList(context *gin.Context) {
 	}
 }
 
+// 组织
+func (m *AdminOrganizationOpenController) AfterInitialize() {
+	m.SetResourceHandlers([]controller.ResourceHandler{
+		{HttpMethod: "GET", ResourcePath: "/organizations", Handler: m.GetList},
+		{HttpMethod: "GET", ResourcePath: "/organizations/:id", Handler: m.GetSubList},
+		{HttpMethod: "GET", ResourcePath: "/organization/:id", Handler: m.GetOrganization},
+		{HttpMethod: "POST", ResourcePath: "/organization", Handler: m.CreateOrganization},
+		{HttpMethod: "PUT", ResourcePath: "/organization", Handler: m.UpdateOrganization},
+		{HttpMethod: "DELETE", ResourcePath: "/organization/:id", Handler: m.DeleteOrganization},
+	})
+}
+
+// 1.根据id查询节点
+func (a *AdminOrganizationOpenController) GetOrganization(context *gin.Context) {
+	id, err := request.Param(context, "id").MustInt64()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	if result, _ := a.OrganizationService.GetById(id); result != nil {
+		response.Success(context, result)
+	} else {
+		response.NotFound(context, "")
+	}
+}
+
+// 1.省份城市列表
+func (a *AdminOrganizationOpenController) GetList(context *gin.Context) {
+	fid := request.Param(context, "fid").DefaultInt64(0)
+	name := request.Param(context, "name").DefaultString("")
+	pageable := query.GetPageable(context)
+
+	if counts, lists := a.OrganizationService.List(fid, name, pageable); counts > 0 {
+		context.Header("X-Total-Count", strconv.FormatInt(counts, 10))
+		response.Success(context, lists)
+	} else {
+		context.Header("X-Total-Count", "0")
+		response.Success(context, []any{})
+	}
+}
+
+// 1.根据fid查询子节点列表
+func (a *AdminOrganizationOpenController) GetSubList(context *gin.Context) {
+	fid, err := request.Param(context, "id").MustInt64()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	if subList := a.OrganizationService.GetSubList(fid); len(subList) > 0 {
+		response.Success(context, subList)
+	} else {
+		response.Success(context, []any{})
+	}
+}
+
 // 新增
-func (a *OrganizationOpenController) CreateOrganization(c *gin.Context) {
+func (a *AdminOrganizationOpenController) CreateOrganization(c *gin.Context) {
 	var data domain.Organization
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
@@ -100,7 +161,7 @@ func (a *OrganizationOpenController) CreateOrganization(c *gin.Context) {
 }
 
 // 修改
-func (a *OrganizationOpenController) UpdateOrganization(c *gin.Context) {
+func (a *AdminOrganizationOpenController) UpdateOrganization(c *gin.Context) {
 	var data domain.Organization
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
@@ -115,7 +176,7 @@ func (a *OrganizationOpenController) UpdateOrganization(c *gin.Context) {
 }
 
 // 删除
-func (a *OrganizationOpenController) DeleteOrganization(c *gin.Context) {
+func (a *AdminOrganizationOpenController) DeleteOrganization(c *gin.Context) {
 	id, err := request.Param(c, "id").MustInt64()
 	if err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)

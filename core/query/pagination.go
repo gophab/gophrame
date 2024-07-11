@@ -7,7 +7,6 @@ import (
 	"github.com/gophab/gophrame/core/form"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type Sort struct {
@@ -39,9 +38,14 @@ type Pageable interface {
 }
 
 type Pagination struct {
-	Page int    `json:"page"`
-	Size int    `json:"size"`
-	Sort []Sort `json:"sort"`
+	Total int64  `json:"total"`
+	Page  int    `json:"page"`
+	Size  int    `json:"size"`
+	Sort  []Sort `json:"sort"`
+}
+
+func (p *Pagination) GetTotal() int64 {
+	return p.Total
 }
 
 func (p *Pagination) GetPage() int {
@@ -145,7 +149,6 @@ func GetSize(c *gin.Context) int {
 }
 
 func GetSort(c *gin.Context) []Sort {
-
 	sorts := c.GetStringSlice("sort")
 	if len(sorts) <= 0 {
 		sorts := c.QueryArray("sort")
@@ -175,53 +178,4 @@ func GetSort(c *gin.Context) []Sort {
 	}
 
 	return result
-}
-
-func Page(tx *gorm.DB, pageable Pageable) *gorm.DB {
-	// Order
-	if !pageable.NoSort() {
-		for _, sort := range pageable.GetSort() {
-			tx.Statement.Order(sort.String())
-		}
-	}
-
-	// Page/Size
-	tx.Statement.Offset(pageable.GetOffset()).Limit(pageable.GetLimit())
-
-	return tx
-}
-
-func PageWithDefaultSort(tx *gorm.DB, pageable Pageable, defaultSort ...Sort) *gorm.DB {
-	// Order
-	if !pageable.NoSort() {
-		for _, sort := range pageable.GetSort() {
-			tx.Statement.Order(sort.String())
-		}
-	} else {
-		for _, sort := range defaultSort {
-			tx.Statement.Order(sort.String())
-		}
-	}
-
-	// Page/Size
-	tx.Statement.Offset(pageable.GetOffset()).Limit(pageable.GetLimit())
-
-	return tx
-}
-
-func PageWithDefaultOrder(tx *gorm.DB, pageable Pageable, defaultOrder ...string) *gorm.DB {
-	// Order
-	if !pageable.NoSort() {
-		for _, sort := range pageable.GetSort() {
-			tx.Statement.Order(sort.String())
-		}
-	} else {
-		for _, order := range defaultOrder {
-			tx.Statement.Order(order)
-		}
-	}
-
-	// Page/Size
-	tx.Statement.Offset(pageable.GetOffset()).Limit(pageable.GetLimit())
-	return tx
 }

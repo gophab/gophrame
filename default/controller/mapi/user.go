@@ -13,6 +13,7 @@ import (
 
 	"github.com/gophab/gophrame/errors"
 
+	"github.com/gophab/gophrame/default/domain"
 	"github.com/gophab/gophrame/default/service"
 	"github.com/gophab/gophrame/default/service/auth"
 	"github.com/gophab/gophrame/default/service/dto"
@@ -44,6 +45,7 @@ func (m *UserMController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/user/:id", Handler: m.GetUser},
 		{HttpMethod: "POST", ResourcePath: "/user", Handler: m.AddUser},
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
+		{HttpMethod: "PATCH", ResourcePath: "/user/:id", Handler: m.PatchUser},
 		{HttpMethod: "DELETE", ResourcePath: "/user/:id", Handler: m.DeleteUser},
 	})
 }
@@ -154,7 +156,7 @@ func (u *UserMController) AddUser(c *gin.Context) {
 		return
 	}
 
-	if res, err := service.GetUserService().CreateUser(&user); err == nil {
+	if res, err := service.GetUserService().Create(&user); err == nil {
 		eventbus.PublishEvent("USER_CREATED", res)
 		response.Success(c, res)
 	} else {
@@ -201,11 +203,41 @@ func (u *UserMController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if result, err := service.GetUserService().UpdateUser(&user); err != nil {
+	if result, err := service.GetUserService().Update(&user); err != nil {
 		response.SystemErrorCode(c, errors.ERROR_UPDATE_FAIL)
 	} else {
 		response.Success(c, result)
 	}
+}
+
+// @Summary   更新用户
+// @Tags  users
+// @Accept json
+// @Produce  json
+// @Param   body  body   models.User   true "body"
+// @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
+// @Failure 400 {string} json
+// @Router /api/v1/users/:id  [PUT]
+func (u *UserMController) PatchUser(c *gin.Context) {
+	id, err := request.Param(c, "id").MustString()
+	if err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	var params map[string]interface{}
+	if err := c.BindJSON(&params); err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	var result *domain.User
+	if result, err = service.GetUserService().PatchAll(id, params); err != nil {
+		response.SystemErrorCode(c, errors.ERROR_UPDATE_FAIL)
+		return
+	}
+
+	response.Success(c, result)
 }
 
 // @Summary   删除用户
@@ -236,7 +268,7 @@ func (u *UserMController) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	if err = u.UserService.Delete(id); err != nil {
+	if err = u.UserService.DeleteById(id); err != nil {
 		response.SystemErrorMessage(c, errors.ERROR_DELETE_FAIL, err.Error())
 	} else {
 		response.Success(c, nil)
@@ -252,7 +284,7 @@ func (u *UserMController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if res, err := u.UserService.CreateUser(&user); err != nil {
+	if res, err := u.UserService.Create(&user); err != nil {
 		response.FailMessage(c, 400, err.Error())
 		return
 	} else {

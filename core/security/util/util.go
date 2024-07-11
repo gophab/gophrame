@@ -38,17 +38,23 @@ func GetToken(c *gin.Context) (string, error) {
 }
 
 func GetCurrentUserId(c *gin.Context) string {
-	currentUserId := c.Value("_CURRENT_USER_ID_").(string)
-	if currentUserId != "" {
-		return currentUserId
+	v := c.Value("_CURRENT_USER_ID_")
+	if v != nil {
+		currentUserId := v.(string)
+		if currentUserId != "" {
+			return currentUserId
+		}
 	}
 	return ""
 }
 
 func GetCurrentTenantId(c *gin.Context) string {
-	currentTenantId := c.Value("_CURRENT_TENANT_ID_").(string)
-	if currentTenantId != "" {
-		return currentTenantId
+	v := c.Value("_CURRENT_TENANT_ID_")
+	if v != nil {
+		currentTenantId := v.(string)
+		if currentTenantId != "" {
+			return currentTenantId
+		}
 	}
 
 	currentUser := GetCurrentUser(c)

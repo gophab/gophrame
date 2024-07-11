@@ -161,7 +161,7 @@ func (u *UserController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if res, err := service.GetUserService().CreateUser(&user); err == nil {
+	if res, err := service.GetUserService().Create(&user); err == nil {
 		response.Success(c, res)
 	} else {
 		response.SystemErrorMessage(c, errors.ERROR_CREATE_FAIL, err.Error())
@@ -209,7 +209,7 @@ func (u *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if result, err := service.GetUserService().UpdateUser(&user); err != nil {
+	if result, err := service.GetUserService().Update(&user); err != nil {
 		response.SystemErrorMessage(c, errors.ERROR_UPDATE_FAIL, err.Error())
 	} else {
 		response.Success(c, result)
@@ -242,7 +242,7 @@ func (u *UserController) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	if err := u.UserService.Delete(id); err != nil {
+	if err := u.UserService.DeleteById(id); err != nil {
 		response.SystemErrorMessage(c, errors.ERROR_DELETE_FAIL, err.Error())
 	} else {
 		response.Success(c, nil)

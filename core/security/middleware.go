@@ -1,6 +1,8 @@
 package security
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/gophab/gophrame/core/logger"
@@ -93,7 +95,11 @@ func CheckTokenVerify(conf ...HandlerConfig) gin.HandlerFunc {
 			return
 		}
 
-		context.Set("_CURRENT_USER_ID_", tokenInfo.GetUserID())
+		var uid = strings.Split(tokenInfo.GetUserID(), "@")
+		context.Set("_CURRENT_USER_ID_", uid[0])
+		if len(uid) > 1 {
+			context.Set("_CURRENT_TENANT_ID_", uid[1])
+		}
 
 		context.Set(tokenKey, tokenInfo)
 
@@ -152,7 +158,11 @@ func HandleTokenVerify(conf ...HandlerConfig) gin.HandlerFunc {
 			return
 		}
 
-		context.Set("_CURRENT_USER_ID_", tokenInfo.GetUserID())
+		var uid = strings.Split(tokenInfo.GetUserID(), "@")
+		context.Set("_CURRENT_USER_ID_", uid[0])
+		if len(uid) > 1 {
+			context.Set("_CURRENT_TENANT_ID_", uid[1])
+		}
 
 		context.Set(tokenKey, tokenInfo)
 

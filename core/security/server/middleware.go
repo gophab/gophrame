@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-oauth2/oauth2/v4"
@@ -20,7 +21,11 @@ func ValidationBearerToken(c *gin.Context) (oauth2.TokenInfo, error) {
 		}
 
 		if ti != nil {
-			c.Set("_CURRENT_USER_ID_", ti.GetUserID())
+			var uid = strings.Split(ti.GetUserID(), "@")
+			c.Set("_CURRENT_USER_ID_", uid[0])
+			if len(uid) > 1 {
+				c.Set("_CURRENT_TENANT_ID_", uid[1])
+			}
 		}
 
 		return ti, nil
