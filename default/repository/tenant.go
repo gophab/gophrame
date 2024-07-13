@@ -33,8 +33,8 @@ func (r *TenantRepository) GetById(id string) (*domain.Tenant, error) {
 	}
 }
 
-func (a *TenantRepository) GetByIds(ids []int64) (result []domain.Tenant) {
-	a.Where("id IN ?", ids).Find(&result)
+func (a *TenantRepository) GetByIds(ids []string) (result []*domain.Tenant, err error) {
+	err = a.Where("id IN ?", ids).Find(&result).Error
 	return
 }
 
@@ -102,19 +102,32 @@ func (r *TenantRepository) DeleteById(id string) bool {
 	return false
 }
 
-func (r *TenantRepository) Find(name, licenseId string, pageable query.Pageable) (total int64, list []*domain.Tenant) {
-	var tx = r.DB
-	if name != "" {
-		tx = r.Where("name like ?", "%"+name+"%")
-	}
-	if licenseId != "" {
-		tx = r.Where("license_id like ?", "%"+licenseId+"%")
+func (r *TenantRepository) Find(conds map[string]interface{}, pageable query.Pageable) (total int64, list []*domain.Tenant) {
+	var tx = r.DB.Model(&domain.Tenant{})
+
+	var search = conds["search"]
+	var id = conds["id"]
+	var name = conds["name"]
+	var licenseId = conds["licenseId"]
+
+	if search != nil && search != "" {
+		tx = tx.Where("name like ? or license_id like ? or id = ?", "%"+search.(string)+"%", "%"+search.(string)+"%", search)
+	} else {
+		if name != nil && name != "" {
+			tx = tx.Where("name like ?", "%"+name.(string)+"%")
+		}
+		if licenseId != nil && licenseId != "" {
+			tx = tx.Where("license_id like ?", "%"+licenseId.(string)+"%")
+		}
+		if id != nil && id != "" {
+			tx = tx.Where("id = ?", id)
+		}
 	}
 
 	list = make([]*domain.Tenant, 0)
 	total = 0
 
-	if r.Count(&total).Error != nil || total == 0 {
+	if tx.Count(&total).Error != nil || total == 0 {
 		return
 	}
 

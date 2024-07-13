@@ -86,7 +86,11 @@ func (s *TenantService) GetById(id string) (*domain.Tenant, error) {
 	return s.TenantRepository.GetById(id)
 }
 
-func (s *TenantService) Find(name, licenseId string, pageable query.Pageable) (total int64, list []*domain.Tenant) {
-	total, list = s.TenantRepository.Find(name, licenseId, pageable)
+func (s *TenantService) GetByIds(ids []string) ([]*domain.Tenant, error) {
+	return s.TenantRepository.GetByIds(ids)
+}
+
+func (s *TenantService) Find(conds map[string]interface{}, pageable query.Pageable) (total int64, list []*domain.Tenant) {
+	total, list = s.TenantRepository.Find(conds, pageable)
 	return
 }

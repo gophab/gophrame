@@ -236,6 +236,10 @@ func (s *UserService) GetByEmail(email string) (*domain.User, error) {
 	return user, nil
 }
 
+func (a *UserService) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.User) {
+	return a.UserRepository.Find(conds, pageable)
+}
+
 // 查询用户信息(带岗位)
 func (a *UserService) GetAllWithOrganization(name string, pageable query.Pageable) (int64, []domain.UserWithOrganization) {
 	return a.UserRepository.GetUserWithOrganizations(name, pageable)

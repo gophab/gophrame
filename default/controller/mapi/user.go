@@ -8,6 +8,7 @@ import (
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/query"
 	SecurityUtil "github.com/gophab/gophrame/core/security/util"
+	"github.com/gophab/gophrame/core/util/collection"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
 
@@ -27,6 +28,7 @@ import (
 type UserMController struct {
 	controller.ResourceController
 	UserService      *service.UserService   `inject:"userService"`
+	TenantService    *service.TenantService `inject:"tenantService"`
 	AuthorityService *auth.AuthorityService `inject:"authorityService"`
 	UserMapper       *mapper.UserMapper     `inject:"userMapper"`
 }
@@ -83,7 +85,13 @@ func (u *UserMController) GetCurrentUser(c *gin.Context) {
 // @Failure 400 {string} json
 // @Router /api/v1/users  [GET]
 func (u *UserMController) GetUsers(c *gin.Context) {
+	search := request.Param(c, "search").DefaultString("")
+	id := request.Param(c, "id").DefaultString("")
 	name := request.Param(c, "name").DefaultString("")
+	login := request.Param(c, "login").DefaultString("")
+	mobile := request.Param(c, "mobile").DefaultString("")
+	email := request.Param(c, "email").DefaultString("")
+	tenantId := request.Param(c, "tenantId").DefaultString("")
 	organization := request.Param(c, "organization").DefaultBool(false)
 
 	if organization {
@@ -93,13 +101,50 @@ func (u *UserMController) GetUsers(c *gin.Context) {
 		}
 		response.Page(c, count, list)
 	} else {
-		example := dto.User{}
-		example.Login = &name
+		conds := make(map[string]interface{})
+		if search != "" {
+			conds["search"] = search
+		}
+		if id != "" {
+			conds["id"] = id
+		}
+		if name != "" {
+			conds["name"] = name
+		}
+		if login != "" {
+			conds["login"] = login
+		}
+		if mobile != "" {
+			conds["mobile"] = mobile
+		}
+		if email != "" {
+			conds["email"] = email
+		}
+		if tenantId != "" {
+			conds["tenantId"] = tenantId
+		}
 
-		count, list := u.UserService.GetAll(&example, query.GetPageable(c))
+		count, list := u.UserService.Find(conds, query.GetPageable(c))
+
+		tenantIds := collection.MapToSet[string](list, func(i interface{}) string {
+			return i.(*domain.User).TenantId
+		})
+
+		var tenants = make(map[string]*domain.Tenant)
+		if list, err := u.TenantService.GetByIds(tenantIds.AsList()); err == nil {
+			for _, item := range list {
+				tenants[item.Id] = item
+			}
+		}
+		tenants["SYSTEM"] = &domain.Tenant{
+			Id:   "SYSTEM",
+			Name: "平台",
+		}
 		for _, v := range list {
 			v.Password = ""
+			v.Tenant = tenants[v.TenantId]
 		}
+
 		response.Page(c, count, list)
 	}
 }

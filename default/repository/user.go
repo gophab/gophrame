@@ -133,6 +133,52 @@ func (h *UserRepository) GetUsers(maps interface{}, pageable query.Pageable) (in
 	return 0, []domain.User{}
 }
 
+func (r *UserRepository) Find(conds map[string]interface{}, pageable query.Pageable) (total int64, list []*domain.User) {
+	var tx = r.DB.Model(&domain.User{})
+
+	var search = conds["search"]
+	var id = conds["id"]
+	var name = conds["name"]
+	var login = conds["licenseId"]
+	var email = conds["email"]
+	var mobile = conds["mobile"]
+	var tenantId = conds["tenantId"]
+
+	if search != nil && search != "" {
+		tx = tx.Where("name like ? or login like ? or email like ? or mobile like ? or id = ?",
+			"%"+search.(string)+"%", "%"+search.(string)+"%", "%"+search.(string)+"%", "%"+search.(string)+"%", search)
+	} else {
+		if id != nil && id != "" {
+			tx = tx.Where("id = ?", id)
+		}
+		if name != nil && name != "" {
+			tx = tx.Where("name like ?", "%"+name.(string)+"%")
+		}
+		if login != nil && login != "" {
+			tx = tx.Where("login like ?", "%"+login.(string)+"%")
+		}
+		if email != nil && email != "" {
+			tx = tx.Where("email like ?", "%"+email.(string)+"%")
+		}
+		if mobile != nil && mobile != "" {
+			tx = tx.Where("mobile like ?", "%"+login.(string)+"%")
+		}
+	}
+
+	if tenantId != nil && tenantId != "" {
+		tx = tx.Where("tenant_id = ?", tenantId)
+	}
+
+	total = 0
+
+	if tx.Count(&total).Error != nil || total == 0 {
+		return
+	}
+
+	query.Page(tx, pageable).Find(&list)
+	return
+}
+
 func (h *UserRepository) GetUser(username string) (*domain.User, error) {
 	var user domain.User
 	err := h.Preload("Roles").Where("(login = ? OR mobile = ? OR email = ?) AND del_flag = ? ", username, username, username, false).First(&user).Error

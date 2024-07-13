@@ -18,6 +18,7 @@ var Resources = &controller.Controllers{
 		permission.CheckUserPermissions(), // 权限验证
 	},
 	Controllers: []controller.Controller{
+		tenantMController,
 		userMController,
 		roleMController,
 		socialUserMController,

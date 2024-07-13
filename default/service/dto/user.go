@@ -13,6 +13,7 @@ type User struct {
 	CreatedTime      *time.Time `json:"createdTime"`
 	LastModifiedTime *time.Time `json:"lastModifiedTime"`
 	DelFlag          *bool      `json:"del_flag"`
+	Admin            *bool      `json:"admin"`
 	Status           *int       `json:"status"`
 	Avatar           *string    `json:"avatar,omitempty"`
 	Remark           *string    `json:"remark,omitempty"`

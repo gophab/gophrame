@@ -4,6 +4,8 @@ import (
 	"errors"
 	"reflect"
 	"strings"
+
+	"golang.org/x/exp/constraints"
 )
 
 func Map[T any](container interface{}, f func(interface{}) T) []T {
@@ -18,6 +20,23 @@ func Map[T any](container interface{}, f func(interface{}) T) []T {
 		iter := containerValue.MapRange()
 		for iter.Next() {
 			result = append(result, f(iter.Value().Interface()))
+		}
+	}
+	return result
+}
+
+func MapToSet[T constraints.Ordered](container interface{}, f func(interface{}) T) Set[T] {
+	result := make(Set[T])
+	containerValue := reflect.ValueOf(container)
+	switch reflect.TypeOf(container).Kind() {
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < containerValue.Len(); i++ {
+			result.Add(f(containerValue.Index(i).Interface()))
+		}
+	case reflect.Map:
+		iter := containerValue.MapRange()
+		for iter.Next() {
+			result.Add(f(iter.Value().Interface()))
 		}
 	}
 	return result
