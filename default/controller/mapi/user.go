@@ -1,6 +1,5 @@
 package mapi
 
-import "C"
 import (
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/eventbus"
