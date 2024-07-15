@@ -4,6 +4,7 @@ import (
 	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/core/util"
 	"github.com/gophab/gophrame/service"
 
 	"github.com/gophab/gophrame/default/domain"
@@ -44,7 +45,7 @@ func (s *TenantService) Update(tenant *domain.Tenant) (*domain.Tenant, error) {
 }
 
 func (s *TenantService) Patch(id string, column string, value interface{}) (*domain.Tenant, error) {
-	if res := s.TenantRepository.Model(&domain.Tenant{}).Where("id=?", id).UpdateColumn(column, value); res.Error != nil {
+	if res := s.TenantRepository.Model(&domain.Tenant{}).Where("id=?", id).UpdateColumn(util.DbFieldName(column), value); res.Error != nil {
 		return nil, res.Error
 	} else {
 		if tenant, err := s.GetById(id); err == nil {
@@ -57,7 +58,7 @@ func (s *TenantService) Patch(id string, column string, value interface{}) (*dom
 }
 
 func (s *TenantService) PatchAll(id string, kv map[string]interface{}) (*domain.Tenant, error) {
-	if res := s.TenantRepository.Model(&domain.Tenant{}).Where("id=?", id).UpdateColumns(kv); res.Error != nil {
+	if res := s.TenantRepository.Model(&domain.Tenant{}).Where("id=?", id).UpdateColumns(util.DbFields(kv)); res.Error != nil {
 		return nil, res.Error
 	}
 
@@ -91,6 +92,6 @@ func (s *TenantService) GetByIds(ids []string) ([]*domain.Tenant, error) {
 }
 
 func (s *TenantService) Find(conds map[string]interface{}, pageable query.Pageable) (total int64, list []*domain.Tenant) {
-	total, list = s.TenantRepository.Find(conds, pageable)
+	total, list = s.TenantRepository.Find(util.DbFields(conds), pageable)
 	return
 }

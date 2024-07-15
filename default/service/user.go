@@ -151,7 +151,7 @@ func (s *UserService) Update(user *dto.User) (*domain.User, error) {
 }
 
 func (s *UserService) Patch(id string, column string, value interface{}) (*domain.User, error) {
-	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumn(column, value); res.Error != nil {
+	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumn(util.DbFieldName(column), value); res.Error != nil {
 		return nil, res.Error
 	} else {
 		if user, err := s.GetById(id); err == nil {
@@ -164,7 +164,7 @@ func (s *UserService) Patch(id string, column string, value interface{}) (*domai
 }
 
 func (s *UserService) PatchAll(id string, kv map[string]interface{}) (*domain.User, error) {
-	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumns(kv); res.Error != nil {
+	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumns(util.DbFields(kv)); res.Error != nil {
 		return nil, res.Error
 	}
 
@@ -237,7 +237,7 @@ func (s *UserService) GetByEmail(email string) (*domain.User, error) {
 }
 
 func (a *UserService) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.User) {
-	return a.UserRepository.Find(conds, pageable)
+	return a.UserRepository.Find(util.DbFields(conds), pageable)
 }
 
 // 查询用户信息(带岗位)

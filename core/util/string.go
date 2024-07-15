@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"math/rand"
+	"regexp"
 	"time"
 )
 
@@ -88,6 +89,65 @@ func Capitalize(str string) string {
 		}
 	}
 	return upperStr
+}
+
+// 驼峰转C
+func Camel2C(str string) string {
+	var cstr string
+	vv := []rune(str) // 后文有介绍
+	for i := 0; i < len(vv); i++ {
+		if vv[i] >= 65 && vv[i] <= 90 { // 后文有介绍
+			vv[i] += 32 // string的码表相差32位
+			if i > 0 {
+				cstr += "_"
+			}
+			cstr += string(vv[i])
+		} else {
+			cstr += string(vv[i])
+		}
+	}
+	return cstr
+}
+
+// C转驼峰
+func C2Camel(str string) string {
+	var cstr string
+	vv := []rune(str) // 后文有介绍
+	for i := 0; i < len(vv); i++ {
+		if vv[i] == 45 || vv[i] == 95 {
+			i++
+			if i >= len(vv) {
+				break
+			}
+			if vv[i] >= 97 && vv[i] <= 122 { // 后文有介绍
+				if cstr != "" {
+					vv[i] -= 32 // string的码表相差32位
+				}
+				cstr += string(vv[i])
+			}
+		} else {
+			cstr += string(vv[i])
+		}
+	}
+	return cstr
+}
+
+var variableNameReg = regexp.MustCompile(`\w+`)
+
+func VariableName(str string) string {
+	return variableNameReg.FindString(str)
+}
+
+func DbFieldName(s string) string {
+	return Camel2C(VariableName(s))
+}
+
+func DbFields(kv map[string]interface{}) map[string]interface{} {
+	var tkv = make(map[string]interface{})
+	for k, v := range kv {
+		tkv[Camel2C(VariableName(k))] = v
+	}
+	return tkv
 }
 
 func GenerateRandomString(length int) string {
