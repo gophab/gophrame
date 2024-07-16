@@ -3,6 +3,7 @@ package domain
 import (
 	"time"
 
+	SecurityUtil "github.com/gophab/gophrame/core/security/util"
 	"github.com/gophab/gophrame/core/snowflake"
 	"github.com/gophab/gophrame/core/util"
 
@@ -30,11 +31,36 @@ type AuditingEntity struct {
 	LastModifiedBy string `gorm:"column:last_modified_by" json:"lastModifiedBy"`
 }
 
+func (m *AuditingEntity) BeforeCreate(tx *gorm.DB) (err error) {
+	if m.CreatedBy == "" {
+		m.CreatedBy = SecurityUtil.GetCurrentUserId(nil)
+	}
+	return
+}
+
+func (m *AuditingEntity) BeforeSave(tx *gorm.DB) (err error) {
+	if m.LastModifiedBy == "" {
+		m.LastModifiedBy = SecurityUtil.GetCurrentUserId(nil)
+	}
+	return
+}
+
 type DeletableEntity struct {
 	AuditingEntity
 	DelFlag     bool      `gorm:"column:del_flag;default:false" json:"delFlag"`
 	DeletedTime time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time"`
 	DeletedBy   string    `gorm:"column:deleted_by" json:"deleted_by"`
+}
+
+func (m *DeletableEntity) BeforeSave(tx *gorm.DB) (err error) {
+	if m.DelFlag && m.DeletedBy == "" {
+		m.DeletedBy = SecurityUtil.GetCurrentUserId(nil)
+		if m.DeletedBy == "" {
+			m.DeletedBy = "internal"
+		}
+		m.DeletedTime = time.Now()
+	}
+	return
 }
 
 type Model struct {
@@ -50,11 +76,36 @@ type AuditingModel struct {
 	LastModifiedBy string `gorm:"lastModified_by" json:"lastModifiedBy"`
 }
 
+func (m *AuditingModel) BeforeCreate(tx *gorm.DB) (err error) {
+	if m.CreatedBy == "" {
+		m.CreatedBy = SecurityUtil.GetCurrentUserId(nil)
+	}
+	return
+}
+
+func (m *AuditingModel) BeforeSave(tx *gorm.DB) (err error) {
+	if m.LastModifiedBy == "" {
+		m.LastModifiedBy = SecurityUtil.GetCurrentUserId(nil)
+	}
+	return
+}
+
 type DeletableModel struct {
 	AuditingModel
 	DelFlag     bool      `gorm:"column:del_flag;default:false" json:"delFlag"`
 	DeletedTime time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time"`
 	DeletedBy   string    `gorm:"column:deleted_by" json:"deleted_by"`
+}
+
+func (m *DeletableModel) BeforeSave(tx *gorm.DB) (err error) {
+	if m.DelFlag && m.DeletedBy == "" {
+		m.DeletedBy = SecurityUtil.GetCurrentUserId(nil)
+		if m.DeletedBy == "" {
+			m.DeletedBy = "internal"
+		}
+		m.DeletedTime = time.Now()
+	}
+	return
 }
 
 func (m *Model) BeforeCreate(tx *gorm.DB) (err error) {

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/gophab/gophrame/core/json"
+	"github.com/gophab/gophrame/core/routine"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/timandy/routine"
 )
 
 type RedisLock struct {
@@ -18,7 +18,7 @@ type RedisLock struct {
 	timeout   time.Duration
 	locked    bool
 	reentrant bool // 同线程可重入机制
-	counter   routine.ThreadLocal
+	counter   routine.ThreadLocal[*int]
 }
 
 func NewRedisLock(client *RedisClient, key string) *RedisLock {
@@ -51,7 +51,7 @@ func (l *RedisLock) Lock(timeout ...int) (bool, error) {
 
 func (l *RedisLock) Unlock() {
 	if l.reentrant && l.counter.Get() != nil {
-		c := *l.counter.Get().(*int) - 1
+		c := *l.counter.Get() - 1
 		l.counter.Set(&c)
 		if c > 0 {
 			return
@@ -67,7 +67,7 @@ func (l *RedisLock) Unlock() {
 
 func (l *RedisLock) TryLock() bool {
 	if l.reentrant && l.counter.Get() != nil {
-		c := *l.counter.Get().(*int) + 1
+		c := *l.counter.Get() + 1
 		l.counter.Set(&c)
 	}
 

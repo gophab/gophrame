@@ -34,7 +34,7 @@ func (c *ResourceController) InitRouter(r *gin.RouterGroup) *gin.RouterGroup {
 	r = c.Controllers.InitRouter(r)
 	if len(c.ResourceHandlers) > 0 {
 		for _, handler := range c.ResourceHandlers {
-			r.Handle(handler.HttpMethod, handler.ResourcePath, handler.Handler)
+			r.Handle(handler.HttpMethod, handler.ResourcePath, SetGlobalContext(), handler.Handler)
 		}
 	}
 	return r

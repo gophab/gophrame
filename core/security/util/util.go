@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gophab/gophrame/core/context"
 	SecurityModel "github.com/gophab/gophrame/core/security/model"
 	"github.com/gophab/gophrame/core/util"
 	"github.com/gophab/gophrame/errors"
@@ -37,7 +38,22 @@ func GetToken(c *gin.Context) (string, error) {
 	return "", fmt.Errorf("authorization error: %d %s", code, errors.GetErrorMessage(code))
 }
 
+func GetCurrentContext() *gin.Context {
+	var v = context.GetContextValue("_current_context_")
+	if v != nil {
+		return v.(*gin.Context)
+	}
+	return nil
+}
+
 func GetCurrentUserId(c *gin.Context) string {
+	if c == nil {
+		c = GetCurrentContext()
+	}
+	if c == nil {
+		return ""
+	}
+
 	v := c.Value("_CURRENT_USER_ID_")
 	if v != nil {
 		currentUserId := v.(string)
@@ -49,6 +65,13 @@ func GetCurrentUserId(c *gin.Context) string {
 }
 
 func GetCurrentTenantId(c *gin.Context) string {
+	if c == nil {
+		c = GetCurrentContext()
+	}
+	if c == nil {
+		return ""
+	}
+
 	v := c.Value("_CURRENT_TENANT_ID_")
 	if v != nil {
 		currentTenantId := v.(string)
@@ -66,6 +89,13 @@ func GetCurrentTenantId(c *gin.Context) string {
 }
 
 func GetCurrentUser(c *gin.Context) *SecurityModel.UserDetails {
+	if c == nil {
+		c = GetCurrentContext()
+	}
+	if c == nil {
+		return nil
+	}
+
 	if c.Value("_CURRENT_USER_") != nil {
 		return c.Value("_CURRENT_USER_").(*SecurityModel.UserDetails)
 	}
