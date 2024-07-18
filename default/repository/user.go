@@ -139,10 +139,10 @@ func (r *UserRepository) Find(conds map[string]interface{}, pageable query.Pagea
 	var search = conds["search"]
 	var id = conds["id"]
 	var name = conds["name"]
-	var login = conds["licenseId"]
+	var login = conds["login"]
 	var email = conds["email"]
 	var mobile = conds["mobile"]
-	var tenantId = conds["tenantId"]
+	var tenantId = conds["tenant_id"]
 
 	if search != nil && search != "" {
 		tx = tx.Where("name like ? or login like ? or email like ? or mobile like ? or id = ?",

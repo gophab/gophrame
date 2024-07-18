@@ -35,7 +35,7 @@ func (m *AuditingEntity) BeforeCreate(tx *gorm.DB) (err error) {
 	if m.CreatedBy == "" {
 		m.CreatedBy = SecurityUtil.GetCurrentUserId(nil)
 	}
-	return
+	return m.Entity.BeforeCreate(tx)
 }
 
 func (m *AuditingEntity) BeforeSave(tx *gorm.DB) (err error) {
@@ -60,7 +60,7 @@ func (m *DeletableEntity) BeforeSave(tx *gorm.DB) (err error) {
 		}
 		m.DeletedTime = time.Now()
 	}
-	return
+	return m.AuditingEntity.BeforeSave(tx)
 }
 
 type Model struct {
@@ -80,7 +80,7 @@ func (m *AuditingModel) BeforeCreate(tx *gorm.DB) (err error) {
 	if m.CreatedBy == "" {
 		m.CreatedBy = SecurityUtil.GetCurrentUserId(nil)
 	}
-	return
+	return m.Model.BeforeCreate(tx)
 }
 
 func (m *AuditingModel) BeforeSave(tx *gorm.DB) (err error) {
@@ -105,7 +105,7 @@ func (m *DeletableModel) BeforeSave(tx *gorm.DB) (err error) {
 		}
 		m.DeletedTime = time.Now()
 	}
-	return
+	return m.AuditingModel.BeforeSave(tx)
 }
 
 func (m *Model) BeforeCreate(tx *gorm.DB) (err error) {

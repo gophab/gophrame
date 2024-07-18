@@ -11,6 +11,9 @@ import (
 type Tenant struct {
 	Id               string    `gorm:"column:id;primaryKey" json:"id" primaryKey:"yes"`
 	Name             string    `gorm:"column:name" json:"name"`
+	NameCn           string    `gorm:"column:name_cn" json:"nameCn"`
+	NameTw           string    `gorm:"column:name_tw" json:"nameTw"`
+	NameEn           string    `gorm:"column:name_en" json:"nameEn"`
 	Description      string    `gorm:"column:description" json:"description"`
 	Logo             string    `gorm:"column:logo" json:"logo"`
 	LicenseId        string    `gorm:"column:license_id" json:"licenseId"`

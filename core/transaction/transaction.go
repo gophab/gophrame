@@ -1,29 +1,44 @@
 package transaction
 
 import (
+	"context"
+	"time"
+
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/routine"
 	"gorm.io/gorm"
 )
 
-type TransactionManager struct {
-	*gorm.DB `inject:"database"`
-	session  *routine.ThreadLocal[*gorm.DB]
+type DBSession struct {
+	*gorm.DB
+	inTransaction bool
 }
 
-var transactionManager = &TransactionManager{session: routine.NewThreadLocal(&gorm.DB{})}
+type TransactionManager struct {
+	*gorm.DB `inject:"database"`
+	session  *routine.ThreadLocal[*DBSession]
+}
+
+var transactionManager = &TransactionManager{session: routine.NewThreadLocal(&DBSession{})}
 
 func init() {
 	inject.InjectValue("transactionManager", transactionManager)
 }
 
 func (m *TransactionManager) InTransaction() bool {
-	return m.session.Get() != nil
+	dbSession := m.session.Get()
+	if dbSession != nil {
+		return dbSession.inTransaction
+	}
+	return false
 }
 
 func (m *TransactionManager) BeginTransaction() {
 	if !m.InTransaction() {
-		// m.session.Set(m.Begin())
+		m.session.Set(&DBSession{
+			DB:            m.Session().Begin(),
+			inTransaction: true,
+		})
 	}
 }
 
@@ -55,10 +70,14 @@ func (m *TransactionManager) EndTransaction() error {
 }
 
 func (m *TransactionManager) Session() *gorm.DB {
-	if m.InTransaction() {
-		return m.session.Get()
+	if m.session.Get() == nil {
+		timeoutContext, _ := context.WithTimeout(context.Background(), time.Second)
+		m.session.Set(&DBSession{
+			DB:            m.DB.WithContext(timeoutContext),
+			inTransaction: false,
+		})
 	}
-	return m.DB
+	return m.session.Get().DB
 }
 
 func Begin() {

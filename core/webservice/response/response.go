@@ -99,7 +99,7 @@ func Unprocessable(c *gin.Context, msg string) {
 	ErrorMessage(c, http.StatusUnprocessableEntity, http.StatusUnprocessableEntity, msg)
 }
 
-func NowAllowed(c *gin.Context, msg string) {
+func NotAllowed(c *gin.Context, msg string) {
 	ErrorMessage(c, http.StatusMethodNotAllowed, http.StatusMethodNotAllowed, msg)
 }
 

@@ -189,14 +189,41 @@ func (u *UserMController) AddUser(c *gin.Context) {
 	}
 
 	valid := validation.Validation{}
-	valid.MaxSize(user.Login, 100, "login").Message("最长为100字符")
-	valid.MaxSize(user.Mobile, 20, "mobile").Message("最长为20字符")
-	valid.MaxSize(user.Email, 100, "mobile").Message("最长为100字符")
-	valid.MaxSize(user.Password, 100, "password").Message("最长为100字符")
+
+	// name 不为空
+	valid.MaxSize(user.Name, 100, "name").Message("最长为100字符")
+
+	// password 不为空
+	valid.MaxSize(*user.PlainPassword, 100, "password").Message("最长为100字符")
+	valid.MinSize(*user.PlainPassword, 6, "password").Message("最短为6字符")
+	user.Password = user.PlainPassword
+
+	if user.Login != nil {
+		if *user.Login == "" {
+			user.Login = nil
+		} else {
+			valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
+			valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+		}
+	}
+	if user.Mobile != nil {
+		if *user.Mobile == "" {
+			user.Mobile = nil
+		} else {
+			valid.Mobile(*user.Mobile, "mobile").Message("无效手机号")
+		}
+	}
+	if user.Email != nil {
+		if *user.Email == "" {
+			user.Email = nil
+		} else {
+			valid.Email(*user.Email, "email").Message("无效的Email")
+		}
+	}
 
 	if valid.HasErrors() {
 		logger.MarkErrors(valid.Errors)
-		response.FailCode(c, errors.INVALID_PARAMS)
+		response.FailMessage(c, errors.INVALID_PARAMS, valid.Errors[0].Message)
 		return
 	}
 
@@ -225,10 +252,38 @@ func (u *UserMController) UpdateUser(c *gin.Context) {
 
 	valid := validation.Validation{}
 	valid.MinSize(user.Id, 1, "id").Message("ID必须大于0")
-	valid.MaxSize(user.Login, 100, "login").Message("最长为100字符")
-	valid.MaxSize(user.Mobile, 20, "mobile").Message("最长为20字符")
-	valid.MaxSize(user.Email, 100, "email").Message("最长为100字符")
-	valid.MaxSize(user.Password, 100, "password").Message("最长为100字符")
+	valid.MaxSize(user.Name, 100, "name").Message("最长为100字符")
+
+	if user.Login != nil {
+		if *user.Login == "" {
+			user.Login = nil
+		} else {
+			valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
+			valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+		}
+	}
+	if user.Mobile != nil {
+		if *user.Mobile == "" {
+			user.Mobile = nil
+		} else {
+			valid.Mobile(*user.Mobile, "mobile").Message("无效手机号")
+		}
+	}
+	if user.Email != nil {
+		if *user.Email == "" {
+			user.Email = nil
+		} else {
+			valid.Email(*user.Email, "email").Message("无效的Email")
+		}
+	}
+
+	if user.PlainPassword != nil {
+		if *user.PlainPassword != "" {
+			valid.MaxSize(*user.PlainPassword, 100, "password").Message("最长为100字符")
+			valid.MinSize(*user.PlainPassword, 6, "password").Message("最短为6字符")
+			user.Password = user.PlainPassword
+		}
+	}
 
 	if valid.HasErrors() {
 		logger.MarkErrors(valid.Errors)
@@ -236,13 +291,13 @@ func (u *UserMController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	exists, err := service.GetUserService().ExistByID(*user.Id)
+	exists, err := service.GetUserService().GetById(*user.Id)
 	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_EXIST_FAIL)
 		return
 	}
 
-	if !exists {
+	if exists == nil {
 		response.NotFound(c, *user.Id)
 		return
 	}

@@ -12,5 +12,6 @@ func init() {
 
 func Start() {
 	logger.Debug("Starting Core Controller ...")
+	router.Root().Use(SetGlobalContext())
 	InitRouter(router.Root())
 }

@@ -38,6 +38,7 @@ var userOpenController *UserOpenController = &UserOpenController{}
 type AdminUserOpenController struct {
 	controller.ResourceController
 	UserService       *service.UserService       `inject:"userService"`
+	TenantService     *service.TenantService     `inject:"tenantService"`
 	SocialUserService *service.SocialUserService `inject:"socialUserService"`
 	AuthorityService  *auth.AuthorityService     `inject:"authorityService"`
 	InviteCodeService *service.InviteCodeService `inject:"inviteCodeService"`
@@ -262,23 +263,43 @@ func (u *AdminUserOpenController) GetCurrentUser(c *gin.Context) {
 // @Failure 400 {string} json
 // @Router /api/v1/users  [GET]
 func (u *AdminUserOpenController) GetUsers(c *gin.Context) {
+	search := request.Param(c, "search").DefaultString("")
+	id := request.Param(c, "id").DefaultString("")
 	name := request.Param(c, "name").DefaultString("")
+	login := request.Param(c, "login").DefaultString("")
+	mobile := request.Param(c, "mobile").DefaultString("")
+	email := request.Param(c, "email").DefaultString("")
 	organization := request.Param(c, "organization").DefaultBool(false)
+	tenantId := SecurityUtil.GetCurrentTenantId(c)
+
+	conds := make(map[string]interface{})
+	if search != "" {
+		conds["search"] = search
+	}
+	if id != "" {
+		conds["id"] = id
+	}
+	if name != "" {
+		conds["name"] = name
+	}
+	if login != "" {
+		conds["login"] = login
+	}
+	if mobile != "" {
+		conds["mobile"] = mobile
+	}
+	if email != "" {
+		conds["email"] = email
+	}
+	if tenantId != "" {
+		conds["tenantId"] = tenantId
+	}
 
 	if organization {
 		count, list := u.UserService.GetAllWithOrganization(name, query.GetPageable(c))
-		for _, v := range list {
-			v.Password = ""
-		}
 		response.Page(c, count, list)
 	} else {
-		example := dto.User{}
-		example.Login = &name
-
-		count, list := u.UserService.GetAll(&example, query.GetPageable(c))
-		for _, v := range list {
-			v.Password = ""
-		}
+		count, list := u.UserService.Find(conds, query.GetPageable(c))
 		response.Page(c, count, list)
 	}
 }

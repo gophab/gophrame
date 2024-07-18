@@ -54,6 +54,7 @@ var AdminResources *controller.Controllers = &controller.Controllers{
 		permission.CheckUserPermissions(), // 权限验证
 	},
 	Controllers: []controller.Controller{
+		adminUserOpenController,
 		adminOrganizationOpenController,
 		adminTenantOpenController,
 		adminTenantOptionOpenController,

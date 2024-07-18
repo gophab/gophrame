@@ -65,6 +65,14 @@ func InitDB(opts ...gorm.Option) (*gorm.DB, error) {
 		} else {
 			return nil, errors.New("Open Read Dialector Error: " + readDSN())
 		}
+	} else {
+		sqlDB, err := db.DB()
+		if err != nil {
+			return nil, err
+		}
+		sqlDB.SetMaxIdleConns(config.Setting.Default.MaxIdleConnections)
+		sqlDB.SetMaxOpenConns(config.Setting.Default.MaxOpenConnections)
+		sqlDB.SetConnMaxLifetime(config.Setting.Default.ConnectionMaxLifeTime)
 	}
 
 	return db, nil

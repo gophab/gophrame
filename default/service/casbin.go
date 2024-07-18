@@ -5,7 +5,6 @@ import (
 	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/default/domain"
-	"github.com/gophab/gophrame/default/service/dto"
 )
 
 // CasbinService负责更新Casbin Enforce数据至
@@ -59,9 +58,9 @@ func (s *CasbinService) loadPolicy(role *domain.Role) error {
 	return nil
 }
 
-func (s *CasbinService) refreshUserPolicy(user *dto.User) {
+func (s *CasbinService) refreshUserPolicy(user *domain.User) {
 	// 转换User信息到Casbin表
-	if _, err := s.RoleService.GetUserRoles(*user.Id); err == nil {
+	if _, err := s.RoleService.GetUserRoles(user.Id); err == nil {
 
 		if s.Enforcer != nil {
 			s.Enforcer.LoadPolicy()
@@ -71,7 +70,7 @@ func (s *CasbinService) refreshUserPolicy(user *dto.User) {
 }
 
 func (s *CasbinService) onUserEvent(event string, args ...interface{}) {
-	var user = args[0].(*dto.User)
+	var user = args[0].(*domain.User)
 
 	switch event {
 	case "USER_CREATED":

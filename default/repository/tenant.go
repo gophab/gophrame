@@ -108,10 +108,16 @@ func (r *TenantRepository) Find(conds map[string]interface{}, pageable query.Pag
 	var search = conds["search"]
 	var id = conds["id"]
 	var name = conds["name"]
-	var licenseId = conds["licenseId"]
+	var licenseId = conds["license_id"]
 
 	if search != nil && search != "" {
-		tx = tx.Where("name like ? or license_id like ? or id = ?", "%"+search.(string)+"%", "%"+search.(string)+"%", search)
+		tx = tx.Where("name like ? or name_cn like ? or name_tw like ? or name_en like ? or license_id like ? or id = ?",
+			"%"+search.(string)+"%",
+			"%"+search.(string)+"%",
+			"%"+search.(string)+"%",
+			"%"+search.(string)+"%",
+			"%"+search.(string)+"%",
+			search)
 	} else {
 		if name != nil && name != "" {
 			tx = tx.Where("name like ?", "%"+name.(string)+"%")

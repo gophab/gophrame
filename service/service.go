@@ -17,10 +17,10 @@ type EntityService[T any] interface {
 }
 
 type __ struct {
-	RoleService       RoleService       `inject:"roleService"`
-	UserService       UserService       `inject:"userService"`
-	InviteCodeService InviteCodeService `inject:"inviteCodeService"`
-	SocialUserService SocialUserService `inject:"socialUserService"`
+	RoleService       RoleService       `inject:"commonRoleService"`
+	UserService       UserService       `inject:"commonUserService"`
+	InviteCodeService InviteCodeService `inject:"commonInviteCodeService"`
+	SocialUserService SocialUserService `inject:"commonSocialUserService"`
 }
 
 var _services = &__{}

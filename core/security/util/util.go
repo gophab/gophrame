@@ -134,14 +134,21 @@ func GetCurrentUser(c *gin.Context) *SecurityModel.UserDetails {
 						Mobile:   currentUser.Mobile,
 						Email:    currentUser.Email,
 						SocialId: currentUser.SocialId,
+						Name:     currentUser.Name,
 						TenantId: currentUser.TenantId,
+						Admin:    false,
+					}
+					if currentUser.Admin != nil {
+						userDetails.Admin = *currentUser.Admin
 					}
 					c.Set("_CURRENT_USER_", userDetails)
 					return userDetails
 				}
 			}
 			return &SecurityModel.UserDetails{
-				UserId: &currentUserId,
+				UserId:   &currentUserId,
+				TenantId: util.StringAddr(GetCurrentTenantId(c)),
+				Admin:    false,
 			}
 		}
 	}

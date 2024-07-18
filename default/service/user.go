@@ -11,6 +11,7 @@ import (
 	"github.com/gophab/gophrame/core/query"
 	"github.com/gophab/gophrame/core/util"
 	"github.com/gophab/gophrame/service"
+	CommonDTO "github.com/gophab/gophrame/service/dto"
 
 	"github.com/gophab/gophrame/default/domain"
 	"github.com/gophab/gophrame/default/repository"
@@ -35,6 +36,7 @@ func init() {
 	logger.Info("Initializing UserService...")
 	logger.Debug("Inject UserService")
 	inject.InjectValue("userService", userService)
+	inject.InjectValue("commonUserService", commonUserService)
 	eventbus.RegisterEventListener("USER_LOGIN", userService.onUserLogin)
 	logger.Info("Initialized UserService")
 }
@@ -80,6 +82,10 @@ func (s *UserService) Create(user *dto.User) (*domain.User, error) {
 
 	if user.Status == nil {
 		user.Status = util.IntAddr(consts.STATUS_VALID)
+	}
+
+	if user.PlainPassword != nil {
+		user.Password = user.PlainPassword
 	}
 
 	res, err := s.UserRepository.CreateUser(user.AsDomain())
@@ -143,6 +149,10 @@ func (s *UserService) Update(user *dto.User) (*domain.User, error) {
 		exists.Status = user.Status
 	}
 
+	if user.Password != nil {
+		exists.Password = *user.Password
+	}
+
 	if err = s.UserRepository.UpdateUser(exists); err == nil {
 		eventbus.PublishEvent("USER_UPDATED", user)
 	}
@@ -151,6 +161,9 @@ func (s *UserService) Update(user *dto.User) (*domain.User, error) {
 }
 
 func (s *UserService) Patch(id string, column string, value interface{}) (*domain.User, error) {
+	if column == "password" && value != nil {
+		value = util.SHA1(value.(string))
+	}
 	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumn(util.DbFieldName(column), value); res.Error != nil {
 		return nil, res.Error
 	} else {
@@ -164,6 +177,10 @@ func (s *UserService) Patch(id string, column string, value interface{}) (*domai
 }
 
 func (s *UserService) PatchAll(id string, kv map[string]interface{}) (*domain.User, error) {
+	if kv["password"] != nil {
+		kv["password"] = util.SHA1(kv["password"].(string))
+	}
+
 	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumns(util.DbFields(kv)); res.Error != nil {
 		return nil, res.Error
 	}
@@ -270,5 +287,39 @@ func (s *UserService) onUserLogin(event string, args ...interface{}) {
 
 	if userId != "" && !strings.HasPrefix(userId, "sns:") {
 		s.UserRepository.LogUserLogin(userId, data["IP"])
+	}
+}
+
+type CommonUserService struct{}
+
+var commonUserService = &CommonUserService{}
+
+func (s *CommonUserService) CreateUser(user *CommonDTO.User) (*CommonDTO.User, error) {
+	var dtoUser = dto.User{
+		User: *user,
+	}
+	if result, err := userService.Create(&dtoUser); err != nil {
+		return nil, err
+	} else {
+		user.Id = util.StringAddr(result.Id)
+		return user, nil
+	}
+}
+
+func (s *CommonUserService) GetById(id string) (*CommonDTO.User, error) {
+	if result, err := userService.GetById(id); err != nil {
+		return nil, err
+	} else {
+		var user = &CommonDTO.User{
+			Id:         &result.Id,
+			InviteCode: &result.InviteCode,
+			InviterId:  result.InviterId,
+			Name:       result.Name,
+			Mobile:     result.Mobile,
+			Email:      result.Email,
+			Admin:      &result.Admin,
+			TenantId:   &result.TenantId,
+		}
+		return user, nil
 	}
 }
