@@ -11,10 +11,10 @@ import (
 )
 
 type Entity struct {
-	Id               string    `gorm:"column:id;primaryKey" json:"id" primaryKey:"yes"`
-	CreatedTime      time.Time `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
-	LastModifiedTime time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime"`
-	TenantId         string    `gorm:"column:tenant_id" json:"tenantId"`
+	Id               string     `gorm:"column:id;primaryKey" json:"id" primaryKey:"yes"`
+	CreatedTime      time.Time  `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
+	LastModifiedTime *time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime"`
+	TenantId         string     `gorm:"column:tenant_id" json:"tenantId"`
 }
 
 func (e *Entity) BeforeCreate(tx *gorm.DB) (err error) {
@@ -47,9 +47,9 @@ func (m *AuditingEntity) BeforeSave(tx *gorm.DB) (err error) {
 
 type DeletableEntity struct {
 	AuditingEntity
-	DelFlag     bool      `gorm:"column:del_flag;default:false" json:"delFlag"`
-	DeletedTime time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time"`
-	DeletedBy   string    `gorm:"column:deleted_by" json:"deleted_by"`
+	DelFlag     bool       `gorm:"column:del_flag;default:false" json:"delFlag"`
+	DeletedTime *time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time"`
+	DeletedBy   string     `gorm:"column:deleted_by" json:"deleted_by"`
 }
 
 func (m *DeletableEntity) BeforeSave(tx *gorm.DB) (err error) {
@@ -58,16 +58,16 @@ func (m *DeletableEntity) BeforeSave(tx *gorm.DB) (err error) {
 		if m.DeletedBy == "" {
 			m.DeletedBy = "internal"
 		}
-		m.DeletedTime = time.Now()
+		m.DeletedTime = util.TimeAddr(time.Now())
 	}
 	return m.AuditingEntity.BeforeSave(tx)
 }
 
 type Model struct {
-	Id               int64     `gorm:"primaryKey" json:"id" primaryKey:"yes"`
-	CreatedTime      time.Time `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
-	LastModifiedTime time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime"`
-	TenantId         string    `gorm:"column:tenant_id" json:"tenantId"`
+	Id               int64      `gorm:"primaryKey" json:"id" primaryKey:"yes"`
+	CreatedTime      time.Time  `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
+	LastModifiedTime *time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime"`
+	TenantId         string     `gorm:"column:tenant_id" json:"tenantId"`
 }
 
 type AuditingModel struct {
@@ -92,9 +92,9 @@ func (m *AuditingModel) BeforeSave(tx *gorm.DB) (err error) {
 
 type DeletableModel struct {
 	AuditingModel
-	DelFlag     bool      `gorm:"column:del_flag;default:false" json:"delFlag"`
-	DeletedTime time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time"`
-	DeletedBy   string    `gorm:"column:deleted_by" json:"deleted_by"`
+	DelFlag     bool       `gorm:"column:del_flag;default:false" json:"delFlag"`
+	DeletedTime *time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time"`
+	DeletedBy   string     `gorm:"column:deleted_by" json:"deleted_by"`
 }
 
 func (m *DeletableModel) BeforeSave(tx *gorm.DB) (err error) {
@@ -103,7 +103,7 @@ func (m *DeletableModel) BeforeSave(tx *gorm.DB) (err error) {
 		if m.DeletedBy == "" {
 			m.DeletedBy = "internal"
 		}
-		m.DeletedTime = time.Now()
+		m.DeletedTime = util.TimeAddr(time.Now())
 	}
 	return m.AuditingModel.BeforeSave(tx)
 }

@@ -8,12 +8,19 @@ import (
 	"github.com/timandy/routine"
 )
 
-type LocalStorage[T any] map[string]T
+type LocalStorage[T any] struct {
+	sync.RWMutex
+	m map[string]T
+}
 
 func (ls *LocalStorage[T]) Get() (r T) {
 	// 1. get current routing id
 	gid := routine.Goid()
-	var vmap map[string]T = *ls
+
+	ls.RLock()
+	defer ls.RUnlock()
+
+	var vmap map[string]T = ls.m
 	if value, b := vmap[strconv.FormatInt(gid, 10)]; b {
 		return value
 	}
@@ -22,18 +29,29 @@ func (ls *LocalStorage[T]) Get() (r T) {
 
 func (ls *LocalStorage[T]) Set(value T) {
 	gid := routine.Goid()
-	var vmap map[string]T = *ls
+
+	ls.Lock()
+	defer ls.Unlock()
+
+	var vmap map[string]T = ls.m
 	vmap[strconv.FormatInt(gid, 10)] = value
 }
 
 func (ls *LocalStorage[T]) Remove() {
 	gid := routine.Goid()
-	var vmap map[string]T = *ls
+
+	ls.Lock()
+	defer ls.Unlock()
+
+	var vmap map[string]T = ls.m
 	delete(vmap, strconv.FormatInt(gid, 10))
 }
 
 func (ls *LocalStorage[T]) Clear() {
-	var vmap map[string]T = *ls
+	ls.Lock()
+	defer ls.Unlock()
+
+	var vmap map[string]T = ls.m
 	for k := range vmap {
 		delete(vmap, k)
 	}
@@ -65,7 +83,7 @@ func nextThreadLocalIndex() int {
 }
 
 func NewThreadLocal[T any](value T) *ThreadLocal[T] {
-	var result = &ThreadLocal[T]{LocalStorage: make(map[string]T), index: nextThreadLocalIndex()}
+	var result = &ThreadLocal[T]{LocalStorage: LocalStorage[T]{m: make(map[string]T)}, index: nextThreadLocalIndex()}
 	threadLocalManager.Add(result)
 	return result
 }

@@ -18,8 +18,8 @@ type SecurityController struct {
 	controller.ResourceController
 	MobileValidator   *SmsCode.SmsCodeValidator     `inject:"smsCodeValidator"`
 	EmailValidator    *EmailCode.EmailCodeValidator `inject:"emailCodeValidator"`
-	UserService       service.UserService           `inject:"userService"`
-	InviteCodeService service.InviteCodeService     `inject:"inviteCodeService"`
+	UserService       service.UserService           `inject:"commonUserService"`
+	InviteCodeService service.InviteCodeService     `inject:"commonInviteCodeService"`
 }
 
 func (c *SecurityController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {

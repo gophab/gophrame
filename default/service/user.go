@@ -323,3 +323,39 @@ func (s *CommonUserService) GetById(id string) (*CommonDTO.User, error) {
 		return user, nil
 	}
 }
+
+func (s *CommonUserService) GetByMobile(mobile string) (*CommonDTO.User, error) {
+	if result, err := userService.GetByMobile(mobile); err != nil {
+		return nil, err
+	} else {
+		var user = &CommonDTO.User{
+			Id:         &result.Id,
+			InviteCode: &result.InviteCode,
+			InviterId:  result.InviterId,
+			Name:       result.Name,
+			Mobile:     result.Mobile,
+			Email:      result.Email,
+			Admin:      &result.Admin,
+			TenantId:   &result.TenantId,
+		}
+		return user, nil
+	}
+}
+
+func (s *CommonUserService) GetByEmail(email string) (*CommonDTO.User, error) {
+	if result, err := userService.GetByEmail(email); err != nil {
+		return nil, err
+	} else {
+		var user = &CommonDTO.User{
+			Id:         &result.Id,
+			InviteCode: &result.InviteCode,
+			InviterId:  result.InviterId,
+			Name:       result.Name,
+			Mobile:     result.Mobile,
+			Email:      result.Email,
+			Admin:      &result.Admin,
+			TenantId:   &result.TenantId,
+		}
+		return user, nil
+	}
+}
