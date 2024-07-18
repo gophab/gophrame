@@ -28,7 +28,7 @@ func NeedSystemUser() gin.HandlerFunc {
 		if tenantId == "" {
 			response.Unauthorized(c, "用户未登录")
 		} else if tenantId != "SYSTEM" {
-			c.JSON(http.StatusForbidden, gin.H{
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"code": http.StatusForbidden,
 				"data": "登录用户没有权限",
 				"msg":  "ok",
@@ -44,19 +44,17 @@ func NeedAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := SecurityUtil.GetCurrentUser(c)
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
 				"data": "未登录用户",
 				"msg":  "ok",
 			})
-			c.Abort()
 		} else if !user.Admin {
-			c.JSON(http.StatusForbidden, gin.H{
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"code": http.StatusForbidden,
 				"data": "登录用户没有权限",
 				"msg":  "ok",
 			})
-			c.Abort()
 		} else {
 			c.Next()
 		}
