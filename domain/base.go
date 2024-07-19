@@ -48,7 +48,7 @@ func (m *AuditingEntity) BeforeSave(tx *gorm.DB) (err error) {
 type DeletableEntity struct {
 	AuditingEntity
 	DelFlag     bool       `gorm:"column:del_flag;default:false" json:"delFlag"`
-	DeletedTime *time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time"`
+	DeletedTime *time.Time `gorm:"column:deleted_time" json:"deleted_time"`
 	DeletedBy   string     `gorm:"column:deleted_by" json:"deleted_by"`
 }
 
@@ -93,7 +93,7 @@ func (m *AuditingModel) BeforeSave(tx *gorm.DB) (err error) {
 type DeletableModel struct {
 	AuditingModel
 	DelFlag     bool       `gorm:"column:del_flag;default:false" json:"delFlag"`
-	DeletedTime *time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time"`
+	DeletedTime *time.Time `gorm:"column:deleted_time" json:"deleted_time"`
 	DeletedBy   string     `gorm:"column:deleted_by" json:"deleted_by"`
 }
 
