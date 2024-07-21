@@ -85,3 +85,13 @@ func Filter(container interface{}, objs []interface{}) (interface{}, error) {
 	}
 	return nil, errors.New("unsupported container")
 }
+
+func First[T any](items []T, filter func(T) bool) T {
+	for _, item := range items {
+		if filter(item) {
+			return item
+		}
+	}
+	var empty T
+	return empty
+}

@@ -79,6 +79,7 @@ func OK(c *gin.Context, data interface{}) *gin.Context {
 	return Response(c, http.StatusOK, 0, data)
 }
 
+// 标准失败响应
 func Bad(c *gin.Context, errCode int, errMsg string) {
 	ErrorMessage(c, http.StatusBadRequest, errCode, errMsg)
 }
@@ -121,6 +122,10 @@ func Fail(c *gin.Context) {
 	Bad(c, BusinessOccurredErrorCode, BusinessOccurredErrorMsg)
 }
 
+func FailError(c *gin.Context, err *errors.Error) {
+	Bad(c, err.Code, err.Message)
+}
+
 func FailCode(c *gin.Context, errCode int) {
 	Bad(c, errCode, errors.GetErrorMessage(errCode))
 }
@@ -144,16 +149,30 @@ func stack() string {
 
 // 系统错误
 func Exception(c *gin.Context, errCode int, errMessage string, msg string) {
-	//
-	ErrorMessage(c, http.StatusInternalServerError, errCode, errMessage)
-
 	// internal log
 	logger.Error("Code: ", errCode, " Message: ", errMessage, "\nError: ", msg, " \nStack: ", stack())
+
+	if errMessage == "" {
+		errMessage = msg
+	}
+	ErrorMessage(c, http.StatusInternalServerError, errCode, errMessage)
 }
 
 // 系统执行代码错误
-func SystemError(c *gin.Context) {
-	Exception(c, ServerOccurredErrorCode, ServerOccurredErrorMsg, "")
+func SystemError(c *gin.Context, err error) {
+	Exception(c, ServerOccurredErrorCode, ServerOccurredErrorMsg, err.Error())
+}
+
+func SystemFail(c *gin.Context, err error) {
+	Exception(c, ServerOccurredErrorCode, ServerOccurredErrorMsg, err.Error())
+}
+
+func SystemFailError(c *gin.Context, e *errors.Error, err error) {
+	if e != nil {
+		Exception(c, e.Code, e.Message, err.Error())
+	} else {
+		Exception(c, ServerOccurredErrorCode, err.Error(), err.Error())
+	}
 }
 
 func SystemErrorCode(c *gin.Context, errCode int) {

@@ -132,6 +132,15 @@ func (f Parameter) String() *string {
 	return nil
 }
 
+func Header(c *gin.Context, key string) Parameter {
+	v := c.GetHeader(key)
+	if v != "" {
+		return Parameter(v)
+	} else {
+		return Parameter([]byte{0x1E})
+	}
+}
+
 func Param(c *gin.Context, key string) Parameter {
 	v, b := c.Params.Get(key)
 	if !b {
