@@ -151,7 +151,7 @@ func GetSize(c *gin.Context) int {
 func GetSort(c *gin.Context) []Sort {
 	sorts := c.GetStringSlice("sort")
 	if len(sorts) <= 0 {
-		sorts := c.QueryArray("sort")
+		sorts = c.QueryArray("sort")
 		if len(sorts) <= 0 {
 			var p Pagination
 			if err := form.ShouldBind(c, &p); err == nil {

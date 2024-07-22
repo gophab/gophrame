@@ -309,7 +309,7 @@ func (s *CommonUserService) CreateUser(user *CommonDTO.User) (*CommonDTO.User, e
 func (s *CommonUserService) GetById(id string) (*CommonDTO.User, error) {
 	if result, err := userService.GetById(id); err != nil {
 		return nil, err
-	} else {
+	} else if result != nil {
 		var user = &CommonDTO.User{
 			Id:         &result.Id,
 			InviteCode: &result.InviteCode,
@@ -321,13 +321,15 @@ func (s *CommonUserService) GetById(id string) (*CommonDTO.User, error) {
 			TenantId:   &result.TenantId,
 		}
 		return user, nil
+	} else {
+		return nil, nil
 	}
 }
 
 func (s *CommonUserService) GetByMobile(mobile string) (*CommonDTO.User, error) {
 	if result, err := userService.GetByMobile(mobile); err != nil {
 		return nil, err
-	} else {
+	} else if result != nil {
 		var user = &CommonDTO.User{
 			Id:         &result.Id,
 			InviteCode: &result.InviteCode,
@@ -339,13 +341,15 @@ func (s *CommonUserService) GetByMobile(mobile string) (*CommonDTO.User, error) 
 			TenantId:   &result.TenantId,
 		}
 		return user, nil
+	} else {
+		return nil, nil
 	}
 }
 
 func (s *CommonUserService) GetByEmail(email string) (*CommonDTO.User, error) {
 	if result, err := userService.GetByEmail(email); err != nil {
 		return nil, err
-	} else {
+	} else if result != nil {
 		var user = &CommonDTO.User{
 			Id:         &result.Id,
 			InviteCode: &result.InviteCode,
@@ -357,5 +361,7 @@ func (s *CommonUserService) GetByEmail(email string) (*CommonDTO.User, error) {
 			TenantId:   &result.TenantId,
 		}
 		return user, nil
+	} else {
+		return nil, nil
 	}
 }

@@ -127,7 +127,7 @@ func GetCurrentUser(c *gin.Context) *SecurityModel.UserDetails {
 
 		if currentUserId != "" {
 			if service.GetUserService() != nil {
-				if currentUser, err := service.GetUserService().GetById(currentUserId); err == nil {
+				if currentUser, err := service.GetUserService().GetById(currentUserId); err == nil && currentUser != nil {
 					userDetails := &SecurityModel.UserDetails{
 						UserId:   currentUser.Id,
 						Login:    currentUser.Login,

@@ -37,6 +37,13 @@ func NotNullString(s *string) string {
 	return ""
 }
 
+func Nullable(s *string) *string {
+	if s == nil || *s == "" {
+		return nil
+	}
+	return s
+}
+
 func ConditionString(condition bool, f1 interface{}, f2 interface{}) string {
 	if condition {
 		if f, ok := f1.(func() string); ok {
