@@ -3,6 +3,7 @@ package code
 import (
 	"github.com/gophab/gophrame/core/code"
 	"github.com/gophab/gophrame/core/email"
+	"github.com/gophab/gophrame/core/inject"
 
 	"github.com/gophab/gophrame/core/email/code/config"
 )
@@ -32,12 +33,20 @@ func (s *EmailCodeSender) SendVerificationCode(dest string, scene string, code s
 	params := make(map[string]string)
 	params["code"] = code
 
-	return s.EmailSender.SendTemplateEmail(dest, scene, params)
+	t := scene
+
+	// TODO: 通用模板处理
+	// t := template.GetTemplate("email:" + scene)
+
+	return s.EmailSender.SendTemplateEmail(dest, t, params)
 }
 
 func (v *EmailCodeValidator) GetSender() code.CodeSender {
 	if v.Sender == nil {
 		if config.Setting.Enabled {
+			sender := &EmailCodeSender{}
+			inject.InjectValue("emailCodeSender", sender)
+			return sender
 		} else {
 			return v.Validator.GetSender()
 		}
