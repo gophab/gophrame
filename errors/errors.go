@@ -32,7 +32,10 @@ func MakeError(name string) *Error {
 		return &err
 	}
 	logger.Warn("Not valid error name: ", name)
-	return nil
+	return &Error{
+		Code:    500,
+		Message: "Unknown internal error: " + name,
+	}
 }
 
 func ErrorCode(name string) int {
