@@ -40,10 +40,10 @@ func InitDB() *gorm.DB {
 		_ = db.Callback().Query().Before("gorm:query").Register("disable_raise_record_not_found", MaskNotDataError)
 
 		// https://github.com/go-gorm/gorm/issues/4838
-		_ = db.Callback().Create().Before("gorm:create").Register("UpdateCreatedTimeHook", UpdateCreatedTimeHook)
-		_ = db.Callback().Create().Before("gorm:create").Register("UpdateIdHook", UpdateIdHook)
-		_ = db.Callback().Update().Before("gorm:update").Register("UpdateLastModifiedTimeHook", UpdateLastModifiedTimeHook)
-		_ = db.Callback().Delete().Before("gorm:delete").Register("UpdateDeletedTimeHook", UpdateDeletedTimeHook)
+		// _ = db.Callback().Create().Before("gorm:create").Register("UpdateCreatedTimeHook", UpdateCreatedTimeHook)
+		// _ = db.Callback().Create().Before("gorm:create").Register("UpdateIdHook", UpdateIdHook)
+		// _ = db.Callback().Update().Before("gorm:update").Register("UpdateLastModifiedTimeHook", UpdateLastModifiedTimeHook)
+		// _ = db.Callback().Delete().Before("gorm:delete").Register("UpdateDeletedTimeHook", UpdateDeletedTimeHook)
 
 		// 为主连接设置连接池(43行返回的数据库驱动指针)
 		if rawDb, err := db.DB(); err == nil {
