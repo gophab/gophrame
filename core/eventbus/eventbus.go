@@ -92,7 +92,7 @@ func (e *eventbus) PublishEvent(event string, args ...interface{}) {
 			fn(event, args...)
 		}
 	} else {
-		logger.Error(errors.ERROR_FUNC_EVENT_NOT_REGISTER, ", 键名：", event)
+		logger.Warn(errors.ERROR_FUNC_EVENT_NOT_REGISTER, ", 无效键名：", event)
 	}
 }
 
@@ -105,7 +105,7 @@ func (e *eventbus) DispatchEvent(event string, args ...interface{}) {
 			}(fn)
 		}
 	} else {
-		logger.Error(errors.ERROR_FUNC_EVENT_NOT_REGISTER, ", 键名：", event)
+		logger.Error(errors.ERROR_FUNC_EVENT_NOT_REGISTER, ", 无效键名：", event)
 	}
 }
 

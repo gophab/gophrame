@@ -5,6 +5,7 @@ import (
 
 	"github.com/gophab/gophrame/core/email/config"
 	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/util"
 	"gopkg.in/gomail.v2"
 )
 
@@ -32,9 +33,11 @@ func (s *GoEmailSender) Init() {
 func (s *GoEmailSender) SendTemplateEmail(addr string, template string, params map[string]string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", config.Setting.Sender.From)
-	m.SetHeader("To")
+	m.SetHeader("To", addr)
 
 	m.SetHeader("Subject", params["title"])
+
+	m.SetBody("text/html", util.FormatParamterContent(template, params))
 
 	if err := s.DialAndSend(m); err != nil {
 		logger.Error("Send email error: ", err.Error())

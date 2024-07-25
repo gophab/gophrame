@@ -12,8 +12,8 @@ import (
 
 type Entity struct {
 	Id               string     `gorm:"column:id;primaryKey" json:"id" primaryKey:"yes"`
-	CreatedTime      time.Time  `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
-	LastModifiedTime *time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime,omitempty"`
+	CreatedTime      time.Time  `gorm:"column:created_time;autoCreateTime;<-:create" json:"createdTime"`
+	LastModifiedTime *time.Time `gorm:"column:last_modified_time;autoUpdateTime;<-:update" json:"lastModifiedTime,omitempty"`
 	TenantId         string     `gorm:"column:tenant_id" json:"tenantId"`
 }
 
@@ -27,8 +27,8 @@ func (e *Entity) BeforeCreate(tx *gorm.DB) (err error) {
 
 type AuditingEntity struct {
 	Entity
-	CreatedBy      string `gorm:"column:created_by" json:"createdBy"`
-	LastModifiedBy string `gorm:"column:last_modified_by" json:"lastModifiedBy,omitempty"`
+	CreatedBy      string `gorm:"column:created_by;<-:create" json:"createdBy"`
+	LastModifiedBy string `gorm:"column:last_modified_by;<-:update" json:"lastModifiedBy,omitempty"`
 }
 
 func (m *AuditingEntity) BeforeCreate(tx *gorm.DB) (err error) {
@@ -65,15 +65,15 @@ func (m *DeletableEntity) BeforeSave(tx *gorm.DB) (err error) {
 
 type Model struct {
 	Id               int64      `gorm:"primaryKey" json:"id" primaryKey:"yes"`
-	CreatedTime      time.Time  `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
-	LastModifiedTime *time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime,omitempty"`
+	CreatedTime      time.Time  `gorm:"column:created_time;autoCreateTime;<-:create" json:"createdTime"`
+	LastModifiedTime *time.Time `gorm:"column:last_modified_time;autoUpdateTime;<-:update" json:"lastModifiedTime,omitempty"`
 	TenantId         string     `gorm:"column:tenant_id" json:"tenantId"`
 }
 
 type AuditingModel struct {
 	Model
-	CreatedBy      string `gorm:"created_by" json:"createdBy"`
-	LastModifiedBy string `gorm:"lastModified_by" json:"lastModifiedBy,omitempty"`
+	CreatedBy      string `gorm:"created_by;<-:create" json:"createdBy"`
+	LastModifiedBy string `gorm:"lastModified_by;<-:update" json:"lastModifiedBy,omitempty"`
 }
 
 func (m *AuditingModel) BeforeCreate(tx *gorm.DB) (err error) {
@@ -116,6 +116,6 @@ func (m *Model) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 type Relation struct {
-	CreatedTime      time.Time `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
-	LastModifiedTime time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime"`
+	CreatedTime      time.Time `gorm:"column:created_time;autoCreateTime;<-:create" json:"createdTime"`
+	LastModifiedTime time.Time `gorm:"column:last_modified_time;autoUpdateTime;<-:update" json:"lastModifiedTime"`
 }
