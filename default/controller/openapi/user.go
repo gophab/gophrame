@@ -4,10 +4,12 @@ import (
 	"strings"
 
 	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/query"
 	SecurityUtil "github.com/gophab/gophrame/core/security/util"
+	"github.com/gophab/gophrame/core/util"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
 
@@ -62,6 +64,7 @@ func (m *UserOpenController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/user/invite-code", Handler: m.GetUserInviteCode},
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
 		{HttpMethod: "DELETE", ResourcePath: "/user", Handler: m.DeleteUser},
+		{HttpMethod: "PUT", ResourcePath: "/user/password", Handler: m.ChangeUserPassword},
 	})
 }
 
@@ -212,6 +215,35 @@ func (u *UserOpenController) GetUserInviteCode(c *gin.Context) {
 	response.Success(c, result)
 }
 
+/**
+ * GET /openapi/user/invite-code
+ */
+type ChangePasswordForm struct {
+	Password    string `json:"password"`
+	OldPassword string `json:"oldPassword"`
+}
+
+func (u *UserOpenController) ChangeUserPassword(c *gin.Context) {
+	var request ChangePasswordForm
+	if err := c.BindJSON(&request); err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	if request.Password == "" || request.OldPassword == "" {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	if b, err := u.UserService.ChangeUserPassword(SecurityUtil.GetCurrentUserId(c), request.OldPassword, request.Password); b {
+		response.Success(c, "OK")
+	} else if err != nil {
+		response.SystemFail(c, err)
+	} else {
+		response.NotFound(c, "Not Found")
+	}
+}
+
 // 用户
 func (m *AdminUserOpenController) AfterInitialize() {
 	m.SetResourceHandlers([]controller.ResourceHandler{
@@ -221,6 +253,7 @@ func (m *AdminUserOpenController) AfterInitialize() {
 		{HttpMethod: "POST", ResourcePath: "/user", Handler: m.CreateUser},
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
 		{HttpMethod: "DELETE", ResourcePath: "/user/:id", Handler: m.DeleteUser},
+		{HttpMethod: "PUT", ResourcePath: "/user/:id/password/reset", Handler: m.ResetUserPassword},
 	})
 }
 
@@ -348,10 +381,37 @@ func (u *AdminUserOpenController) CreateUser(c *gin.Context) {
 	}
 
 	valid := validation.Validation{}
-	valid.MaxSize(user.Login, 100, "login").Message("最长为100字符")
-	valid.MaxSize(user.Mobile, 20, "mobile").Message("最长为20字符")
-	valid.MaxSize(user.Email, 100, "mobile").Message("最长为100字符")
-	valid.MaxSize(user.Password, 100, "password").Message("最长为100字符")
+
+	// name 不为空
+	valid.MaxSize(user.Name, 100, "name").Message("最长为100字符")
+
+	// password 不为空
+	valid.MaxSize(*user.PlainPassword, 100, "password").Message("最长为100字符")
+	valid.MinSize(*user.PlainPassword, 6, "password").Message("最短为6字符")
+	user.Password = user.PlainPassword
+
+	if user.Login != nil {
+		if *user.Login == "" {
+			user.Login = nil
+		} else {
+			valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
+			valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+		}
+	}
+	if user.Mobile != nil {
+		if *user.Mobile == "" {
+			user.Mobile = nil
+		} else {
+			valid.Mobile(*user.Mobile, "mobile").Message("无效手机号")
+		}
+	}
+	if user.Email != nil {
+		if *user.Email == "" {
+			user.Email = nil
+		} else {
+			valid.Email(*user.Email, "email").Message("无效的Email")
+		}
+	}
 
 	if valid.HasErrors() {
 		logger.MarkErrors(valid.Errors)
@@ -359,12 +419,15 @@ func (u *AdminUserOpenController) CreateUser(c *gin.Context) {
 		return
 	}
 
+	user.TenantId = util.StringAddr(SecurityUtil.GetCurrentTenantId(c))
+
 	res, err := service.GetUserService().Create(&user)
 	if err != nil {
-		response.SystemErrorCode(c, errors.ERROR_CREATE_FAIL)
+		response.SystemErrorMessage(c, errors.ERROR_CREATE_FAIL, err.Error())
 		return
 	}
 
+	eventbus.PublishEvent("USER_CREATED", res)
 	response.OK(c, res)
 }
 
@@ -385,10 +448,38 @@ func (u *AdminUserOpenController) UpdateUser(c *gin.Context) {
 
 	valid := validation.Validation{}
 	valid.MinSize(user.Id, 1, "id").Message("ID必须大于0")
-	valid.MaxSize(user.Login, 100, "login").Message("最长为100字符")
-	valid.MaxSize(user.Mobile, 20, "mobile").Message("最长为20字符")
-	valid.MaxSize(user.Email, 100, "email").Message("最长为100字符")
-	valid.MaxSize(user.Password, 100, "password").Message("最长为100字符")
+	valid.MaxSize(user.Name, 100, "name").Message("最长为100字符")
+
+	if user.Login != nil {
+		if *user.Login == "" {
+			user.Login = nil
+		} else {
+			valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
+			valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+		}
+	}
+	if user.Mobile != nil {
+		if *user.Mobile == "" {
+			user.Mobile = nil
+		} else {
+			valid.Mobile(*user.Mobile, "mobile").Message("无效手机号")
+		}
+	}
+	if user.Email != nil {
+		if *user.Email == "" {
+			user.Email = nil
+		} else {
+			valid.Email(*user.Email, "email").Message("无效的Email")
+		}
+	}
+
+	if user.PlainPassword != nil {
+		if *user.PlainPassword != "" {
+			valid.MaxSize(*user.PlainPassword, 100, "password").Message("最长为100字符")
+			valid.MinSize(*user.PlainPassword, 6, "password").Message("最短为6字符")
+			user.Password = user.PlainPassword
+		}
+	}
 
 	if valid.HasErrors() {
 		logger.MarkErrors(valid.Errors)
@@ -396,13 +487,19 @@ func (u *AdminUserOpenController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	exists, err := service.GetUserService().ExistByID(*user.Id)
+	exists, err := service.GetUserService().GetById(*user.Id)
 	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_EXIST_FAIL)
 		return
 	}
-	if !exists {
-		response.NotFound(c, errors.GetErrorMessage(errors.ERROR_EXIST_FAIL))
+
+	if exists == nil {
+		response.NotFound(c, *user.Id)
+		return
+	}
+
+	if exists.TenantId != SecurityUtil.GetCurrentTenantId(c) {
+		response.NotAllowed(c, "Not Allowed")
 		return
 	}
 
@@ -432,13 +529,19 @@ func (u *AdminUserOpenController) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	exists, err := u.UserService.ExistByID(id)
+	exists, err := service.GetUserService().GetById(id)
 	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_EXIST_FAIL)
 		return
 	}
-	if !exists {
-		response.NotFound(c, errors.GetErrorMessage(errors.ERROR_EXIST_FAIL))
+
+	if exists == nil {
+		response.NotFound(c, "Not Found")
+		return
+	}
+
+	if exists.TenantId != SecurityUtil.GetCurrentTenantId(c) {
+		response.NotAllowed(c, "Not Allowed")
 		return
 	}
 
@@ -449,4 +552,43 @@ func (u *AdminUserOpenController) DeleteUser(c *gin.Context) {
 	}
 
 	response.OK(c, nil)
+}
+
+func (u *AdminUserOpenController) ResetUserPassword(c *gin.Context) {
+	id, err := request.Param(c, "id").MustString()
+	if err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	exist, err := u.UserService.GetById(id)
+	if err != nil {
+		response.SystemErrorCode(c, errors.ERROR_EXIST_FAIL)
+		return
+	}
+	if exist == nil {
+		response.NotFound(c, id)
+		return
+	}
+
+	if exist.TenantId != SecurityUtil.GetCurrentTenantId(c) {
+		response.NotAllowed(c, "Not Allowed")
+		return
+	}
+
+	if exist.Id == SecurityUtil.GetCurrentUserId(c) {
+		response.NotAllowed(c, "Not Allowed")
+		return
+	}
+
+	if b, err := u.UserService.ResetUserPassword(id); err != nil {
+		response.SystemError(c, err)
+		return
+	} else if b {
+		response.Success(c, "OK")
+		return
+	} else {
+		response.NotFound(c, "Not Found")
+		return
+	}
 }

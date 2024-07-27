@@ -270,6 +270,27 @@ func (s *UserService) Count(user *dto.User) (int64, error) {
 	return s.UserRepository.GetUserTotal(user.GetMaps())
 }
 
+func (s *UserService) ResetUserPassword(id string) (bool, error) {
+	res := s.UserRepository.Model(&domain.User{}).
+		Where("id=?", id).
+		UpdateColumn("password", util.SHA1("123456"))
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return true, nil
+}
+
+func (s *UserService) ChangeUserPassword(id string, oldpassword, password string) (bool, error) {
+	res := s.UserRepository.Model(&domain.User{}).
+		Where("id=?", id).
+		Where("password=?", util.SHA1(oldpassword)).
+		UpdateColumn("password", util.SHA1(password))
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
+}
+
 func (s *UserService) onUserLogin(event string, args ...interface{}) {
 	userId := ""
 	data := map[string]string{}

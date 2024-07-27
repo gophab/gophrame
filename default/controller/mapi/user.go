@@ -48,6 +48,7 @@ func (m *UserMController) AfterInitialize() {
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
 		{HttpMethod: "PATCH", ResourcePath: "/user/:id", Handler: m.PatchUser},
 		{HttpMethod: "DELETE", ResourcePath: "/user/:id", Handler: m.DeleteUser},
+		{HttpMethod: "PUT", ResourcePath: "/user/:id/password/reset", Handler: m.ResetUserPassword},
 	})
 }
 
@@ -388,5 +389,34 @@ func (u *UserMController) CreateUser(c *gin.Context) {
 		return
 	} else {
 		response.Success(c, res)
+	}
+}
+
+func (u *UserMController) ResetUserPassword(c *gin.Context) {
+	id, err := request.Param(c, "id").MustString()
+	if err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	exists, err := u.UserService.ExistByID(id)
+	if err != nil {
+		response.SystemErrorCode(c, errors.ERROR_EXIST_FAIL)
+		return
+	}
+	if !exists {
+		response.NotFound(c, id)
+		return
+	}
+
+	if b, err := u.UserService.ResetUserPassword(id); err != nil {
+		response.SystemError(c, err)
+		return
+	} else if b {
+		response.Success(c, "OK")
+		return
+	} else {
+		response.NotFound(c, "Not Found")
+		return
 	}
 }
