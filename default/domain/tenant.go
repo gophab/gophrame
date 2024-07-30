@@ -16,7 +16,7 @@ type Tenant struct {
 	NameEn           string    `gorm:"column:name_en" json:"nameEn"`
 	Description      string    `gorm:"column:description" json:"description"`
 	Logo             string    `gorm:"column:logo" json:"logo"`
-	LicenseId        string    `gorm:"column:license_id" json:"licenseId"`
+	LicenseId        *string   `gorm:"column:license_id" json:"licenseId,omitempty"`
 	Address          string    `gorm:"column:address" json:"address"`
 	Telephone        string    `gorm:"column:telephone" json:"telephone"`
 	Fax              string    `gorm:"column:fax" json:"fax"`

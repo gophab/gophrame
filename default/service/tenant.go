@@ -76,10 +76,10 @@ func (s *TenantService) DeleteTenant(tenant *domain.Tenant) (bool, error) {
 }
 
 func (s *TenantService) DeleteById(id string) (bool, error) {
-	if tenant, err := s.GetById(id); err != nil {
+	if tenant, err := s.GetById(id); tenant != nil {
 		return s.DeleteTenant(tenant)
 	} else {
-		return true, nil
+		return true, err
 	}
 }
 

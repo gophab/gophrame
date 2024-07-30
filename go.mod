@@ -49,6 +49,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/modern-go/reflect2 v1.0.2
 	github.com/mojocn/base64Captcha v1.3.6
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
 require (
@@ -57,7 +58,6 @@ require (
 	github.com/mozillazg/go-httpheader v0.2.1 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 )
 
 require (
