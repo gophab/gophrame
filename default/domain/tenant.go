@@ -12,24 +12,24 @@ import (
 type Tenant struct {
 	Id               string    `gorm:"column:id;primaryKey" json:"id" primaryKey:"yes"`
 	Name             string    `gorm:"column:name" json:"name"`
-	NameCn           string    `gorm:"column:name_cn;default:null" json:"nameCn"`
-	NameTw           string    `gorm:"column:name_tw;default:null" json:"nameTw"`
-	NameEn           string    `gorm:"column:name_en;default:null" json:"nameEn"`
-	Description      string    `gorm:"column:description;default:null" json:"description"`
-	Logo             string    `gorm:"column:logo;default:null" json:"logo"`
+	NameCn           string    `gorm:"column:name_cn;default:null" json:"nameCn,omitempty"`
+	NameTw           string    `gorm:"column:name_tw;default:null" json:"nameTw,omitempty"`
+	NameEn           string    `gorm:"column:name_en;default:null" json:"nameEn,omitempty"`
+	Description      string    `gorm:"column:description;default:null" json:"description,omitempty"`
+	Logo             string    `gorm:"column:logo;default:null" json:"logo,omitempty"`
 	LicenseId        string    `gorm:"column:license_id;default:null" json:"licenseId,omitempty"`
-	Address          string    `gorm:"column:address;default:null" json:"address"`
-	Telephone        string    `gorm:"column:telephone;default:null" json:"telephone"`
-	Fax              string    `gorm:"column:fax;default:null" json:"fax"`
+	Address          string    `gorm:"column:address;default:null" json:"address,omitempty"`
+	Telephone        string    `gorm:"column:telephone;default:null" json:"telephone,omitempty"`
+	Fax              string    `gorm:"column:fax;default:null" json:"fax,omitempty"`
 	Status           int       `gorm:"column:status;default:0" json:"status"`
-	Remark           string    `gorm:"column:remark;default:null" json:"remark"`
+	Remark           string    `gorm:"column:remark;default:null" json:"remark,omitempty"`
 	CreatedTime      time.Time `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
 	LastModifiedTime time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime"`
-	CreatedBy        string    `gorm:"column:created_by" json:"createdBy"`
-	LastModifiedBy   string    `gorm:"column:last_modified_by" json:"lastModifiedBy"`
+	CreatedBy        string    `gorm:"column:created_by" json:"createdBy,omitempty"`
+	LastModifiedBy   string    `gorm:"column:last_modified_by" json:"lastModifiedBy,omitempty"`
 	DelFlag          bool      `gorm:"column:del_flag;default:false" json:"delFlag"`
-	DeletedTime      time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time"`
-	DeletedBy        string    `gorm:"column:deleted_by;default:null" json:"deleted_by"`
+	DeletedTime      time.Time `gorm:"column:deleted_time;autoUpdateTime" json:"deleted_time,omitempty"`
+	DeletedBy        string    `gorm:"column:deleted_by;default:null" json:"deleted_by,omitempty"`
 }
 
 func (e *Tenant) BeforeCreate(tx *gorm.DB) (err error) {
