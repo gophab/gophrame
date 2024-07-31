@@ -6,7 +6,7 @@ type Option struct {
 	Name        string `gorm:"column:name" json:"name"`
 	Value       string `gorm:"column:value" json:"value"`
 	ValueType   string `gorm:"column:value_type" json:"valueType"`
-	Description string `gorm:"column:description" json:"description"`
+	Description string `gorm:"column:description;default:null" json:"description"`
 }
 
 func OptionsToMap(sysEnvs []Option) map[string]interface{} {

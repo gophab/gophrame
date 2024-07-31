@@ -44,12 +44,8 @@ func (r *TenantRepository) CreateTenant(tenant *domain.Tenant) (*domain.Tenant, 
 
 	// 排除重名或者营业执照号重
 	var tx = r.Model(&domain.Tenant{})
-	if tenant.LicenseId != nil && *tenant.LicenseId == "" {
-		tenant.LicenseId = nil
-	}
-
-	if tenant.Name != "" && tenant.LicenseId != nil {
-		tx.Where("name=? or license_id=?", tenant.Name, *tenant.LicenseId)
+	if tenant.Name != "" && tenant.LicenseId != "" {
+		tx.Where("name=? or license_id=?", tenant.Name, tenant.LicenseId)
 	} else {
 		tx.Where("name=?", tenant.Name)
 	}
@@ -72,16 +68,14 @@ func (r *TenantRepository) UpdateTenant(tenant *domain.Tenant) (bool, error) {
 
 	// 同一个地区下不存在相同名称的区域
 	var tx = r.Model(&domain.Tenant{})
-	if tenant.LicenseId != nil && *tenant.LicenseId == "" {
-		tenant.LicenseId = nil
-	}
-	if tenant.Name != "" || tenant.LicenseId != nil {
-		if tenant.Name != "" && tenant.LicenseId != nil {
-			tx.Where("id <> ? and (name=? or license_id=?)", tenant.Id, tenant.Name, *tenant.LicenseId)
+
+	if tenant.Name != "" || tenant.LicenseId != "" {
+		if tenant.Name != "" && tenant.LicenseId != "" {
+			tx.Where("id <> ? and (name=? or license_id=?)", tenant.Id, tenant.Name, tenant.LicenseId)
 		} else if tenant.Name != "" {
 			tx.Where("id <> ? and name=?", tenant.Id, tenant.Name)
-		} else if tenant.LicenseId != nil {
-			tx.Where("id <> ? and license_id=?", tenant.Id, *tenant.LicenseId)
+		} else if tenant.LicenseId != "" {
+			tx.Where("id <> ? and license_id=?", tenant.Id, tenant.LicenseId)
 		}
 
 		if res := tx.Count(&counts); res.Error == nil && counts > 0 {

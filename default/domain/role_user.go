@@ -7,7 +7,7 @@ type RoleUser struct {
 	RoleId string `gorm:"column:role_id" json:"roleId"`
 	UserId string `gorm:"column:user_id" json:"userId"`
 	Status int    `gorm:"column:status;default:1" json:"status"`
-	Remark string `gorm:"column:remark" json:"remark,omitempty"`
+	Remark string `gorm:"column:remark;default:null" json:"remark,omitempty"`
 }
 
 // 表名

@@ -27,7 +27,7 @@ type UserBase struct {
 type User struct {
 	UserBase
 	Password   string  `gorm:"column:password" json:"-"`
-	Admin      bool    `gorm:"column:admin" json:"admin"`
+	Admin      bool    `gorm:"column:admin;default:false" json:"admin"`
 	Roles      []Role  `gorm:"many2many:sys_role_user;" json:"roles,omitempty"` /* 角色 */
 	InviteCode string  `gorm:"-" json:"inviteCode,omitempty"`                   /* 邀请码 */
 	Tenant     *Tenant `gorm:"->" json:"tenant,omitempty"`                      /* 所在企业ID */
