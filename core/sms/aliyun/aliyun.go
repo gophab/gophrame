@@ -48,19 +48,11 @@ func (s *AliyunSmsSender) SendTemplateMessage(dest string, template string, para
 }
 
 func (s *AliyunSmsSender) getTemplateReq(phoneNumber, template string, params map[string]string) *dysmsapi20170525.SendSmsRequest {
-	signature := params["signature"]
-	delete(params, "signature")
-
-	templateCode, b := config.Setting.Templates[template]
-	if b {
-		return &dysmsapi20170525.SendSmsRequest{
-			SignName:      tea.String(signature),
-			TemplateCode:  tea.String(templateCode),
-			PhoneNumbers:  tea.String(phoneNumber),
-			TemplateParam: tea.String(json.String(params)),
-		}
-	} else {
-		return nil
+	return &dysmsapi20170525.SendSmsRequest{
+		SignName:      tea.String(config.Setting.Signature),
+		TemplateCode:  tea.String(template),
+		PhoneNumbers:  tea.String(phoneNumber),
+		TemplateParam: tea.String(json.String(params)),
 	}
 }
 
