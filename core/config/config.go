@@ -125,7 +125,7 @@ func getConfigNode(config interface{}, path string) (interface{}, bool) {
 		return nil, false
 	}
 
-	segs := strings.SplitN(path, ".", 1)
+	segs := strings.SplitN(path, ".", 2)
 	if len(segs) == 2 {
 		if node, b := getConfigNode(config, segs[0]); b {
 			return getConfigNode(node, segs[1])

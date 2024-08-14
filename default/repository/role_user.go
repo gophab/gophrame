@@ -21,7 +21,7 @@ func init() {
 }
 
 // 查询类
-func (a *RoleUserRepository) GetCount(roleId string, userName string) (count int64) {
+func (a *RoleUserRepository) GetCount(roleId, search, tenantId string) (count int64) {
 	sql := `
 		SELECT 
 			count(*) as counts  
@@ -29,15 +29,20 @@ func (a *RoleUserRepository) GetCount(roleId string, userName string) (count int
 			sys_role_user a, sys_user  b   
 		WHERE 
 			a.user_id=b.id 
-			AND (a.role_id=? or 0=?)
-			AND (b.login LIKE ? or b.name like ?)
+			AND a.role_id=?
+			AND (b.login LIKE ? or b.name like ? or b.email like ? or b.mobile like ?)
 	`
-	a.Raw(sql, roleId, roleId, "%"+userName+"%", "%"+userName+"%").First(&count)
+	if tenantId != "" {
+		sql += ` AND b.tenant_id = ?`
+	} else {
+		sql += ` AND b.tenant_id <> ?`
+	}
+	a.Raw(sql, roleId, "%"+search+"%", "%"+search+"%", "%"+search+"%", "%"+search+"%", tenantId).First(&count)
 	return
 }
 
-func (a *RoleUserRepository) ListMembers(roleId string, userName string, pageable query.Pageable) (count int64, data []domain.RoleMember) {
-	count = a.GetCount(roleId, userName)
+func (a *RoleUserRepository) ListMembers(roleId, search, tenantId string, pageable query.Pageable) (count int64, data []*domain.RoleMember) {
+	count = a.GetCount(roleId, search, tenantId)
 	sql := `
 		SELECT  
 			c.id AS role_id, 
@@ -59,16 +64,18 @@ func (a *RoleUserRepository) ListMembers(roleId string, userName string, pageabl
 		JOIN sys_role c ON c.id = a.role_id
 		LEFT JOIN sys_position d ON a.position_id=d.id
 		WHERE  
-			(a.role_id=? or 0=?)
-			AND (b.login LIKE ? or b.name LIKE ?)
+			a.role_id=?
+			AND (b.login LIKE ? or b.name LIKE ? or b.email LIKE ? or b.mobile LIKE ?)
 		ORDER BY CONVERT(b.name USING GBK)
 		LIMIT ?,?
 	`
-	a.Raw(sql, roleId, roleId, "%"+userName+"%", "%"+userName+"%", pageable.GetOffset(), pageable.GetLimit()).Find(&data)
+	a.Raw(sql, roleId, "%"+search+"%", "%"+search+"%", "%"+search+"%", "%"+search+"%", pageable.GetOffset(), pageable.GetLimit()).Find(&data)
 	return
 }
 
-func (a *RoleUserRepository) List(roleId, userName string, pageable query.Pageable) (count int64, data []domain.RoleUser) {
+func (a *RoleUserRepository) List(roleId, search, tenantId string, pageable query.Pageable) (count int64, data []*domain.RoleUser) {
+	count = a.GetCount(roleId, search, tenantId)
+
 	sql := `
 		SELECT  
 			a.*
@@ -76,11 +83,74 @@ func (a *RoleUserRepository) List(roleId, userName string, pageable query.Pageab
 			sys_role_user a, sys_user b, sys_role c
 		WHERE  
 			a.user_id=b.id AND c.id=a.role_id
-			AND (a.role_id=? or 0=?)
-			AND b.name LIKE ?
+			AND a.role_id=?
+			AND (b.login LIKE ? or b.name LIKE ? or b.email LIKE ? or b.mobile LIKE ?)
+	`
+
+	if tenantId != "" {
+		sql += ` AND b.tenant_id = ?`
+	} else {
+		sql += ` AND b.tenant_id <> ?`
+	}
+
+	sql += `
+		ORDER BY CONVERT(b.name using GBK)
 		LIMIT ?,?
 	`
-	a.Raw(sql, roleId, roleId, "%"+userName+"%", pageable.GetOffset(), pageable.GetLimit()).Find(&data)
+	a.Raw(sql, roleId, "%"+search+"%", "%"+search+"%", "%"+search+"%", "%"+search+"%", tenantId, pageable.GetOffset(), pageable.GetLimit()).Find(&data)
+	return
+}
+
+func (a *RoleUserRepository) ListUsers(roleId, search, tenantId string, pageable query.Pageable) (count int64, data []*domain.User) {
+	count = a.GetCount(roleId, search, tenantId)
+
+	sql := `
+		SELECT  
+			b.*
+		FROM  
+			sys_role_user a, sys_user b, sys_role c
+		WHERE  
+			a.user_id=b.id AND c.id=a.role_id
+			AND a.role_id=?
+			AND (b.login LIKE ? or b.name LIKE ? or b.email LIKE ? or b.mobile LIKE ?)
+	`
+
+	if tenantId != "" {
+		sql += ` AND b.tenant_id = ?`
+	} else {
+		sql += ` AND b.tenant_id <> ?`
+	}
+
+	sql += `
+		ORDER BY CONVERT(b.name using GBK)
+		LIMIT ?,?
+	`
+	a.Raw(sql, roleId, "%"+search+"%", "%"+search+"%", "%"+search+"%", "%"+search+"%", tenantId, pageable.GetOffset(), pageable.GetLimit()).Find(&data)
+	return
+}
+
+func (a *RoleUserRepository) ListRoles(userId string, pageable query.Pageable) (count int64, data []*domain.Role) {
+	sql := `
+		SELECT  
+			count(*)
+		FROM  
+			sys_role_user a
+		WHERE  
+			a.user_id=?
+	`
+	a.Raw(sql, userId).First(&count)
+
+	sql = `
+		SELECT  
+			c.*
+		FROM  
+			sys_role_user a, sys_user b, sys_role c
+		WHERE  
+			a.user_id=b.id AND c.id=a.role_id
+			AND a.user_id=?
+		LIMIT ?,?
+	`
+	a.Raw(sql, userId, pageable.GetOffset(), pageable.GetLimit()).Find(&data)
 	return
 }
 
@@ -102,7 +172,7 @@ func (a *RoleUserRepository) InsertData(data *domain.RoleUser) bool {
 // 修改
 func (a *RoleUserRepository) UpdateData(data *domain.RoleUser) bool {
 	// Omit 表示忽略指定字段(CreatedTime)，其他字段全量更新
-	if res := a.Omit("CreatedTime").Save(data); res.Error == nil {
+	if res := a.Save(data); res.Error == nil {
 		return true
 	} else {
 		logger.Error("RoleUserRepository 数据更新出错：", res.Error.Error())
@@ -113,9 +183,8 @@ func (a *RoleUserRepository) UpdateData(data *domain.RoleUser) bool {
 // 删除
 func (a *RoleUserRepository) DeleteData(roleId string, userId string) bool {
 	// 只能删除除了 admin 之外的用户
-	var count int64
-	a.Model(&domain.RoleUser{}).Select("user_id").Where("role_id=? AND user_id=?", roleId, userId).First(&count)
-	if count < 1 {
+	res := a.Model(&domain.RoleUser{}).Select("user_id").Where("role_id=? AND user_id=?", roleId, userId).First(&userId)
+	if res.RowsAffected < 1 {
 		return true
 	}
 
@@ -128,7 +197,13 @@ func (a *RoleUserRepository) DeleteData(roleId string, userId string) bool {
 }
 
 // 修改
-func (a *RoleUserRepository) GetByUserId(user_id string) (result []domain.RoleUser) {
-	a.Where("user_id = ?", user_id).Find(&result)
+func (a *RoleUserRepository) GetByUserId(userId string) (result []*domain.RoleUser) {
+	a.Where("user_id = ?", userId).Find(&result)
+	return
+}
+
+// 修改
+func (a *RoleUserRepository) GetByRoleId(roleId string) (result []*domain.RoleUser) {
+	a.Where("role_id = ?", roleId).Find(&result)
 	return
 }

@@ -24,7 +24,7 @@ func init() {
 	inject.InjectValue("roleRepository", roleRepository)
 }
 
-func (r *RoleRepository) ExistRoleByID(id string) (bool, error) {
+func (r *RoleRepository) ExistById(id string) (bool, error) {
 	var role domain.Role
 	err := r.Select("id").Where("id = ? AND del_flag = false ", id).First(&role).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -36,6 +36,16 @@ func (r *RoleRepository) ExistRoleByID(id string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (r *RoleRepository) GetById(id string) (*domain.Role, error) {
+	var role domain.Role
+	err := r.Model(&domain.Role{}).Where("id = ? AND del_flag = false ", id).First(&role).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	return &role, nil
 }
 
 func (r *RoleRepository) GetByIds(ids []string) (result []domain.Role) {
@@ -53,28 +63,8 @@ func (r *RoleRepository) GetRoleTotal(maps interface{}) (int64, error) {
 }
 
 func (r *RoleRepository) GetRolesAll() ([]*domain.Role, error) {
-	var role []*domain.Role
-	err := r.Preload("Menus").Find(&role).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, err
-	}
-
-	return role, nil
-}
-
-func (r *RoleRepository) FindRoles(maps interface{}, pageable query.Pageable) ([]*domain.Role, error) {
-	var role []*domain.Role
-	err := query.Page(r.Preload("Menus").Where(maps), pageable).Find(&role).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, err
-	}
-
-	return role, nil
-}
-
-func (r *RoleRepository) FindRolesAll(maps interface{}) ([]*domain.Role, error) {
 	var roles []*domain.Role
-	err := r.Preload("Menus").Where(maps).Find(&roles).Error
+	err := r.Model(&domain.Role{}).Find(&roles).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
@@ -82,18 +72,64 @@ func (r *RoleRepository) FindRolesAll(maps interface{}) ([]*domain.Role, error) 
 	return roles, nil
 }
 
-func (r *RoleRepository) GetRole(id string) (*domain.Role, error) {
-	var role domain.Role
-	err := r.Preload("Menus").Where("id = ? AND del_flag = false ", id).First(&role).Error
+func (r *RoleRepository) FindRoles(maps map[string]interface{}, pageable query.Pageable) (int64, []*domain.Role, error) {
+	var role []*domain.Role
+	tx := r.Model(&domain.Role{}).Where(maps)
+
+	var count int64 = -1
+	if !pageable.NoCount() {
+		_ = tx.Count(&count)
+	}
+
+	if count != 0 {
+		if err := query.Page(tx, pageable).Find(&role).Error; err != nil {
+			return 0, nil, err
+		}
+	}
+
+	return count, role, nil
+}
+
+func (r *RoleRepository) FindAvailableRoles(maps map[string]interface{}, pageable query.Pageable) (int64, []*domain.Role, error) {
+	var role []*domain.Role
+
+	tenantId := maps["tenant_id"]
+	if tenantId != nil && tenantId.(string) != "" {
+		delete(maps, "tenant_id")
+	}
+
+	tx := r.Model(&domain.Role{}).Where(maps)
+	if tenantId != nil && tenantId.(string) != "" {
+		tx.Where("tenant_id = ? or (tenant_id = 'SYSTEM' and scope = 'PUBLIC')", tenantId)
+	}
+
+	var count int64 = -1
+	if !pageable.NoCount() {
+		_ = tx.Count(&count)
+	}
+
+	if count != 0 {
+		if err := query.Page(tx, pageable).Find(&role).Error; err != nil {
+			return 0, nil, err
+		}
+	}
+
+	return count, role, nil
+}
+
+func (r *RoleRepository) GetRoles(maps interface{}) ([]*domain.Role, error) {
+	var roles []*domain.Role
+	err := r.Model(&domain.Role{}).Where(maps).Find(&roles).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
 
-	return &role, nil
+	return roles, nil
 }
-func (r *RoleRepository) CheckRoleName(name string) (bool, error) {
+
+func (r *RoleRepository) CheckRoleName(name string, tenantId string) (bool, error) {
 	var role domain.Role
-	err := r.Where("name = ? AND del_flag = false ", name).First(&role).Error
+	err := r.Where("name = ? AND tenant_id = ? and del_flag = false ", name, tenantId).First(&role).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -104,9 +140,9 @@ func (r *RoleRepository) CheckRoleName(name string) (bool, error) {
 	return false, nil
 }
 
-func (r *RoleRepository) CheckRoleNameId(name string, id string) (bool, error) {
+func (r *RoleRepository) CheckRoleNameId(name string, id string, tenantId string) (bool, error) {
 	var role domain.Role
-	err := r.Where("name = ? AND id != ? AND del_flag = false ", name, id).First(&role).Error
+	err := r.Where("name = ? AND tenant_id = ? AND id != ? AND del_flag = false ", name, tenantId, id).First(&role).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -117,31 +153,30 @@ func (r *RoleRepository) CheckRoleNameId(name string, id string) (bool, error) {
 	return false, nil
 }
 
-func (r *RoleRepository) EditRole(id string, data map[string]interface{}) error {
-	var role []domain.Role
-
-	if err := r.Where("id = ? AND del_flag = false ", id).Find(&role).Error; err != nil {
-		return err
-	}
-	r.Model(&role).UpdateColumns(data)
-
-	return nil
-}
-
-func (r *RoleRepository) AddRole(data map[string]interface{}) (*domain.Role, error) {
-	role := domain.Role{
-		Name: data["name"].(string),
-	}
-	if err := r.Create(&role).Error; err != nil {
+func (r *RoleRepository) PatchRole(id string, data map[string]interface{}) (*domain.Role, error) {
+	if err := r.Model(&domain.Role{}).Where("id = ? AND del_flag = false", id).UpdateColumns(data).Error; err != nil {
 		return nil, err
 	}
-	return &role, nil
+
+	return r.GetById(id)
 }
 
-func (r *RoleRepository) DeleteRole(id string) error {
-	var role domain.Role
-	r.Where("id = ?", id).Find(&role)
-	if err := r.Where("id = ?", id).Delete(&role).Error; err != nil {
+func (r *RoleRepository) CreateRole(role *domain.Role) (*domain.Role, error) {
+	if err := r.Create(role).Error; err != nil {
+		return nil, err
+	}
+	return role, nil
+}
+
+func (r *RoleRepository) UpdateRole(role *domain.Role) (*domain.Role, error) {
+	if err := r.Save(role).Error; err != nil {
+		return nil, err
+	}
+	return role, nil
+}
+
+func (r *RoleRepository) DeleteById(id string) error {
+	if err := r.Model(&domain.Role{}).Where("id = ?", id).UpdateColumn("del_flag", true).Error; err != nil {
 		return err
 	}
 

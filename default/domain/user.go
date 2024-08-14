@@ -8,9 +8,7 @@ import (
 	"github.com/gophab/gophrame/core/util"
 )
 
-type UserBase struct {
-	domain.Entity
-	DelFlag       bool       `gorm:"column:del_flag" json:"del_flag"`
+type UserInfo struct {
 	Login         *string    `gorm:"column:login" json:"login,omitempty"`
 	Mobile        *string    `gorm:"column:mobile" json:"mobile,omitempty"`
 	Email         *string    `gorm:"column:email" json:"email,omitempty"`
@@ -19,13 +17,14 @@ type UserBase struct {
 	Avatar        *string    `gorm:"column:avatar" json:"avatar,omitempty"`
 	Remark        *string    `gorm:"column:remark" json:"remark,omitempty"`
 	InviterId     *string    `gorm:"column:inviter_id" json:"inviterId,omitempty"`
-	LoginTimes    int        `gorm:"column:login_times" json:"loginTimes"`
+	LoginTimes    int        `gorm:"column:login_times;default:0" json:"loginTimes"`
 	LastLoginTime *time.Time `gorm:"column:last_login_time" json:"lastLoginTime,omitempty"`
 	LastLoginIp   *string    `gorm:"column:last_login_ip" json:"lastLoginIp,omitempty"`
 }
 
 type User struct {
-	UserBase
+	domain.DeletableEntity
+	UserInfo
 	Password   string  `gorm:"column:password" json:"-"`
 	Admin      bool    `gorm:"column:admin;default:false" json:"admin"`
 	Roles      []Role  `gorm:"many2many:sys_role_user;" json:"roles,omitempty"` /* 角色 */

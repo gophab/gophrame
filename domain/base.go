@@ -10,11 +10,60 @@ import (
 	"gorm.io/gorm"
 )
 
-type Entity struct {
-	Id               string     `gorm:"column:id;primaryKey" json:"id" primaryKey:"yes"`
+type TenantEnabled struct {
+	TenantId string `gorm:"column:tenant_id" json:"tenantId"`
+}
+
+func (m *TenantEnabled) BeforeCreate(tx *gorm.DB) (err error) {
+	if m.TenantId == "" {
+		m.TenantId = SecurityUtil.GetCurrentTenantId(nil)
+		if m.TenantId == "" {
+			m.TenantId = "SYSTEM"
+		}
+	}
+	return
+}
+
+type AuditingEnabled struct {
+	CreatedBy        string     `gorm:"column:created_by;<-:create" json:"createdBy"`
 	CreatedTime      time.Time  `gorm:"column:created_time;autoCreateTime;<-:create" json:"createdTime"`
+	LastModifiedBy   string     `gorm:"column:last_modified_by;<-:update" json:"lastModifiedBy,omitempty"`
 	LastModifiedTime *time.Time `gorm:"column:last_modified_time;autoUpdateTime;<-:update" json:"lastModifiedTime,omitempty"`
-	TenantId         string     `gorm:"column:tenant_id" json:"tenantId"`
+}
+
+func (m *AuditingEnabled) BeforeCreate(tx *gorm.DB) (err error) {
+	if m.CreatedBy == "" {
+		m.CreatedBy = SecurityUtil.GetCurrentUserId(nil)
+	}
+	return
+}
+
+func (m *AuditingEnabled) BeforeSave(tx *gorm.DB) (err error) {
+	if m.LastModifiedBy == "" {
+		m.LastModifiedBy = SecurityUtil.GetCurrentUserId(nil)
+	}
+	return
+}
+
+type DeleteEnabled struct {
+	DelFlag     bool       `gorm:"column:del_flag;default:false" json:"delFlag"`
+	DeletedTime *time.Time `gorm:"column:deleted_time" json:"deletedTime,omitempty"`
+	DeletedBy   string     `gorm:"column:deleted_by" json:"deletedBy,omitempty"`
+}
+
+func (m *DeleteEnabled) BeforeSave(tx *gorm.DB) (err error) {
+	if m.DelFlag && m.DeletedBy == "" {
+		m.DeletedBy = SecurityUtil.GetCurrentUserId(nil)
+		if m.DeletedBy == "" {
+			m.DeletedBy = "internal"
+		}
+		m.DeletedTime = util.TimeAddr(time.Now())
+	}
+	return
+}
+
+type Entity struct {
+	Id string `gorm:"column:id;primaryKey" json:"id" primaryKey:"yes"`
 }
 
 func (e *Entity) BeforeCreate(tx *gorm.DB) (err error) {
@@ -27,85 +76,49 @@ func (e *Entity) BeforeCreate(tx *gorm.DB) (err error) {
 
 type AuditingEntity struct {
 	Entity
-	CreatedBy      string `gorm:"column:created_by;<-:create" json:"createdBy"`
-	LastModifiedBy string `gorm:"column:last_modified_by;<-:update" json:"lastModifiedBy,omitempty"`
+	AuditingEnabled
+	TenantEnabled
 }
 
-func (m *AuditingEntity) BeforeCreate(tx *gorm.DB) (err error) {
-	if m.CreatedBy == "" {
-		m.CreatedBy = SecurityUtil.GetCurrentUserId(nil)
-	}
-	return m.Entity.BeforeCreate(tx)
+func (e *AuditingEntity) BeforeCreate(tx *gorm.DB) (err error) {
+	e.Entity.BeforeCreate(tx)
+	e.AuditingEnabled.BeforeCreate(tx)
+	e.TenantEnabled.BeforeCreate(tx)
+	return
 }
 
-func (m *AuditingEntity) BeforeSave(tx *gorm.DB) (err error) {
-	if m.LastModifiedBy == "" {
-		m.LastModifiedBy = SecurityUtil.GetCurrentUserId(nil)
-	}
+func (e *AuditingEntity) BeforeSave(tx *gorm.DB) (err error) {
+	// e.Entity.BeforeSave(tx)
+	e.AuditingEnabled.BeforeSave(tx)
+	// e.TenantEnabled.BeforeSave(tx)
 	return
 }
 
 type DeletableEntity struct {
-	AuditingEntity
-	DelFlag     bool       `gorm:"column:del_flag;default:false" json:"delFlag"`
-	DeletedTime *time.Time `gorm:"column:deleted_time" json:"deletedTime,omitempty"`
-	DeletedBy   string     `gorm:"column:deleted_by" json:"deletedBy,omitempty"`
+	Entity
+	AuditingEnabled
+	TenantEnabled
+	DeleteEnabled
 }
 
-func (m *DeletableEntity) BeforeSave(tx *gorm.DB) (err error) {
-	if m.DelFlag && m.DeletedBy == "" {
-		m.DeletedBy = SecurityUtil.GetCurrentUserId(nil)
-		if m.DeletedBy == "" {
-			m.DeletedBy = "internal"
-		}
-		m.DeletedTime = util.TimeAddr(time.Now())
-	}
-	return m.AuditingEntity.BeforeSave(tx)
-}
-
-type Model struct {
-	Id               int64      `gorm:"primaryKey" json:"id" primaryKey:"yes"`
-	CreatedTime      time.Time  `gorm:"column:created_time;autoCreateTime;<-:create" json:"createdTime"`
-	LastModifiedTime *time.Time `gorm:"column:last_modified_time;autoUpdateTime;<-:update" json:"lastModifiedTime,omitempty"`
-	TenantId         string     `gorm:"column:tenant_id" json:"tenantId"`
-}
-
-type AuditingModel struct {
-	Model
-	CreatedBy      string `gorm:"created_by;<-:create" json:"createdBy"`
-	LastModifiedBy string `gorm:"lastModified_by;<-:update" json:"lastModifiedBy,omitempty"`
-}
-
-func (m *AuditingModel) BeforeCreate(tx *gorm.DB) (err error) {
-	if m.CreatedBy == "" {
-		m.CreatedBy = SecurityUtil.GetCurrentUserId(nil)
-	}
-	return m.Model.BeforeCreate(tx)
-}
-
-func (m *AuditingModel) BeforeSave(tx *gorm.DB) (err error) {
-	if m.LastModifiedBy == "" {
-		m.LastModifiedBy = SecurityUtil.GetCurrentUserId(nil)
-	}
+func (e *DeletableEntity) BeforeCreate(tx *gorm.DB) (err error) {
+	e.Entity.BeforeCreate(tx)
+	e.AuditingEnabled.BeforeCreate(tx)
+	e.TenantEnabled.BeforeCreate(tx)
+	// e.DeleteEnabled.BeforeCreate(tx)
 	return
 }
 
-type DeletableModel struct {
-	AuditingModel
-	DelFlag     bool       `gorm:"column:del_flag;default:false" json:"delFlag"`
-	DeletedTime *time.Time `gorm:"column:deleted_time" json:"deletedTime,omitempty"`
-	DeletedBy   string     `gorm:"column:deleted_by" json:"deletedBy,omitempty"`
+func (e *DeletableEntity) BeforeSave(tx *gorm.DB) (err error) {
+	// e.Entity.BeforeSave(tx)
+	e.AuditingEnabled.BeforeSave(tx)
+	// e.TenantEnabled.BeforeSave(tx)
+	e.DeleteEnabled.BeforeSave(tx)
+	return
 }
 
-func (m *DeletableModel) BeforeSave(tx *gorm.DB) (err error) {
-	if m.DelFlag && m.DeletedBy == "" {
-		m.DeletedBy = SecurityUtil.GetCurrentUserId(nil)
-		if m.DeletedBy == "" {
-			m.DeletedBy = "internal"
-		}
-		m.DeletedTime = util.TimeAddr(time.Now())
-	}
-	return m.AuditingModel.BeforeSave(tx)
+type Model struct {
+	Id int64 `gorm:"primaryKey" json:"id" primaryKey:"yes"`
 }
 
 func (m *Model) BeforeCreate(tx *gorm.DB) (err error) {
@@ -115,7 +128,48 @@ func (m *Model) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
+type AuditingModel struct {
+	Model
+	AuditingEnabled
+	TenantEnabled
+}
+
+func (e *AuditingModel) BeforeCreate(tx *gorm.DB) (err error) {
+	e.Model.BeforeCreate(tx)
+	e.AuditingEnabled.BeforeCreate(tx)
+	e.TenantEnabled.BeforeCreate(tx)
+	return
+}
+
+func (e *AuditingModel) BeforeSave(tx *gorm.DB) (err error) {
+	// e.Entity.BeforeSave(tx)
+	e.AuditingEnabled.BeforeSave(tx)
+	// e.TenantEnabled.BeforeSave(tx)
+	return
+}
+
+type DeletableModel struct {
+	Model
+	AuditingEnabled
+	TenantEnabled
+	DeleteEnabled
+}
+
+func (e *DeletableModel) BeforeCreate(tx *gorm.DB) (err error) {
+	e.Model.BeforeCreate(tx)
+	e.AuditingEnabled.BeforeCreate(tx)
+	e.TenantEnabled.BeforeCreate(tx)
+	return
+}
+
+func (e *DeletableModel) BeforeSave(tx *gorm.DB) (err error) {
+	// e.Entity.BeforeSave(tx)
+	e.AuditingEnabled.BeforeSave(tx)
+	e.DeleteEnabled.BeforeSave(tx)
+	// e.TenantEnabled.BeforeSave(tx)
+	return
+}
+
 type Relation struct {
-	CreatedTime      time.Time `gorm:"column:created_time;autoCreateTime;<-:create" json:"createdTime"`
-	LastModifiedTime time.Time `gorm:"column:last_modified_time;autoUpdateTime;<-:update" json:"lastModifiedTime"`
+	AuditingEnabled
 }

@@ -35,13 +35,15 @@ type Pageable interface {
 	GetLimit() int
 	GetOffset() int
 	NoSort() bool
+	NoCount() bool
 }
 
 type Pagination struct {
-	Total int64  `json:"total"`
-	Page  int    `json:"page"`
-	Size  int    `json:"size"`
-	Sort  []Sort `json:"sort"`
+	Total     int64  `json:"total"`
+	Page      int    `json:"page"`
+	Size      int    `json:"size"`
+	Sort      []Sort `json:"sort"`
+	WithTotal *bool  `json:"withTotal"`
 }
 
 func (p *Pagination) GetTotal() int64 {
@@ -83,12 +85,20 @@ func (p *Pagination) GetOffset() (offset int) {
 	return offset
 }
 
+func (p *Pagination) NoCount() bool {
+	if p.WithTotal != nil && !*p.WithTotal {
+		return true
+	}
+	return false
+}
+
 func GetPageable(c *gin.Context) Pageable {
 	// 1. From Query
 	result := &Pagination{
-		Page: GetPage(c),
-		Size: GetSize(c),
-		Sort: GetSort(c),
+		Page:      GetPage(c),
+		Size:      GetSize(c),
+		Sort:      GetSort(c),
+		WithTotal: WithTotal(c),
 	}
 
 	return result
@@ -178,4 +188,15 @@ func GetSort(c *gin.Context) []Sort {
 	}
 
 	return result
+}
+
+func WithTotal(c *gin.Context) *bool {
+	var p Pagination
+	if err := form.ShouldBind(c, &p); err == nil {
+		if p.WithTotal != nil {
+			return p.WithTotal
+		}
+	}
+	result := c.GetBool("withTotal")
+	return &result
 }

@@ -36,13 +36,13 @@ var UserResources *controller.Controllers = &controller.Controllers{
 	},
 	Controllers: []controller.Controller{
 		userOpenController,
-		roleOpenController,
+		adminRoleOpenController,
 		organizationOpenController,
 		organizationUserOpenController,
 		userOptionOpenController,
 		socialUserOpenController,
 		tenantOptionOpenController,
-		auth.Resources,
+		auth.UserResources,
 	},
 }
 
@@ -54,9 +54,11 @@ var AdminResources *controller.Controllers = &controller.Controllers{
 		permission.CheckUserPermissions(), // 权限验证
 	},
 	Controllers: []controller.Controller{
+		adminRoleOpenController,
 		adminUserOpenController,
 		adminOrganizationOpenController,
 		adminTenantOpenController,
 		adminTenantOptionOpenController,
+		auth.AdminResources,
 	},
 }

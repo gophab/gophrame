@@ -38,7 +38,7 @@ func (s *CasbinService) LoadAllPolicy() error {
 // LoadPolicy 加载角色权限策略
 func (s *CasbinService) LoadPolicy(id string) error {
 	if s.Enforcer != nil {
-		role, err := s.RoleService.Get(id)
+		role, err := s.RoleService.GetById(id)
 		if err != nil {
 			return err
 		}
@@ -87,7 +87,9 @@ func (s *CasbinService) onRoleEvent(event string, args ...interface{}) {
 	case "ROLE_UPDATED":
 		break
 	case "ROLE_DELETED":
-		s.Enforcer.DeletePermissionsForUser(role.Name)
+		if s.Enforcer != nil {
+			s.Enforcer.DeletePermissionsForUser(role.Name)
+		}
 		break
 	}
 }

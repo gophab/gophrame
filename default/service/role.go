@@ -11,7 +11,6 @@ import (
 
 	"github.com/gophab/gophrame/default/domain"
 	"github.com/gophab/gophrame/default/repository"
-	"github.com/gophab/gophrame/default/service/dto"
 )
 
 type RoleService struct {
@@ -28,16 +27,13 @@ func init() {
 	logger.Debug("Initialized RoleService")
 }
 
-func (s *RoleService) Add(role *dto.Role) (*domain.Role, error) {
-	name, _ := s.RoleRepository.CheckRoleName(role.Name)
+func (s *RoleService) CreateRole(role *domain.Role) (*domain.Role, error) {
+	name, _ := s.RoleRepository.CheckRoleName(role.Name, role.TenantId)
 	if name {
 		return nil, errors.New("name 名字重复,请更改！")
 	}
 
-	res, err := s.RoleRepository.AddRole(map[string]interface{}{
-		"name": role.Name,
-	})
-
+	res, err := s.RoleRepository.CreateRole(role)
 	if err != nil {
 		return nil, err
 	}
@@ -47,32 +43,46 @@ func (s *RoleService) Add(role *dto.Role) (*domain.Role, error) {
 	return res, nil
 }
 
-func (s *RoleService) Edit(role *dto.Role) error {
-	name, _ := s.RoleRepository.CheckRoleNameId(role.Name, role.Id)
+func (s *RoleService) UpdateRole(role *domain.Role) (*domain.Role, error) {
+	name, _ := s.RoleRepository.CheckRoleNameId(role.Name, role.Id, role.TenantId)
 	if name {
-		return errors.New("name 名字重复,请更改！")
+		return nil, errors.New("name 名字重复,请更改！")
 	}
 
-	err := s.RoleRepository.EditRole(role.Id, map[string]interface{}{
-		"name": role.Name,
-	})
+	role, err := s.RoleRepository.UpdateRole(role)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	eventbus.PublishEvent("ROLE_UPDATED", role)
-
-	return nil
+	return role, nil
 }
 
-func (s *RoleService) Delete(id string) error {
-	role, err := s.RoleRepository.GetRole(id)
+func (s *RoleService) PatchRole(role *domain.Role, data map[string]interface{}) (*domain.Role, error) {
+	if n, b := data["name"]; b {
+		name, _ := s.RoleRepository.CheckRoleNameId(n.(string), role.Id, role.TenantId)
+		if name {
+			return nil, errors.New("name 名字重复,请更改！")
+		}
+	}
+
+	role, err := s.RoleRepository.PatchRole(role.Id, data)
+	if err != nil {
+		return nil, err
+	}
+
+	eventbus.PublishEvent("ROLE_UPDATED", role)
+	return role, nil
+}
+
+func (s *RoleService) DeleteById(id string) error {
+	role, err := s.RoleRepository.GetById(id)
 	if err != nil {
 		return err
 	}
 
 	if role != nil {
-		err := s.RoleRepository.DeleteRole(id)
+		err := s.RoleRepository.DeleteById(id)
 		if err != nil {
 			return err
 		}
@@ -83,8 +93,8 @@ func (s *RoleService) Delete(id string) error {
 	return nil
 }
 
-func (s *RoleService) Get(id string) (*domain.Role, error) {
-	role, err := s.RoleRepository.GetRole(id)
+func (s *RoleService) GetById(id string) (*domain.Role, error) {
+	role, err := s.RoleRepository.GetById(id)
 	if err != nil {
 		return nil, err
 	}
@@ -93,36 +103,23 @@ func (s *RoleService) Get(id string) (*domain.Role, error) {
 }
 
 func (s *RoleService) GetUserRoles(userId string) ([]*domain.Role, error) {
-	var params = make(map[string]interface{})
-	params["user_id"] = userId
-	return s.RoleRepository.FindRolesAll(params)
+	var conds = make(map[string]interface{})
+	conds["user_id"] = userId
+	return s.RoleRepository.GetRoles(conds)
 }
 
-func (s *RoleService) GetAll(role *dto.Role, pageable query.Pageable) ([]*domain.Role, error) {
-	if role.Id != "" {
-		maps := make(map[string]interface{})
-		maps["del_flag"] = false
-		maps["id"] = role.Id
-
-		roles, err := s.RoleRepository.FindRoles(maps, pageable)
-		if err != nil {
-			return nil, err
-		}
-
-		return roles, nil
-	} else {
-		roles, err := s.RoleRepository.FindRoles(role.GetMaps(), pageable)
-		if err != nil {
-			return nil, err
-		}
-		return roles, nil
-	}
+func (s *RoleService) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Role, error) {
+	return s.RoleRepository.FindRoles(conds, pageable)
 }
 
-func (s *RoleService) ExistByID(id string) (bool, error) {
-	return s.RoleRepository.ExistRoleByID(id)
+func (s *RoleService) FindAvailable(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Role, error) {
+	return s.RoleRepository.FindAvailableRoles(conds, pageable)
 }
 
-func (s *RoleService) Count(role *dto.Role) (int64, error) {
-	return s.RoleRepository.GetRoleTotal(role.GetMaps())
+func (s *RoleService) ExistById(id string) (bool, error) {
+	return s.RoleRepository.ExistById(id)
+}
+
+func (s *RoleService) Count(conds map[string]interface{}) (int64, error) {
+	return s.RoleRepository.GetRoleTotal(conds)
 }

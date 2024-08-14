@@ -89,30 +89,37 @@ func (m *MenuMController) GetMenu(c *gin.Context) {
 		return
 	}
 
-	if res, _ := m.MenuService.GetById(id); res != nil {
-		response.NotFound(c, "")
+	if res, _ := m.MenuService.GetById(id); res == nil {
+		response.NotFound(c, "Not Found")
 	} else {
 		response.Success(c, res)
 	}
 }
 
 func (m *MenuMController) GetMenus(c *gin.Context) {
-	fid := request.Param(c, "fid").Int64()
+	fid := request.Param(c, "fid").DefaultInt64(-1)
 	title := request.Param(c, "title").DefaultString("")
 	buttons := request.Param(c, "buttons").DefaultBool(false)
+	tree := request.Param(c, "tree").DefaultBool(false)
 	pageable := query.GetPageable(c)
 
 	if buttons { // menu with buttons
 		count, result := m.MenuService.ListWithButtons(fid, title, pageable)
-		if count > 0 {
+		if count != 0 {
 			c.Header("X-Total-Count", strconv.FormatInt(count, 10))
+			if tree {
+				result = m.MenuService.MakeTree(result)
+			}
 			response.Success(c, result)
 			return
 		}
 	} else {
 		count, result := m.MenuService.List(fid, title, pageable)
-		if count > 0 {
+		if count != 0 {
 			c.Header("X-Total-Count", strconv.FormatInt(count, 10))
+			if tree {
+				result = m.MenuService.MakeTree(result)
+			}
 			response.Success(c, result)
 			return
 		}

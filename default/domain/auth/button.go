@@ -2,15 +2,15 @@ package auth
 
 import "github.com/gophab/gophrame/domain"
 
-// 用户在指定页面已分配的按钮列表
+type ButtonInfo struct {
+	OperationInfo
+	Color       string `gorm:"column:color" json:"color,omitempty"`
+	AllowMethod string `gorm:"column:allow_method" json:"allowMethod,omitempty"`
+}
+
 type Button struct {
-	domain.Model
-	CnName      string `json:"cnName,omitempty"`
-	EnName      string `json:"enName,omitempty"`
-	Color       string `json:"color,omitempty"`
-	AllowMethod string `json:"allowMethod,omitempty"`
-	Status      int    `json:"status"`
-	Remark      string `json:"remark,omitempty"`
+	domain.AuditingEnabled
+	ButtonInfo
 }
 
 // 表名

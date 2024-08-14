@@ -1,12 +1,22 @@
 package auth
 
 // 菜单分配文件相关的数据类型
-type AuthNode struct {
-	Id       int64      `json:"id" primaryKey:"yes"`
-	Fid      int64      `json:"fid" fid:"Id"`
-	Title    string     `json:"title,omitempty"`
-	NodeType string     `json:"nodeType"`
-	Expand   bool       `json:"expand"`
-	Sort     int        `json:"sort"`
-	Children []AuthNode `gorm:"-" json:"children,omitempty"`
+// Type: [menu | button]
+type OperationInfo struct {
+	Id     int64  `gorm:"primaryKey" json:"id" primaryKey:"yes"`
+	Fid    int64  `gorm:"column:fid;default:0" json:"fid" fid:"Id"`
+	Name   string `gorm:"column:name" json:"name"`
+	Icon   string `gorm:"column:icon" json:"icon,omitempty"`
+	Title  string `gorm:"column:title" json:"title,omitempty"`
+	Type   string `gorm:"column:type" json:"type"`
+	Tags   string `gorm:"column:tags" json:"tags,omitempty"`
+	Sort   int    `gorm:"column:sort;default:100" json:"sort"`
+	Status int    `gorm:"column:status;default:1" json:"status"`
+	Remark string `gorm:"column:remark" json:"remark,omitempty"`
+	Level  int    `gorm:"column:level;default:0" json:"level"`
+}
+
+type Operation struct {
+	OperationInfo
+	Children []*Operation `gorm:"-" json:"children,omitempty"`
 }

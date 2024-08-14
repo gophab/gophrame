@@ -33,6 +33,28 @@ func (b *ButtonRepository) GetById(id int64) (*auth.Button, error) {
 	}
 }
 
+func (b *ButtonRepository) GetByFid(fid int64) ([]*auth.Button, error) {
+	var result []*auth.Button
+	if res := b.Model(&result).Where("fid = ?", fid).Find(&result); res.Error != nil {
+		return nil, res.Error
+	} else if res.RowsAffected == 0 {
+		return nil, nil
+	} else {
+		return result, nil
+	}
+}
+
+func (b *ButtonRepository) GetByComponent(component string) ([]*auth.Button, error) {
+	var result []*auth.Button
+	if res := b.Model(&result).Where("component = ?", component).Find(&result); res.Error != nil {
+		return nil, res.Error
+	} else if res.RowsAffected == 0 {
+		return nil, nil
+	} else {
+		return result, nil
+	}
+}
+
 // 根据关键词查询用户表的条数
 func (b *ButtonRepository) getCounts(keyWords string) (counts int64) {
 	sql := "SELECT count(*) AS counts FROM auth_button WHERE (en_name LIKE ? OR cn_name LIKE  ?) "
@@ -53,8 +75,8 @@ func (b *ButtonRepository) Show(keyWords string, pageable query.Pageable) (total
 			FROM 
 				auth_button a 
 			WHERE 
-				a.cn_name LIKE ? 
-				OR a.en_name LIKE ? 
+				a.name LIKE ? 
+				OR a.title LIKE ? 
 			LIMIT ?,?
 		`
 		if res := b.Raw(sql, "%"+keyWords+"%", "%"+keyWords+"%", pageable.GetOffset(), pageable.GetLimit()).Find(&temp); res.RowsAffected > 0 {
@@ -68,18 +90,18 @@ func (b *ButtonRepository) Show(keyWords string, pageable query.Pageable) (total
 
 //按钮编辑页的列表展示
 
-func (a *ButtonRepository) getCountsByButtonName(cnName string) (count int64) {
-	if res := a.Model(&auth.Button{}).Where("cn_name LIKE ?", "%"+cnName+"%").Count(&count); res.Error == nil {
+func (a *ButtonRepository) getCountsByButtonName(name string) (count int64) {
+	if res := a.Model(&auth.Button{}).Where("name LIKE ?", "%"+name+"%").Count(&count); res.Error == nil {
 		return count
 	}
 	return 0
 }
 
-func (a *ButtonRepository) List(cnName string, pageable query.Pageable) (counts int64, data []auth.Button) {
-	counts = a.getCountsByButtonName(cnName)
+func (a *ButtonRepository) List(name string, pageable query.Pageable) (counts int64, data []auth.Button) {
+	counts = a.getCountsByButtonName(name)
 	if counts > 0 {
 		if err := a.Model(&auth.Button{}).
-			Where("cn_name LIKE ?", "%"+cnName+"%").Offset(pageable.GetOffset()).Limit(pageable.GetLimit()).Find(&data); err.Error == nil {
+			Where("name LIKE ? or tilte LIKE ?", "%"+name+"%", "%"+name+"%").Offset(pageable.GetOffset()).Limit(pageable.GetLimit()).Find(&data); err.Error == nil {
 			return
 		}
 	}

@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/unknwon/com"
+	"strconv"
 
 	"github.com/astaxie/beego/validation"
 	"github.com/gin-gonic/gin"
@@ -14,13 +14,13 @@ import (
 	"github.com/gophab/gophrame/core/webservice/response"
 	"github.com/gophab/gophrame/errors"
 
+	"github.com/gophab/gophrame/default/domain"
 	"github.com/gophab/gophrame/default/service"
-	"github.com/gophab/gophrame/default/service/dto"
 )
 
 type RoleController struct {
 	controller.ResourceController
-	RoleService *service.RoleService `inject:"roleController"`
+	RoleService *service.RoleService `inject:"roleService"`
 }
 
 var roleController *RoleController = &RoleController{}
@@ -31,7 +31,7 @@ func init() {
 
 func (m *RoleController) AfterInitialize() {
 	m.SetResourceHandlers([]controller.ResourceHandler{
-		{HttpMethod: "GET", ResourcePath: "/roles", Handler: m.GetRoles},
+		{HttpMethod: "GET", ResourcePath: "/roles", Handler: m.FindRoles},
 		{HttpMethod: "GET", ResourcePath: "/role/:id", Handler: m.GetRole},
 		{HttpMethod: "POST", ResourcePath: "/role", Handler: m.AddRole},
 		{HttpMethod: "PUT", ResourcePath: "/role", Handler: m.EditRole},
@@ -45,26 +45,19 @@ func (m *RoleController) AfterInitialize() {
 // @Produce  json
 // @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
 // @Router /api/v1/roles  [GET]
-func (r *RoleController) GetRoles(c *gin.Context) {
-	id := com.StrTo(c.Query("id")).String()
+func (r *RoleController) FindRoles(c *gin.Context) {
+	pageable := query.GetPageable(c)
 
-	total, err := r.RoleService.Count(&dto.Role{Id: id})
-	if err != nil {
-		response.SystemErrorCode(c, errors.ERROR_COUNT_FAIL)
-		return
-	}
-
-	roles, err := r.RoleService.GetAll(&dto.Role{Id: id}, query.GetPageable(c))
+	count, roles, err := r.RoleService.Find(map[string]interface{}{
+		"del_flag": false,
+	}, pageable)
 	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_GET_S_FAIL)
 		return
 	}
 
-	data := make(map[string]interface{})
-	data["lists"] = roles
-	data["total"] = total
-
-	response.Success(c, data)
+	c.Header("X-Total-Count", strconv.FormatInt(count, 10))
+	response.Success(c, roles)
 }
 
 // @Summary   获取角色
@@ -80,7 +73,7 @@ func (r *RoleController) GetRole(c *gin.Context) {
 		return
 	}
 
-	result, err := r.RoleService.Get(id)
+	result, err := r.RoleService.GetById(id)
 	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_COUNT_FAIL)
 		return
@@ -97,7 +90,7 @@ func (r *RoleController) GetRole(c *gin.Context) {
 // @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
 // @Router /api/v1/role  [POST]
 func (r *RoleController) AddRole(c *gin.Context) {
-	var data dto.RoleCreate
+	var data domain.Role
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -112,10 +105,7 @@ func (r *RoleController) AddRole(c *gin.Context) {
 		return
 	}
 
-	role, err := r.RoleService.Add(&dto.Role{
-		RoleCreate: data,
-	})
-
+	role, err := r.RoleService.CreateRole(&data)
 	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_CREATE_FAIL)
 		return
@@ -133,7 +123,7 @@ func (r *RoleController) AddRole(c *gin.Context) {
 // @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
 // @Router /api/v1/role/:id  [PUT]
 func (r *RoleController) EditRole(c *gin.Context) {
-	var data dto.Role
+	var data domain.Role
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -149,7 +139,7 @@ func (r *RoleController) EditRole(c *gin.Context) {
 		return
 	}
 
-	if exists, err := r.RoleService.ExistByID(data.Id); err != nil {
+	if exists, err := r.RoleService.ExistById(data.Id); err != nil {
 		response.FailCode(c, errors.ERROR_EXIST_FAIL)
 		return
 	} else if !exists {
@@ -157,8 +147,8 @@ func (r *RoleController) EditRole(c *gin.Context) {
 		return
 	}
 
-	if err := r.RoleService.Edit(&data); err == nil {
-		response.Success(c, data)
+	if result, err := r.RoleService.UpdateRole(&data); err == nil {
+		response.Success(c, result)
 	} else {
 		response.SystemErrorMessage(c, errors.ERROR_UPDATE_FAIL, err.Error())
 	}
@@ -178,7 +168,7 @@ func (r *RoleController) DeleteRole(c *gin.Context) {
 		return
 	}
 
-	if exists, err := r.RoleService.ExistByID(id); err != nil {
+	if exists, err := r.RoleService.ExistById(id); err != nil {
 		response.SystemErrorMessage(c, errors.ERROR_EXIST_FAIL, err.Error())
 		return
 	} else if !exists {
@@ -186,7 +176,7 @@ func (r *RoleController) DeleteRole(c *gin.Context) {
 		return
 	}
 
-	if err := r.RoleService.Delete(id); err == nil {
+	if err := r.RoleService.DeleteById(id); err == nil {
 		response.Success(c, nil)
 	} else {
 		response.SystemErrorMessage(c, errors.ERROR_DELETE_FAIL, err.Error())

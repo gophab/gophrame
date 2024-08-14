@@ -6,7 +6,7 @@ import (
 )
 
 type SocialUser struct {
-	domain.Entity
+	domain.DeletableEntity
 	social.SocialUser
 	Roles []Role `gorm:"-" json:"roles,omitempty"`
 }

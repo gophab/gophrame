@@ -26,7 +26,7 @@ func init() {
 	inject.InjectValue("authorityService", authorityService)
 }
 
-func (u *AuthorityService) GetUserMenus(userId string) []AuthModel.Menu {
+func (u *AuthorityService) GetUserMenus(userId string) []*AuthModel.Menu {
 	roleIds := u.RoleUserService.GetUserRoleIds(userId)
 
 	//根据岗位ID获取拥有的菜单ID,去重
@@ -41,42 +41,88 @@ func (u *AuthorityService) GetUserMenus(userId string) []AuthModel.Menu {
 
 }
 
-func (u *AuthorityService) GetUserMenuTree(userId string) []AuthModel.Menu {
+func (u *AuthorityService) GetUserMenuTree(userId string) []*AuthModel.Menu {
 	menus := u.GetUserMenus(userId)
 	if len(menus) > 1 {
-		var dest = make([]AuthModel.Menu, 0)
+		var dest = make([]*AuthModel.Menu, 0)
 		if err := util.CreateSqlResFormatFactory().ScanToTreeData(menus, &dest); err == nil {
 			return dest
 		} else {
 			logger.Error("根据用户id查询权限范围内的菜单数据树形化出错", err.Error())
 		}
 	}
-	return []AuthModel.Menu{}
+	return []*AuthModel.Menu{}
 }
 
 // 查询用户打开指定的页面所拥有的按钮列表
-func (u *AuthorityService) GetButtonListByMenuId(userId string, menuId int64) []AuthModel.Button {
+func (u *AuthorityService) GetButtonListByMenuId(userId string, menuId int64) []*AuthModel.Button {
 	roleIds := u.RoleUserService.GetUserRoleIds(userId)
 	if list := u.AuthorityRepository.GetButtonListByMenuId(roleIds, menuId); len(list) > 0 {
 		return list
 	}
-	return []AuthModel.Button{}
+	return []*AuthModel.Button{}
 }
 
-func (u *AuthorityService) GetSystemAuthorities() (int64, []AuthModel.AuthNode) {
-	return u.AuthorityRepository.GetSystemMenuButtonList()
+func (u *AuthorityService) GetSystemAuthorities() (int64, []*AuthModel.Operation) {
+	return u.AuthorityRepository.GetSystemAuthorities()
 }
 
-func (u *AuthorityService) GetRoleAuthorities(roleId string) (int64, []AuthModel.AuthNode) {
-	return u.AuthorityRepository.GetAssignedMenuButtonList(roleId)
+func (u *AuthorityService) SetRoleAuthorities(roleId string, authorities []*AuthModel.Operation) {
+	u.AuthorityRepository.SetAuthoritiesByRoleId(roleId, authorities)
+}
+
+func (u *AuthorityService) SetUserAuthorities(userId string, authorities []*AuthModel.Operation) {
+	u.AuthorityRepository.SetAuthoritiesByUserId(userId, authorities)
+}
+
+func (u *AuthorityService) SetOrganizationAuthorities(organizationId string, authorities []*AuthModel.Operation) {
+	u.AuthorityRepository.SetAuthoritiesByOrganizationId(organizationId, authorities)
 }
 
 // 根据用户ID获取所有权限的来源
-func (a *AuthorityService) GetUserAuthorities(userId string) []AuthModel.AuthNode {
+func (a *AuthorityService) GetUserAuthorities(userId string) []*AuthModel.Operation {
+	//根据用户ID,查询隶属哪些组织机构
+	_, result := a.AuthorityRepository.GetAuthoritiesByUserId(userId)
+	if len(result) == 0 {
+		return []*AuthModel.Operation{}
+	}
+	return result
+}
+
+// 根据用户ID获取所有权限的来源
+func (a *AuthorityService) GetUserAvailableAuthorities(userId string) []*AuthModel.Operation {
 	//根据用户ID,查询隶属哪些组织机构
 	result := a.AuthorityRepository.GetUserAuthorities(userId)
 	if len(result) == 0 {
-		return []AuthModel.AuthNode{}
+		return []*AuthModel.Operation{}
+	}
+	return result
+}
+
+func (u *AuthorityService) GetRoleAuthorities(roleId string) (int64, []*AuthModel.Operation) {
+	return u.AuthorityRepository.GetAuthoritiesByRoleId(roleId)
+}
+
+// 根据用户ID获取所有权限的来源
+func (a *AuthorityService) GetRoleAvailableAuthorities(roleId string) []*AuthModel.Operation {
+	//根据用户ID,查询隶属哪些组织机构
+	result := a.AuthorityRepository.GetRoleAuthorities(roleId)
+	if len(result) == 0 {
+		return []*AuthModel.Operation{}
+	}
+	return result
+}
+
+func (u *AuthorityService) GetOrganizationAuthorities(organizationId string) (int64, []*AuthModel.Operation) {
+	return u.AuthorityRepository.GetAuthoritiesByOrganizationId(organizationId)
+}
+
+// 根据用户ID获取所有权限的来源
+func (a *AuthorityService) GetOrganizationAvailableAuthorities(organizationId string) []*AuthModel.Operation {
+	//根据用户ID,查询隶属哪些组织机构
+	result := a.AuthorityRepository.GetOrganizationAuthorities(organizationId)
+	if len(result) == 0 {
+		return []*AuthModel.Operation{}
 	}
 	return result
 }
