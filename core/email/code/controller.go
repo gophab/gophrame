@@ -3,19 +3,20 @@ package code
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gophab/gophrame/core/captcha"
-	"github.com/gophab/gophrame/core/code"
+	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
 	"github.com/gophab/gophrame/errors"
 )
 
 type EmailCodeController struct {
-	EmailCodeValidator *code.Validator `inject:"emailCodeValidator"`
+	controller.ResourceController
+	EmailCodeValidator *EmailCodeValidator `inject:"emailCodeValidator"`
 }
 
 func (e *EmailCodeController) GenerateCode(c *gin.Context) {
 	email, err := request.Param(c, "email").MustString()
-	scene := request.Param(c, "scene").DefaultString("register-pin")
+	scene := request.Param(c, "scene").DefaultString("register")
 	force := request.Param(c, "force").DefaultBool(false)
 
 	if err != nil {
@@ -37,7 +38,7 @@ func (e *EmailCodeController) GenerateCode(c *gin.Context) {
 
 func (e *EmailCodeController) CheckCode(c *gin.Context) {
 	email, err := request.Param(c, "email").MustString()
-	scene := request.Param(c, "scene").DefaultString("register-pin")
+	scene := request.Param(c, "scene").DefaultString("register")
 	if err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return

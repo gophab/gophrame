@@ -48,6 +48,11 @@ func (s *AliyunSmsSender) SendTemplateMessage(dest string, template string, para
 }
 
 func (s *AliyunSmsSender) getTemplateReq(phoneNumber, template string, params map[string]string) *dysmsapi20170525.SendSmsRequest {
+	if len(config.Setting.Templates) > 0 {
+		if t, b := config.Setting.Templates[template]; b {
+			template = t
+		}
+	}
 	return &dysmsapi20170525.SendSmsRequest{
 		SignName:      tea.String(config.Setting.Signature),
 		TemplateCode:  tea.String(template),

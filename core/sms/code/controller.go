@@ -24,7 +24,7 @@ func (s *SmsCodeController) GenerateCode(c *gin.Context) {
 		return
 	}
 
-	scene := request.Param(c, "scene").DefaultString("register-pin")
+	scene := request.Param(c, "scene").DefaultString("register")
 	force := request.Param(c, "force").DefaultBool(false)
 
 	_, b := s.SmsCodeValidator.GetVerificationCode(s.SmsCodeValidator, phone, scene)

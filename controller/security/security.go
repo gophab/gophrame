@@ -79,7 +79,7 @@ func (u *SecurityController) Register(c *gin.Context) {
 				return
 			}
 
-			if !u.MobileValidator.CheckCode(u.MobileValidator, form.Username, "register-pin", form.Password) {
+			if !u.MobileValidator.CheckCode(u.MobileValidator, form.Username, "register", form.Password) {
 				response.FailMessage(c, errors.INVALID_PARAMS, "验证码不一致")
 				return
 			}
@@ -101,7 +101,7 @@ func (u *SecurityController) Register(c *gin.Context) {
 				return
 			}
 
-			if !u.EmailValidator.CheckCode(u.EmailValidator, form.Username, "register-pin", form.Password) {
+			if !u.EmailValidator.CheckCode(u.EmailValidator, form.Username, "register", form.Password) {
 				response.FailMessage(c, errors.INVALID_PARAMS, "验证码不一致")
 				return
 			}

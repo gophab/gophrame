@@ -4,11 +4,13 @@ import (
 	"strings"
 
 	"github.com/gophab/gophrame/core/controller"
+	EmailCode "github.com/gophab/gophrame/core/email/code"
 	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/query"
 	SecurityUtil "github.com/gophab/gophrame/core/security/util"
+	SmsCode "github.com/gophab/gophrame/core/sms/code"
 	"github.com/gophab/gophrame/core/util"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
@@ -27,12 +29,14 @@ import (
 
 type UserOpenController struct {
 	controller.ResourceController
-	UserService       *service.UserService       `inject:"userService"`
-	SocialUserService *service.SocialUserService `inject:"socialUserService"`
-	AuthorityService  *auth.AuthorityService     `inject:"authorityService"`
-	InviteCodeService *service.InviteCodeService `inject:"inviteCodeService"`
-	UserMapper        *mapper.UserMapper         `inject:"userMapper"`
-	SocialUserMapper  *mapper.SocialUserMapper   `inject:"socialUserMapper"`
+	UserService        *service.UserService          `inject:"userService"`
+	SocialUserService  *service.SocialUserService    `inject:"socialUserService"`
+	AuthorityService   *auth.AuthorityService        `inject:"authorityService"`
+	InviteCodeService  *service.InviteCodeService    `inject:"inviteCodeService"`
+	UserMapper         *mapper.UserMapper            `inject:"userMapper"`
+	SocialUserMapper   *mapper.SocialUserMapper      `inject:"socialUserMapper"`
+	SmsCodeValidator   *SmsCode.SmsCodeValidator     `inject:"smsCodeValidator"`
+	EmailCodeValidator *EmailCode.EmailCodeValidator `inject:"emailCodeValidator"`
 }
 
 var userOpenController *UserOpenController = &UserOpenController{}
@@ -63,6 +67,8 @@ func (m *UserOpenController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/user/:id", Handler: m.GetUser},
 		{HttpMethod: "GET", ResourcePath: "/user/invite-code", Handler: m.GetUserInviteCode},
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
+		{HttpMethod: "PUT", ResourcePath: "/user/mobile", Handler: m.ChangeUserMobile},
+		{HttpMethod: "PUT", ResourcePath: "/user/email", Handler: m.ChangeUserEmail},
 		{HttpMethod: "DELETE", ResourcePath: "/user", Handler: m.DeleteUser},
 		{HttpMethod: "PUT", ResourcePath: "/user/password", Handler: m.ChangeUserPassword},
 	})
@@ -241,6 +247,59 @@ func (u *UserOpenController) ChangeUserPassword(c *gin.Context) {
 		response.SystemFail(c, err)
 	} else {
 		response.NotFound(c, "Not Found")
+	}
+}
+
+type ChangeForm struct {
+	Target string `json:"target"`
+	Code   string `json:"code"`
+}
+
+func (u *UserOpenController) ChangeUserMobile(c *gin.Context) {
+	var request ChangeForm
+	if err := c.BindJSON(&request); err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	if request.Target == "" || request.Code == "" {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	if !u.SmsCodeValidator.CheckCode(u.SmsCodeValidator, request.Target, "bind", request.Code) {
+		response.Forbidden(c, "Forbidden")
+		return
+	}
+
+	if _, err := u.UserService.Patch(SecurityUtil.GetCurrentUserId(c), "mobile", request.Target); err == nil {
+		response.Success(c, nil)
+	} else {
+		response.SystemFail(c, err)
+	}
+}
+
+func (u *UserOpenController) ChangeUserEmail(c *gin.Context) {
+	var request ChangeForm
+	if err := c.BindJSON(&request); err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	if request.Target == "" || request.Code == "" {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	if !u.EmailCodeValidator.CheckCode(u.EmailCodeValidator, request.Target, "bind", request.Code) {
+		response.Forbidden(c, "Forbidden")
+		return
+	}
+
+	if _, err := u.UserService.Patch(SecurityUtil.GetCurrentUserId(c), "email", request.Target); err == nil {
+		response.Success(c, nil)
+	} else {
+		response.SystemFail(c, err)
 	}
 }
 

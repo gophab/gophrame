@@ -3,7 +3,6 @@ package code
 import (
 	"github.com/gophab/gophrame/core/code"
 	"github.com/gophab/gophrame/core/sms"
-	"github.com/gophab/gophrame/core/sms/config"
 )
 
 const (
@@ -24,8 +23,8 @@ type SmsCodeSender struct {
 func (s *SmsCodeSender) SendVerificationCode(dest string, scene string, code string) error {
 	params := map[string]string{}
 	params["code"] = code
-	params["product"] = config.Setting.Product
-	params["signature"] = config.Setting.Signature
+	// params["product"] = config.Setting.Product
+	// params["signature"] = config.Setting.Signature
 
 	return s.SendTemplateMessage(dest, scene, params)
 }
