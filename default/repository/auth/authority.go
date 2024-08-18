@@ -25,26 +25,45 @@ func init() {
 	inject.InjectValue("authorityRepository", authorityRepository)
 }
 
-// 查询用户在指定页面拥有的按钮列表
-func (u *AuthorityRepository) GetButtonListByMenuId(roleIds []string, MenuId int64) (r []*auth.Button) {
+func (u *AuthorityRepository) GetMenuByRoleIds(roleIds []string) (result []*auth.Menu, err error) {
 	sql := `
 		SELECT  
-			c.*
+			distinct b.*
+		FROM 
+			auth_role_authority a, auth_menu b  
+		WHERE  
+			a.role_id IN ? AND a.auth_type='menu' AND a.auth_id=b.id
+			AND a.status=1
+		ORDER BY b.sort ASC, b.id ASC, b.fid ASC
+	`
+	if err = u.Raw(sql, roleIds).Find(&result).Error; err != nil {
+		logger.Error("查询系统待分配菜单出错：", err.Error())
+	}
+
+	return
+}
+
+// 查询用户在指定页面拥有的按钮列表
+func (u *AuthorityRepository) GetButtonListByMenuId(roleIds []string, menuId int64) (r []*auth.Button, err error) {
+	sql := `
+		SELECT  
+			distinct c.*
 		FROM  
 			auth_role_authority a,
 			auth_button c 
 		WHERE
 			a.auth_type='button'   
-		AND
-			a.auth_id=c.id
-		AND
-			c.fid = ?
+			AND a.auth_id=c.id
+			AND	c.fid = ?
 		`
 	if len(roleIds) > 0 {
-		sql += ` AND a.role_id IN  (?)`
+		sql += ` AND a.role_id IN  (?) `
 	}
-	if res := u.Raw(sql, MenuId, roleIds).Find(&r); res.Error != nil {
-		logger.Error("获取指定页面(菜单)所拥有的按钮权限出错", res.Error.Error())
+	sql += `
+		ORDER BY c.sort ASC, c.fid ASC, c.id ASC
+	`
+	if err = u.Raw(sql, menuId, roleIds).Find(&r).Error; err != nil {
+		logger.Error("获取指定页面(菜单)所拥有的按钮权限出错", err.Error())
 	}
 	return
 }
@@ -214,17 +233,16 @@ func (a *AuthorityRepository) GetAuthoritiesByRoleIds(roleIds []string) (result 
 				SELECT
 					e.id AS id, 
 					e.fid AS fid,
+					e.name AS name,
 					e.title AS title,
 					e.sort AS sort,
 					'menu' AS type,
 					(CASE WHEN e.fid=0 THEN 1 ELSE 0 END) AS expand
 				FROM
-					auth_role_authority d, 
 					auth_menu e 
 				WHERE  
-					d.auth_type = 'menu'
-					AND FIND_IN_SET(d.auth_id, ?)
-					AND d.auth_id=e.id
+					e.id IN ?
+				ORDER BY sort ASC, fid ASC
 			`
 			a.Raw(sql, menuIds).Scan(&menuNodes)
 
@@ -240,18 +258,17 @@ func (a *AuthorityRepository) GetAuthoritiesByRoleIds(roleIds []string) (result 
 					sql = `
 						SELECT
 							g.id AS id,
-							g.fid AS fid ,
-							g.title AS title,
+							g.fid AS fid,
+							g.name AS name,
+							g.name AS title,
 							0 AS sort,
 							'button' AS  type,
 							0 AS expand
 						FROM  
-							auth_role_authority d,
 							auth_button  g
 						WHERE  
-							d.auth_type = 'button'
-							AND FIND_IN_SET(d.auth_id, ?)
-							AND d.auth_id=g.id
+							g.id IN ?
+						ORDER BY sort ASC, fid ASC
 					`
 					a.Raw(sql, buttonIds).Scan(&buttonNodes)
 					if len(buttonNodes) > 0 {

@@ -24,7 +24,6 @@ import (
 
 	"github.com/astaxie/beego/validation"
 	"github.com/gin-gonic/gin"
-	"github.com/unknwon/com"
 )
 
 type UserOpenController struct {
@@ -67,6 +66,7 @@ func (m *UserOpenController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/user/:id", Handler: m.GetUser},
 		{HttpMethod: "GET", ResourcePath: "/user/invite-code", Handler: m.GetUserInviteCode},
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
+		{HttpMethod: "PATCH", ResourcePath: "/user", Handler: m.PatchUser},
 		{HttpMethod: "PUT", ResourcePath: "/user/mobile", Handler: m.ChangeUserMobile},
 		{HttpMethod: "PUT", ResourcePath: "/user/email", Handler: m.ChangeUserEmail},
 		{HttpMethod: "DELETE", ResourcePath: "/user", Handler: m.DeleteUser},
@@ -177,6 +177,30 @@ func (u *UserOpenController) UpdateUser(c *gin.Context) {
 	} else {
 		response.OK(c, result)
 	}
+}
+
+// @Summary   更新用户
+// @Tags  users
+// @Accept json
+// @Produce  json
+// @Param   body  body   models.User   true "body"
+// @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
+// @Failure 400 {string} json
+// @Router /api/v1/users/:id  [PUT]
+func (u *UserOpenController) PatchUser(c *gin.Context) {
+	var params map[string]interface{}
+	if err := c.BindJSON(&params); err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	result, err := service.GetUserService().PatchAll(SecurityUtil.GetCurrentUserId(c), params)
+	if err != nil {
+		response.SystemErrorCode(c, errors.ERROR_UPDATE_FAIL)
+		return
+	}
+
+	response.Success(c, result)
 }
 
 // @Summary   删除用户
@@ -311,6 +335,7 @@ func (m *AdminUserOpenController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/users", Handler: m.GetUsers},
 		{HttpMethod: "POST", ResourcePath: "/user", Handler: m.CreateUser},
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
+		{HttpMethod: "PATCH", ResourcePath: "/user/:id", Handler: m.PatchUser},
 		{HttpMethod: "DELETE", ResourcePath: "/user/:id", Handler: m.DeleteUser},
 		{HttpMethod: "PUT", ResourcePath: "/user/:id/password/reset", Handler: m.ResetUserPassword},
 	})
@@ -570,6 +595,85 @@ func (u *AdminUserOpenController) UpdateUser(c *gin.Context) {
 	}
 }
 
+// @Summary   更新用户
+// @Tags  users
+// @Accept json
+// @Produce  json
+// @Param   body  body   models.User   true "body"
+// @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
+// @Failure 400 {string} json
+// @Router /api/v1/users/:id  [PUT]
+func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
+	id, err := request.Param(c, "id").MustString()
+	if err != nil || id == "" {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	exists, err := service.GetUserService().GetById(id)
+	if err != nil {
+		response.SystemErrorCode(c, errors.ERROR_EXIST_FAIL)
+		return
+	}
+
+	if exists == nil {
+		response.NotFound(c, "Not Found")
+		return
+	}
+
+	if exists.TenantId != SecurityUtil.GetCurrentTenantId(c) {
+		response.NotAllowed(c, "Not Allowed")
+		return
+	}
+
+	var params map[string]interface{}
+	if err := c.BindJSON(&params); err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	valid := validation.Validation{}
+
+	login := params["login"]
+	if login != nil && login.(string) != "" {
+		valid.MaxSize(login.(string), 100, "login").Message("最长为100字符")
+		valid.MinSize(login.(string), 6, "login").Message("最短为5字符")
+	}
+
+	mobile := params["mobile"]
+	if mobile != nil && mobile.(string) != "" {
+		valid.Mobile(mobile.(string), "mobile").Message("无效手机号")
+	}
+
+	email := params["email"]
+	if email != nil && email.(string) != "" {
+		valid.Email(email.(string), "email").Message("无效邮箱地址")
+	}
+
+	password := params["password"]
+	if password != nil && password.(string) != "" {
+		valid.MaxSize(password.(string), 100, "password").Message("最长为100字符")
+		valid.MinSize(password.(string), 6, "password").Message("最短为6字符")
+	}
+
+	delete(params, "tenantId")
+	delete(params, "tenant_id")
+
+	if valid.HasErrors() {
+		logger.MarkErrors(valid.Errors)
+		response.SystemErrorCode(c, errors.ERROR_CREATE_FAIL)
+		return
+	}
+
+	result, err := service.GetUserService().PatchAll(id, params)
+	if err != nil {
+		response.SystemErrorCode(c, errors.ERROR_UPDATE_FAIL)
+		return
+	}
+
+	response.Success(c, result)
+}
+
 // @Summary   删除用户
 // @Tags  users
 // @Accept json
@@ -578,13 +682,9 @@ func (u *AdminUserOpenController) UpdateUser(c *gin.Context) {
 // @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
 // @Router /api/v1/users/:id  [DELETE]
 func (u *AdminUserOpenController) DeleteUser(c *gin.Context) {
-	id := com.StrTo(c.Param("id")).String()
-
-	valid := validation.Validation{}
-	valid.MinSize(id, 1, "id").Message("ID不为空")
-	if valid.HasErrors() {
-		logger.MarkErrors(valid.Errors)
-		response.SystemErrorCode(c, errors.INVALID_PARAMS)
+	id, err := request.Param(c, "id").MustString()
+	if err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
 		return
 	}
 

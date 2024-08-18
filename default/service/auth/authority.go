@@ -2,21 +2,21 @@ package auth
 
 import (
 	"github.com/gophab/gophrame/core/inject"
-	"github.com/gophab/gophrame/core/logger"
-	"github.com/gophab/gophrame/core/util"
 
 	"github.com/gophab/gophrame/service"
 
 	AuthModel "github.com/gophab/gophrame/default/domain/auth"
 	AuthRepository "github.com/gophab/gophrame/default/repository/auth"
+
 	DefaultService "github.com/gophab/gophrame/default/service"
 )
 
 type AuthorityService struct {
 	service.BaseService
 	AuthorityRepository  *AuthRepository.AuthorityRepository  `inject:"authorityRepository"`
-	MenuRepositoy        *AuthRepository.MenuRepository       `inject:"menuRepository"`
+	MenuRepository       *AuthRepository.MenuRepository       `inject:"menuRepository"`
 	MenuButtonRepository *AuthRepository.MenuButtonRepository `inject:"menuButtonRepository"`
+	MenuService          *MenuService                         `inject:"menuService"`
 	RoleUserService      *DefaultService.RoleUserService      `inject:"roleUserService"`
 }
 
@@ -30,26 +30,16 @@ func (u *AuthorityService) GetUserMenus(userId string) []*AuthModel.Menu {
 	roleIds := u.RoleUserService.GetUserRoleIds(userId)
 
 	//根据岗位ID获取拥有的菜单ID,去重
-	roleMenus := roleMenuService.GetByRoleIds(roleIds)
-	menuIds := []int64{}
-	for _, v := range roleMenus {
-		menuIds = append(menuIds, v.MenuId)
-	}
+	menus, _ := u.AuthorityRepository.GetMenuByRoleIds(roleIds)
 
 	//根据菜单 Ids数组 获取菜单信息
-	return u.MenuRepositoy.GetByIds(menuIds)
-
+	return menus
 }
 
 func (u *AuthorityService) GetUserMenuTree(userId string) []*AuthModel.Menu {
 	menus := u.GetUserMenus(userId)
 	if len(menus) > 1 {
-		var dest = make([]*AuthModel.Menu, 0)
-		if err := util.CreateSqlResFormatFactory().ScanToTreeData(menus, &dest); err == nil {
-			return dest
-		} else {
-			logger.Error("根据用户id查询权限范围内的菜单数据树形化出错", err.Error())
-		}
+		return u.MenuService.MakeTree(menus)
 	}
 	return []*AuthModel.Menu{}
 }
@@ -57,7 +47,7 @@ func (u *AuthorityService) GetUserMenuTree(userId string) []*AuthModel.Menu {
 // 查询用户打开指定的页面所拥有的按钮列表
 func (u *AuthorityService) GetButtonListByMenuId(userId string, menuId int64) []*AuthModel.Button {
 	roleIds := u.RoleUserService.GetUserRoleIds(userId)
-	if list := u.AuthorityRepository.GetButtonListByMenuId(roleIds, menuId); len(list) > 0 {
+	if list, err := u.AuthorityRepository.GetButtonListByMenuId(roleIds, menuId); err == nil {
 		return list
 	}
 	return []*AuthModel.Button{}
@@ -125,4 +115,27 @@ func (a *AuthorityService) GetOrganizationAvailableAuthorities(organizationId st
 		return []*AuthModel.Operation{}
 	}
 	return result
+}
+
+func (a *AuthorityService) makeTree(src []*AuthModel.Operation, dest *[]*AuthModel.Operation) error {
+	var result = *dest
+	var srcMap = make(map[int64]*AuthModel.Operation)
+	for _, item := range src {
+		srcMap[item.Id] = item
+	}
+	for _, item := range src {
+		if item.Fid != 0 {
+			var parent = srcMap[item.Fid]
+			if parent != nil {
+				if parent.Children == nil {
+					parent.Children = make([]*AuthModel.Operation, 0)
+				}
+				parent.Children = append(parent.Children, item)
+			}
+		} else {
+			result = append(result, item)
+		}
+	}
+	*dest = result
+	return nil
 }

@@ -16,7 +16,6 @@ type MenuInfo struct {
 type Menu struct {
 	domain.AuditingEnabled
 	MenuInfo
-	Leaf     bool      `gorm:"->;default:true" json:"leaf"`
 	Children []*Menu   `gorm:"-" json:"children,omitempty"`
 	Buttons  []*Button `gorm:"foreignkey:Fid" json:"buttons,omitempty"`
 }
