@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/gophab/gophrame/core/json"
+	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/sms/aliyun/config"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
@@ -25,23 +26,27 @@ func (s *AliyunSmsSender) SendTemplateMessage(dest string, template string, para
 	// 发送短信
 	client, _err := s.CreateClient()
 	if _err != nil {
+		logger.Error("[Aliyun] Send sms error: ", template, _err.Error())
 		return _err
 	}
 
 	defer func() {
 		if r := tea.Recover(recover()); r != nil {
 			_err = r
+			logger.Error("[Aliyun] Send sms error: ", template, _err.Error())
 		}
 	}()
 
 	runtime := &aliyunUtil.RuntimeOptions{}
 	result, _err := client.SendSmsWithOptions(s.getTemplateReq(dest, template, params), runtime)
 	if _err != nil {
+		logger.Error("[Aliyun] Send sms error: ", template, _err.Error())
 		return _err
 	}
 
 	if *result.Body.Code != "OK" {
 		_err = errors.New(result.String())
+		logger.Error("[Aliyun] Send sms error: ", template, _err.Error())
 	}
 
 	return _err
