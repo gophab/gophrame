@@ -211,7 +211,7 @@ func (u *UserMController) AddUser(c *gin.Context) {
 		if *user.Mobile == "" {
 			user.Mobile = nil
 		} else {
-			valid.Mobile(*user.Mobile, "mobile").Message("无效手机号")
+			valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
 		}
 	}
 	if user.Email != nil {
@@ -267,7 +267,7 @@ func (u *UserMController) UpdateUser(c *gin.Context) {
 		if *user.Mobile == "" {
 			user.Mobile = nil
 		} else {
-			valid.Mobile(*user.Mobile, "mobile").Message("无效手机号")
+			valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
 		}
 	}
 	if user.Email != nil {

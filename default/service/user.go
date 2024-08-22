@@ -84,7 +84,7 @@ func (s *UserService) Create(user *dto.User) (*domain.User, error) {
 		user.Status = util.IntAddr(consts.STATUS_VALID)
 	}
 
-	if user.PlainPassword != nil {
+	if user.PlainPassword != nil && (user.Password == nil || *user.Password == "") {
 		user.Password = user.PlainPassword
 	}
 

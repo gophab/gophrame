@@ -116,26 +116,3 @@ func (a *AuthorityService) GetOrganizationAvailableAuthorities(organizationId st
 	}
 	return result
 }
-
-func (a *AuthorityService) makeTree(src []*AuthModel.Operation, dest *[]*AuthModel.Operation) error {
-	var result = *dest
-	var srcMap = make(map[int64]*AuthModel.Operation)
-	for _, item := range src {
-		srcMap[item.Id] = item
-	}
-	for _, item := range src {
-		if item.Fid != 0 {
-			var parent = srcMap[item.Fid]
-			if parent != nil {
-				if parent.Children == nil {
-					parent.Children = make([]*AuthModel.Operation, 0)
-				}
-				parent.Children = append(parent.Children, item)
-			}
-		} else {
-			result = append(result, item)
-		}
-	}
-	*dest = result
-	return nil
-}

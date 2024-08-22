@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"bufio"
 	"strings"
 
 	"github.com/gophab/gophrame/core/controller"
@@ -21,6 +22,7 @@ import (
 	"github.com/gophab/gophrame/default/service/auth"
 	"github.com/gophab/gophrame/default/service/dto"
 	"github.com/gophab/gophrame/default/service/mapper"
+	"github.com/gophab/gophrame/default/utils"
 
 	"github.com/astaxie/beego/validation"
 	"github.com/gin-gonic/gin"
@@ -334,6 +336,8 @@ func (m *AdminUserOpenController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/user/:id", Handler: m.GetUser},
 		{HttpMethod: "GET", ResourcePath: "/users", Handler: m.GetUsers},
 		{HttpMethod: "POST", ResourcePath: "/user", Handler: m.CreateUser},
+		{HttpMethod: "POST", ResourcePath: "/users", Handler: m.CreateUsers},
+		{HttpMethod: "POST", ResourcePath: "/users/import", Handler: m.ImportUsers},
 		{HttpMethod: "PUT", ResourcePath: "/user", Handler: m.UpdateUser},
 		{HttpMethod: "PATCH", ResourcePath: "/user/:id", Handler: m.PatchUser},
 		{HttpMethod: "DELETE", ResourcePath: "/user/:id", Handler: m.DeleteUser},
@@ -486,7 +490,7 @@ func (u *AdminUserOpenController) CreateUser(c *gin.Context) {
 		if *user.Mobile == "" {
 			user.Mobile = nil
 		} else {
-			valid.Mobile(*user.Mobile, "mobile").Message("无效手机号")
+			valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
 		}
 	}
 	if user.Email != nil {
@@ -513,6 +517,138 @@ func (u *AdminUserOpenController) CreateUser(c *gin.Context) {
 
 	eventbus.PublishEvent("USER_CREATED", res)
 	response.OK(c, res)
+}
+
+// @Summary   增加用户
+// @Tags  users
+// @Accept json
+// @Produce  json
+// @Param   body  body   models.User   true "body"
+// @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
+// @Failure 400 {string} json
+// @Router /api/v1/users  [POST]
+func (u *AdminUserOpenController) CreateUsers(c *gin.Context) {
+	var users []dto.User
+	if err := c.BindJSON(&users); err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	valid := validation.Validation{}
+	result := make([]interface{}, 0)
+	for _, user := range users {
+		var skip = false
+		// name 不为空
+		valid.MaxSize(user.Name, 100, "name").Message("最长为100字符")
+
+		// password 不为空
+		valid.MaxSize(*user.PlainPassword, 100, "password").Message("最长为100字符")
+		valid.MinSize(*user.PlainPassword, 6, "password").Message("最短为6字符")
+		user.Password = user.PlainPassword
+
+		if user.Login != nil {
+			if *user.Login == "" {
+				user.Login = nil
+			} else {
+				valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
+				valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+			}
+		}
+		if user.Mobile != nil {
+			if *user.Mobile == "" {
+				user.Mobile = nil
+			} else {
+				valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
+			}
+		}
+		if user.Email != nil {
+			if *user.Email == "" {
+				user.Email = nil
+			} else {
+				valid.Email(*user.Email, "email").Message("无效的Email")
+			}
+		}
+
+		if valid.HasErrors() {
+			logger.MarkErrors(valid.Errors)
+			skip = true
+		}
+
+		if !skip {
+			user.TenantId = util.StringAddr(SecurityUtil.GetCurrentTenantId(c))
+			res, err := service.GetUserService().Create(&user)
+			if err != nil {
+				logger.Error("Create user error: ", err.Error())
+			} else {
+				eventbus.PublishEvent("USER_CREATED", res)
+				result = append(result, res)
+			}
+		}
+	}
+
+	response.OK(c, result)
+}
+
+// @Summary   增加用户
+// @Tags  users
+// @Accept json
+// @Produce  json
+// @Param   body  body   models.User   true "body"
+// @Success 200 {string} json "{ "code": 200, "data": {}, "msg": "ok" }"
+// @Failure 400 {string} json
+// @Router /api/v1/users  [POST]
+func (u *AdminUserOpenController) ImportUsers(c *gin.Context) {
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		response.FailMessage(c, 400, "接收文件失败")
+		return
+	}
+
+	// 异步执行导入
+	go func() {
+		defer func() {
+			file.Close()
+		}()
+
+		utils.NewImporter().ReadReader(bufio.NewReader(file), func(rows []map[string]string) {
+			for _, row := range rows {
+				var skip = false
+				// 处理每条记录
+				var user dto.User
+				user.Name = util.Nullable(util.StringAddr(row["name"]))
+				user.Login = util.Nullable(util.StringAddr(row["login"]))
+				user.Email = util.Nullable(util.StringAddr(row["email"]))
+				user.Mobile = util.Nullable(util.StringAddr(row["mobile"]))
+				user.Email = util.Nullable(util.StringAddr(row["email"]))
+				user.Password = util.Nullable(util.StringAddr(row["password"]))
+				user.PlainPassword = util.Nullable(util.StringAddr("!12345678!"))
+
+				if user.Name == nil && user.Mobile == nil && user.Email == nil {
+					skip = true
+				}
+
+				valid := validation.Validation{}
+				if user.Mobile != nil {
+					valid.AlphaDash(user.Mobile, "mobile").Message("无效的手机号码")
+				}
+
+				if user.Email != nil {
+					valid.Email(user.Email, "email").Message("无效的邮箱地址")
+				}
+
+				if valid.HasErrors() {
+					skip = true
+				}
+
+				if !skip {
+					user.TenantId = util.StringAddr(SecurityUtil.GetCurrentTenantId(c))
+					u.UserService.Create(&user)
+				}
+			}
+		}, 50)
+	}()
+
+	response.OK(c, nil)
 }
 
 // @Summary   更新用户
@@ -546,7 +682,7 @@ func (u *AdminUserOpenController) UpdateUser(c *gin.Context) {
 		if *user.Mobile == "" {
 			user.Mobile = nil
 		} else {
-			valid.Mobile(*user.Mobile, "mobile").Message("无效手机号")
+			valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
 		}
 	}
 	if user.Email != nil {
@@ -642,7 +778,7 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 
 	mobile := params["mobile"]
 	if mobile != nil && mobile.(string) != "" {
-		valid.Mobile(mobile.(string), "mobile").Message("无效手机号")
+		valid.AlphaDash(mobile.(string), "mobile").Message("无效手机号")
 	}
 
 	email := params["email"]
