@@ -12,6 +12,7 @@ var Resources = &controller.Controllers{
 		authorityMController,
 		buttonMController,
 		menuMController,
+		moduleMController,
 	},
 }
 

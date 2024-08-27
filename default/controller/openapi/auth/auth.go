@@ -10,6 +10,7 @@ var UserResources = &controller.Controllers{
 		authorityOpenController,
 		buttonOpenController,
 		menuOpenController,
+		moduleOpenController,
 	},
 }
 
