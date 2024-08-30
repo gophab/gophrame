@@ -19,6 +19,9 @@ type OperationInfo struct {
 	Status int    `gorm:"column:status;default:1" json:"status"`
 	Remark string `gorm:"column:remark" json:"remark,omitempty"`
 	Level  int    `gorm:"column:level;default:0" json:"level"`
+	Expand bool   `gorm:"column:expand;->" json:"expand"`
+	Leaf   bool   `gorm:"column:leaf;->" json:"leaf"`
+	Checks string `gorm:"column:cks;->" json:"checks"`
 }
 
 type Operation struct {

@@ -81,6 +81,8 @@ func (a *AuthorityRepository) GetSystemAuthorities() (counts int64, data []*auth
 			a.tags AS tags,
 			'menu' AS type,
 			(CASE WHEN a.fid=0 THEN 1 ELSE 0 END) AS expand,
+			(SELECT CASE WHEN COUNT(*) =0 THEN 1 ELSE 0 END FROM auth_button WHERE fid=a.id) AS leaf,
+			(SELECT GROUP_CONCAT(name) FROM auth_button WHERE fid=a.id) AS cks,
 			a.sort
 		FROM
 			auth_menu a
@@ -159,6 +161,8 @@ func (a *AuthorityRepository) GetAuthoritiesByRoleId(roleId string) (counts int6
 			b.title									AS title,
 			'menu' 									AS type,
 			(case when b.fid=0 then 1 else 0 end) AS expand,
+			(SELECT CASE WHEN COUNT(*) =0 THEN 1 ELSE 0 END FROM auth_button WHERE fid=b.id) AS leaf,
+			(SELECT GROUP_CONCAT(name) FROM auth_button WHERE fid=b.id) AS cks,
 			b.sort 									AS sort
 		FROM 
 			auth_role_authority a, auth_menu b  
@@ -235,9 +239,11 @@ func (a *AuthorityRepository) GetAuthoritiesByRoleIds(roleIds []string) (result 
 					e.fid AS fid,
 					e.name AS name,
 					e.title AS title,
-					e.sort AS sort,
 					'menu' AS type,
-					(CASE WHEN e.fid=0 THEN 1 ELSE 0 END) AS expand
+					(CASE WHEN e.fid=0 THEN 1 ELSE 0 END) AS expand,
+					(SELECT CASE WHEN COUNT(*) =0 THEN 1 ELSE 0 END FROM auth_button WHERE fid=e.id) AS leaf,
+					(SELECT GROUP_CONCAT(name) FROM auth_button WHERE fid=e.id) AS cks,
+					e.sort AS sort
 				FROM
 					auth_menu e 
 				WHERE  
@@ -436,6 +442,8 @@ func (a *AuthorityRepository) GetAuthoritiesByUserId(userId string) (count int64
 			b.title									AS title,
 			'menu' 									AS type,
 			(case when b.fid=0 then 1 else 0 end) AS expand,
+			(SELECT CASE WHEN COUNT(*) =0 THEN 1 ELSE 0 END FROM auth_button WHERE fid=b.id) AS leaf,
+			(SELECT GROUP_CONCAT(name) FROM auth_button WHERE fid=b.id) AS cks,
 			b.sort 									AS sort
 		FROM 
 			auth_user_authority a, auth_menu b  
@@ -565,6 +573,8 @@ func (a *AuthorityRepository) GetAuthoritiesByOrganizationId(organizationId stri
 			b.title									AS title,
 			'menu' 									AS type,
 			(case when b.fid=0 then 1 else 0 end) AS expand,
+			(SELECT CASE WHEN COUNT(*) =0 THEN 1 ELSE 0 END FROM auth_button WHERE fid=b.id) AS leaf,
+			(SELECT GROUP_CONCAT(name) FROM auth_button WHERE fid=b.id) AS cks,
 			b.sort 									AS sort
 		FROM 
 			auth_organization_authority a, auth_menu b  
@@ -643,7 +653,9 @@ func (a *AuthorityRepository) GetAuthoritiesByOrganizationIds(organizationIds []
 					e.title AS title,
 					e.sort AS sort,
 					'menu' AS type,
-					(CASE WHEN e.fid=0 THEN 1 ELSE 0 END) AS expand
+					(CASE WHEN e.fid=0 THEN 1 ELSE 0 END) AS expand,
+					(SELECT CASE WHEN COUNT(*) =0 THEN 1 ELSE 0 END FROM auth_button WHERE fid=e.id) AS leaf,
+					(SELECT GROUP_CONCAT(name) FROM auth_button WHERE fid=e.id) AS cks,
 				FROM
 					auth_role_authority d, 
 					auth_menu e 

@@ -152,9 +152,20 @@ func (c *AdminAuthorityOpenController) SetUserAuthorities(context *gin.Context) 
 
 func (m *AuthorityOpenController) AfterInitialize() {
 	m.SetResourceHandlers([]controller.ResourceHandler{
+		{HttpMethod: "GET", ResourcePath: "/user/authorities", Handler: m.GetUserAuthorities},
 		{HttpMethod: "GET", ResourcePath: "/user/menus", Handler: m.GetUserMenus},
 		{HttpMethod: "GET", ResourcePath: "/user/menu/:id/buttons", Handler: m.GetUserMenuButtons},
 	})
+}
+
+func (c *AuthorityOpenController) GetUserAuthorities(context *gin.Context) {
+	currentUserId := SecurityUtils.GetCurrentUserId(context)
+	authorities := c.AuthorityService.GetUserAvailableAuthorities(currentUserId)
+	if len(authorities) > 0 {
+		response.OK(context, authorities)
+	} else {
+		response.OK(context, []any{})
+	}
 }
 
 func (c *AuthorityOpenController) GetUserMenus(context *gin.Context) {
