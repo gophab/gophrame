@@ -604,6 +604,8 @@ func (u *AdminUserOpenController) ImportUsers(c *gin.Context) {
 		return
 	}
 
+	tenantId := SecurityUtil.GetCurrentTenantId(c)
+
 	// 异步执行导入
 	go func() {
 		defer func() {
@@ -619,7 +621,6 @@ func (u *AdminUserOpenController) ImportUsers(c *gin.Context) {
 				user.Login = util.Nullable(util.StringAddr(row["login"]))
 				user.Email = util.Nullable(util.StringAddr(row["email"]))
 				user.Mobile = util.Nullable(util.StringAddr(row["mobile"]))
-				user.Email = util.Nullable(util.StringAddr(row["email"]))
 				user.Password = util.Nullable(util.StringAddr(row["password"]))
 				user.PlainPassword = util.Nullable(util.StringAddr("!12345678!"))
 
@@ -641,7 +642,7 @@ func (u *AdminUserOpenController) ImportUsers(c *gin.Context) {
 				}
 
 				if !skip {
-					user.TenantId = util.StringAddr(SecurityUtil.GetCurrentTenantId(c))
+					user.TenantId = util.StringAddr(tenantId)
 					u.UserService.Create(&user)
 				}
 			}
