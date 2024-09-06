@@ -771,30 +771,41 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 
 	valid := validation.Validation{}
 
+	name := params["name"]
+	if name != nil && name.(string) != "" {
+		valid.MaxSize(name.(string), 100, "login").Message("最长为100字符")
+		valid.MinSize(name.(string), 2, "name").Message("最短为2字符")
+	} else {
+		delete(params, "name")
+	}
+
 	login := params["login"]
 	if login != nil && login.(string) != "" {
 		valid.MaxSize(login.(string), 100, "login").Message("最长为100字符")
 		valid.MinSize(login.(string), 6, "login").Message("最短为5字符")
+	} else {
+		delete(params, "login")
 	}
 
 	mobile := params["mobile"]
 	if mobile != nil && mobile.(string) != "" {
 		valid.AlphaDash(mobile.(string), "mobile").Message("无效手机号")
+	} else {
+		delete(params, "mobile")
 	}
 
 	email := params["email"]
 	if email != nil && email.(string) != "" {
 		valid.Email(email.(string), "email").Message("无效邮箱地址")
+	} else {
+		delete(params, "email")
 	}
 
-	password := params["password"]
-	if password != nil && password.(string) != "" {
-		valid.MaxSize(password.(string), 100, "password").Message("最长为100字符")
-		valid.MinSize(password.(string), 6, "password").Message("最短为6字符")
-	}
-
-	delete(params, "tenantId")
-	delete(params, "tenant_id")
+	// password := params["password"]
+	// if password != nil && password.(string) != "" {
+	// 	valid.MaxSize(password.(string), 100, "password").Message("最长为100字符")
+	// 	valid.MinSize(password.(string), 6, "password").Message("最短为6字符")
+	// }
 
 	if valid.HasErrors() {
 		logger.MarkErrors(valid.Errors)
@@ -802,7 +813,15 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 		return
 	}
 
-	result, err := service.GetUserService().PatchAll(id, params)
+	var availableFields = []string{"name", "login", "mobile", "email", "admin", "status"}
+	var user = make(map[string]interface{})
+	for _, k := range availableFields {
+		if v, b := params[k]; b {
+			user[k] = v
+		}
+	}
+
+	result, err := service.GetUserService().PatchAll(id, user)
 	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_UPDATE_FAIL)
 		return

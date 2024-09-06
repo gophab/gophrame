@@ -1,8 +1,10 @@
 package mapi
 
 import (
+	"github.com/astaxie/beego/validation"
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/query"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
@@ -134,7 +136,45 @@ func (a *TenantMController) PatchTenant(c *gin.Context) {
 		return
 	}
 
-	if result, err := a.TenantService.PatchAll(id, data); err == nil {
+	valid := validation.Validation{}
+
+	name := data["name"]
+	if name != nil && name.(string) != "" {
+		valid.MaxSize(name.(string), 100, "login").Message("最长为100字符")
+		valid.MinSize(name.(string), 2, "name").Message("最短为2字符")
+	} else {
+		delete(data, "name")
+	}
+
+	telephone := data["telephone"]
+	if telephone != nil && telephone.(string) != "" {
+		valid.AlphaDash(telephone.(string), "telephone").Message("无效电话号码")
+	} else {
+		delete(data, "telephone")
+	}
+
+	if valid.HasErrors() {
+		logger.MarkErrors(valid.Errors)
+		response.SystemErrorCode(c, errors.ERROR_CREATE_FAIL)
+		return
+	}
+
+	var availableFields = []string{"name", "description", "telephone", "address", "logo", "status"}
+	var tenant = make(map[string]interface{})
+	for _, k := range availableFields {
+		if v, b := data[k]; b && v != nil {
+			switch t := v.(type) {
+			case string:
+				if t != "" {
+					tenant[k] = v
+				}
+			default:
+				tenant[k] = v
+			}
+		}
+	}
+
+	if result, err := a.TenantService.PatchAll(id, tenant); err == nil {
 		response.Success(c, result)
 	} else {
 		response.SystemErrorMessage(c, errors.ERROR_UPDATE_FAIL, err.Error())

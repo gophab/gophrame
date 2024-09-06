@@ -2,7 +2,6 @@ package array
 
 import (
 	"errors"
-	"reflect"
 	"strings"
 )
 
@@ -29,9 +28,9 @@ func Filter[T any](list []T, f func(T) bool) ([]T, error) {
 	return result, nil
 }
 
-func Contains[T any](list []T, obj T) (bool, error) {
+func Contains[T comparable](list []T, obj T) (bool, error) {
 	for _, v := range list {
-		if reflect.ValueOf(v) == reflect.ValueOf(obj) {
+		if v == obj {
 			return true, nil
 		}
 	}
@@ -39,7 +38,7 @@ func Contains[T any](list []T, obj T) (bool, error) {
 	return false, errors.New("not in container")
 }
 
-func ContainsAny[T any](list []T, objs []T) (bool, error) {
+func ContainsAny[T comparable](list []T, objs []T) (bool, error) {
 	for _, v := range list {
 		if b, _ := Contains(objs, v); b {
 			return true, nil
@@ -49,7 +48,7 @@ func ContainsAny[T any](list []T, objs []T) (bool, error) {
 	return false, errors.New("not in container")
 }
 
-func ContainsAll[T any](list []T, objs []T) (bool, error) {
+func ContainsAll[T comparable](list []T, objs []T) (bool, error) {
 	for _, obj := range objs {
 		if b, _ := Contains(list, obj); !b {
 			return false, errors.New("not in container")
@@ -58,7 +57,7 @@ func ContainsAll[T any](list []T, objs []T) (bool, error) {
 	return true, nil
 }
 
-func FilterAll[T any](list []T, objs []T) ([]T, error) {
+func FilterAll[T comparable](list []T, objs []T) ([]T, error) {
 	return Filter(list, func(v T) bool {
 		b, _ := Contains(objs, v)
 		return b

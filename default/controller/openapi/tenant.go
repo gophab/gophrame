@@ -92,9 +92,23 @@ func (a *AdminTenantOpenController) PatchTenant(c *gin.Context) {
 		return
 	}
 
+	var availableFields = []string{"name", "description", "telephone", "address", "logo", "status"}
+	var tenant = make(map[string]interface{})
+	for _, k := range availableFields {
+		if v, b := data[k]; b && v != nil {
+			switch t := v.(type) {
+			case string:
+				if t != "" {
+					tenant[k] = v
+				}
+			default:
+				tenant[k] = v
+			}
+		}
+	}
+
 	var id = data["id"].(string)
-	delete(data, "id")
-	if result, err := a.TenantService.PatchAll(id, data); err == nil {
+	if result, err := a.TenantService.PatchAll(id, tenant); err == nil {
 		response.Success(c, result)
 	} else {
 		response.SystemErrorMessage(c, errors.ERROR_UPDATE_FAIL, err.Error())
