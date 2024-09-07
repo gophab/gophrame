@@ -39,11 +39,11 @@ type Pageable interface {
 }
 
 type Pagination struct {
-	Total     int64  `json:"total"`
-	Page      int    `json:"page"`
-	Size      int    `json:"size"`
-	Sort      []Sort `json:"sort"`
-	WithTotal *bool  `json:"withTotal"`
+	Total        int64  `json:"total"`
+	Page         int    `json:"page"`
+	Size         int    `json:"size"`
+	Sort         []Sort `json:"sort"`
+	WithoutTotal *bool  `json:"withoutTotal"`
 }
 
 func (p *Pagination) GetTotal() int64 {
@@ -86,19 +86,19 @@ func (p *Pagination) GetOffset() (offset int) {
 }
 
 func (p *Pagination) NoCount() bool {
-	if p.WithTotal != nil && !*p.WithTotal {
-		return true
+	if p.WithoutTotal == nil || !*p.WithoutTotal {
+		return false
 	}
-	return false
+	return true
 }
 
 func GetPageable(c *gin.Context) Pageable {
 	// 1. From Query
 	result := &Pagination{
-		Page:      GetPage(c),
-		Size:      GetSize(c),
-		Sort:      GetSort(c),
-		WithTotal: WithTotal(c),
+		Page:         GetPage(c),
+		Size:         GetSize(c),
+		Sort:         GetSort(c),
+		WithoutTotal: WithoutTotal(c),
 	}
 
 	return result
@@ -190,13 +190,13 @@ func GetSort(c *gin.Context) []Sort {
 	return result
 }
 
-func WithTotal(c *gin.Context) *bool {
+func WithoutTotal(c *gin.Context) *bool {
 	var p Pagination
 	if err := form.ShouldBind(c, &p); err == nil {
-		if p.WithTotal != nil {
-			return p.WithTotal
+		if p.WithoutTotal != nil {
+			return p.WithoutTotal
 		}
 	}
-	result := c.GetBool("withTotal")
+	result := c.GetBool("withoutTotal")
 	return &result
 }
