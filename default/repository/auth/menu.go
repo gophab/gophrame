@@ -23,8 +23,14 @@ func init() {
 }
 
 func (a *MenuRepository) getCounts(fid int64, title string) (count int64) {
-	sql := "SELECT COUNT(*) AS counts FROM `auth_menu` WHERE fid=? AND title LIKE ?"
-	a.Raw(sql, fid, "%"+title+"%").First(&count)
+	var tx = a.Model(&auth.Menu{})
+	if fid >= 0 {
+		tx.Where("fid = ?", fid)
+	}
+	if title != "" {
+		tx.Where("title LIKE ?", "%"+title+"%")
+	}
+	tx.Count(&count)
 	return
 }
 
