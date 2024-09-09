@@ -11,7 +11,7 @@ import (
 
 type Tenant struct {
 	Id               string    `gorm:"column:id;primaryKey" json:"id" primaryKey:"yes"`
-	Name             string    `gorm:"column:name" json:"name"`
+	Name             string    `gorm:"column:name" json:"name" i18n:"yes"`
 	NameCn           string    `gorm:"column:name_cn;default:null" json:"nameCn,omitempty"`
 	NameTw           string    `gorm:"column:name_tw;default:null" json:"nameTw,omitempty"`
 	NameEn           string    `gorm:"column:name_en;default:null" json:"nameEn,omitempty"`

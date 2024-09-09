@@ -12,7 +12,7 @@ type OperationInfo struct {
 	Fid    int64  `gorm:"column:fid;default:0" json:"fid" fid:"Id"`
 	Name   string `gorm:"column:name" json:"name"`
 	Icon   string `gorm:"column:icon" json:"icon,omitempty"`
-	Title  string `gorm:"column:title" json:"title,omitempty"`
+	Title  string `gorm:"column:title" json:"title,omitempty" i18n:"yes"`
 	Type   string `gorm:"column:type;->" json:"type"`
 	Tags   string `gorm:"column:tags" json:"tags,omitempty"`
 	Sort   int    `gorm:"column:sort;default:100" json:"sort"`

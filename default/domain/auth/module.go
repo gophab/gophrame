@@ -4,8 +4,8 @@ import "github.com/gophab/gophrame/domain"
 
 type ModuleInfo struct {
 	Name        string `gorm:"column:name" json:"name"`
-	Title       string `gorm:"column:title" json:"title,omitempty"`
-	Description string `gorm:"column:description" json:"description,omitempty"`
+	Title       string `gorm:"column:title" json:"title,omitempty" i18n:"yes"`
+	Description string `gorm:"column:description" json:"description,omitempty" i18n:"yes"`
 	Type        string `gorm:"column:type;default:MODULE" json:"type"`
 	Oid         int64  `gorm:"column:oid;default:null" json:"oid,omitempty"`
 	Fid         int64  `gorm:"column:fid;default:null" json:"fid,omitempty"`

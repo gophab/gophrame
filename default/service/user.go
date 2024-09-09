@@ -181,6 +181,7 @@ func (s *UserService) PatchAll(id string, kv map[string]interface{}) (*domain.Us
 		kv["password"] = util.SHA1(kv["password"].(string))
 	}
 
+	kv["id"] = id
 	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumns(util.DbFields(kv)); res.Error != nil {
 		return nil, res.Error
 	}

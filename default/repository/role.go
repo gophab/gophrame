@@ -4,6 +4,7 @@ import (
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/query"
 	"github.com/gophab/gophrame/core/security/server"
+	"github.com/gophab/gophrame/core/util"
 
 	"github.com/gophab/gophrame/default/domain"
 
@@ -154,7 +155,8 @@ func (r *RoleRepository) CheckRoleNameId(name string, id string, tenantId string
 }
 
 func (r *RoleRepository) PatchRole(id string, data map[string]interface{}) (*domain.Role, error) {
-	if err := r.Model(&domain.Role{}).Where("id = ? AND del_flag = false", id).UpdateColumns(data).Error; err != nil {
+	data["id"] = id
+	if err := r.Model(&domain.Role{}).Where("id = ? AND del_flag = false", id).UpdateColumns(util.DbFields(data)).Error; err != nil {
 		return nil, err
 	}
 

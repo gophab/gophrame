@@ -1,0 +1,210 @@
+package i18n
+
+import (
+	"fmt"
+	"reflect"
+	"strings"
+
+	"github.com/gophab/gophrame/core/context"
+	"github.com/gophab/gophrame/core/global"
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/starter"
+	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
+)
+
+type LocaleFieldValue struct {
+	EntityName string `gorm:"column:entity_name;primaryKey" json:"entityName"`
+	EntityId   string `gorm:"column:entity_id;primaryKey" json:"entityId"`
+	Name       string `gorm:"column:name;primaryKey" json:"name"`
+	Locale     string `gorm:"column:locale;default:en;primaryKey" json:"locale"`
+	Value      string `gorm:"column:value" json:"value"`
+}
+
+type Translator interface {
+	StoreTranslations(translations []*LocaleFieldValue)
+	LoadTranslations(entityName, entityId, locale string) []*LocaleFieldValue
+}
+
+type I18nFactory struct {
+	Translator Translator `inject:"translator"`
+}
+
+var i18nFactory = &I18nFactory{}
+
+func init() {
+	inject.InjectValue("i18nFactory", i18nFactory)
+	starter.RegisterStarter(Start)
+}
+
+func Start() {
+	if global.DB != nil {
+		global.DB.Callback().Create().After("gorm:create").Register("LocaleUpdateHook", LocaleUpdateHook)
+		global.DB.Callback().Update().After("gorm:update").Register("LocaleUpdateHook", LocaleUpdateHook)
+		global.DB.Callback().Query().After("gorm:query").Register("LocaleLoadHook", LocaleLoadHook)
+	}
+}
+
+// 1. store locale fields
+func LocaleUpdateHook(db *gorm.DB) {
+	if i18nFactory.Translator == nil {
+		return
+	}
+
+	locale := context.GetContextValue("_LOCALE_")
+	if locale == nil || locale.(string) == "" {
+		return
+	}
+
+	if db.Statement.Schema == nil {
+		return
+	}
+
+	if len(db.Statement.Schema.Fields) == 0 {
+		return
+	}
+
+	var localeFields = make([]*LocaleFieldValue, 0)
+
+	ctx := db.Statement.Context
+	for _, field := range db.Statement.Schema.Fields {
+		if v, b := field.Tag.Lookup("i18n"); b && v == "yes" {
+			//
+			switch db.Statement.ReflectValue.Kind() {
+			case reflect.Slice, reflect.Array:
+				for i := 0; i < db.Statement.ReflectValue.Len(); i++ {
+					item := db.Statement.ReflectValue.Index(i)
+					if v, isZero := field.ValueOf(ctx, item); !isZero {
+						// 构造
+						idField := db.Statement.Schema.LookUpField("Id")
+						id, _ := idField.ValueOf(ctx, item)
+						var field = &LocaleFieldValue{
+							EntityName: db.Statement.Schema.ModelType.Name(),
+							EntityId:   fmt.Sprint(id),
+							Name:       field.Name,
+							Locale:     locale.(string),
+							Value:      fmt.Sprint(v),
+						}
+						localeFields = append(localeFields, field)
+					}
+				}
+			case reflect.Struct:
+				if v, isZero := field.ValueOf(ctx, db.Statement.ReflectValue); !isZero {
+					// 构造
+					idField := db.Statement.Schema.LookUpField("Id")
+					id, _ := idField.ValueOf(ctx, db.Statement.ReflectValue)
+					if fmt.Sprint(id) != "" {
+						var field = &LocaleFieldValue{
+							EntityName: db.Statement.Schema.ModelType.Name(),
+							EntityId:   fmt.Sprint(id),
+							Name:       field.Name,
+							Locale:     locale.(string),
+							Value:      fmt.Sprint(v),
+						}
+						localeFields = append(localeFields, field)
+					}
+				}
+			}
+		}
+	}
+
+	if len(localeFields) > 0 {
+		// translator.StoreTranslation()
+		i18nFactory.Translator.StoreTranslations(localeFields)
+	}
+}
+
+// 2. get locale fields
+func LocaleLoadHook(db *gorm.DB) {
+	if i18nFactory.Translator == nil {
+		return
+	}
+
+	locale := context.GetContextValue("_LOCALE_")
+	if locale == nil || locale.(string) == "" {
+		return
+	}
+
+	if db.Statement.Schema == nil {
+		return
+	}
+
+	if len(db.Statement.Schema.Fields) == 0 {
+		return
+	}
+
+	var localeFields = make([]*schema.Field, 0)
+	for _, field := range db.Statement.Schema.Fields {
+		if v, b := field.Tag.Lookup("i18n"); b && v == "yes" {
+			localeFields = append(localeFields, field)
+		}
+	}
+
+	ctx := db.Statement.Context
+	if len(localeFields) > 0 {
+		var ids []string = make([]string, 0)
+		switch db.Statement.ReflectValue.Kind() {
+		case reflect.Slice, reflect.Array:
+			for i := 0; i < db.Statement.ReflectValue.Len(); i++ {
+				item := db.Statement.ReflectValue.Index(i)
+				if idField := db.Statement.Schema.LookUpField("Id"); idField != nil {
+					if id, b := idField.ValueOf(ctx, item); !b {
+						ids = append(ids, fmt.Sprint(id))
+					}
+				}
+			}
+		case reflect.Struct:
+			idField := db.Statement.Schema.LookUpField("Id")
+			if id, b := idField.ValueOf(ctx, db.Statement.ReflectValue); !b {
+				ids = append(ids, fmt.Sprint(id))
+			}
+		}
+
+		if len(ids) == 0 {
+			return
+		}
+
+		// translator.StoreTranslation()
+		localeFieldValues := i18nFactory.Translator.LoadTranslations(
+			db.Statement.Schema.ModelType.Name(),
+			strings.Join(ids, ","),
+			locale.(string),
+		)
+
+		if len(localeFieldValues) > 0 {
+			switch db.Statement.ReflectValue.Kind() {
+			case reflect.Slice, reflect.Array:
+				var entityFields = make(map[string][]*LocaleFieldValue, 0)
+				for _, fieldValue := range localeFieldValues {
+					list, b := entityFields[fieldValue.EntityId]
+					if !b {
+						list = make([]*LocaleFieldValue, 0)
+					}
+					list = append(list, fieldValue)
+					entityFields[fieldValue.EntityId] = list
+				}
+
+				for i := 0; i < db.Statement.ReflectValue.Len(); i++ {
+					item := db.Statement.ReflectValue.Index(i)
+					idField := db.Statement.Schema.LookUpField("Id")
+					if id, b := idField.ValueOf(ctx, item); !b {
+						filtered := entityFields[fmt.Sprint(id)]
+						if len(filtered) > 0 {
+							for _, fieldValue := range filtered {
+								if field := db.Statement.Schema.LookUpField(fieldValue.Name); field != nil {
+									field.Set(ctx, item, fieldValue.Value)
+								}
+							}
+						}
+					}
+				}
+			case reflect.Struct:
+				for _, fieldValue := range localeFieldValues {
+					if field := db.Statement.Schema.LookUpField(fieldValue.Name); field != nil {
+						field.Set(ctx, db.Statement.ReflectValue, fieldValue.Value)
+					}
+				}
+			}
+		}
+	}
+}

@@ -58,6 +58,8 @@ func (s *TenantService) Patch(id string, column string, value interface{}) (*dom
 }
 
 func (s *TenantService) PatchAll(id string, kv map[string]interface{}) (*domain.Tenant, error) {
+	kv["id"] = id
+
 	if res := s.TenantRepository.Model(&domain.Tenant{}).Where("id=?", id).UpdateColumns(util.DbFields(kv)); res.Error != nil {
 		return nil, res.Error
 	}

@@ -12,7 +12,7 @@ type UserInfo struct {
 	Login         *string    `gorm:"column:login" json:"login,omitempty"`
 	Mobile        *string    `gorm:"column:mobile" json:"mobile,omitempty"`
 	Email         *string    `gorm:"column:email" json:"email,omitempty"`
-	Name          *string    `gorm:"column:name" json:"name,omitempty"`
+	Name          *string    `gorm:"column:name" json:"name,omitempty" i18n:"yes"`
 	Status        *int       `gorm:"column:status" json:"status"`
 	Avatar        *string    `gorm:"column:avatar" json:"avatar,omitempty"`
 	Remark        *string    `gorm:"column:remark" json:"remark,omitempty"`
