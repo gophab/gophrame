@@ -40,15 +40,14 @@ func (r *LocaleFieldRepository) SaveAll(entities []*domain.LocaleField) []*domai
 	// }
 }
 
-func (r *LocaleFieldRepository) GetLocaleAll(entityName string, entityId string, locale string) []*domain.LocaleField {
+func (r *LocaleFieldRepository) GetLocaleAll(locale string, entityName string, entityIds ...string) []*domain.LocaleField {
 	tx := r.DB.Model(&domain.LocaleField{}).
 		Where("entity_name = ?", entityName)
 
-	ids := strings.Split(entityId, ",")
-	if len(ids) > 1 {
-		tx = tx.Where("entity_id in ?", ids)
+	if len(entityIds) > 1 {
+		tx = tx.Where("entity_id in ?", entityIds)
 	} else {
-		tx = tx.Where("entity_id = ?", entityId)
+		tx = tx.Where("entity_id = ?", entityIds[0])
 	}
 
 	tx = tx.Where("locale = ?", locale)

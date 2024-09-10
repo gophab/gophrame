@@ -28,7 +28,7 @@ type I18nEnabled struct {
 
 type Translator interface {
 	StoreTranslations(translations []*LocaleFieldValue)
-	LoadTranslations(entityName, entityId, locale string) []*LocaleFieldValue
+	LoadTranslations(locale, entityName string, entityId ...string) map[string][]*LocaleFieldValue
 }
 
 type I18nFactory struct {
@@ -225,29 +225,19 @@ func LocaleLoadHook(db *gorm.DB) {
 
 		// translator.StoreTranslation()
 		localeFieldValues := i18nFactory.Translator.LoadTranslations(
-			db.Statement.Schema.ModelType.Name(),
-			strings.Join(ids, ","),
 			locale.(string),
+			db.Statement.Schema.ModelType.Name(),
+			ids...,
 		)
 
 		if len(localeFieldValues) > 0 {
 			switch db.Statement.ReflectValue.Kind() {
 			case reflect.Slice, reflect.Array:
-				var entityFields = make(map[string][]*LocaleFieldValue, 0)
-				for _, fieldValue := range localeFieldValues {
-					list, b := entityFields[fieldValue.EntityId]
-					if !b {
-						list = make([]*LocaleFieldValue, 0)
-					}
-					list = append(list, fieldValue)
-					entityFields[fieldValue.EntityId] = list
-				}
-
 				for i := 0; i < db.Statement.ReflectValue.Len(); i++ {
 					item := db.Statement.ReflectValue.Index(i)
 					idField := db.Statement.Schema.LookUpField("Id")
 					if id, b := idField.ValueOf(ctx, item); !b {
-						filtered := entityFields[fmt.Sprint(id)]
+						filtered := localeFieldValues[fmt.Sprint(id)]
 						if len(filtered) > 0 {
 							for _, fieldValue := range filtered {
 								if field := db.Statement.Schema.LookUpField(fieldValue.Name); field != nil {
@@ -258,7 +248,7 @@ func LocaleLoadHook(db *gorm.DB) {
 					}
 				}
 			case reflect.Struct:
-				for _, fieldValue := range localeFieldValues {
+				for _, fieldValue := range localeFieldValues[ids[0]] {
 					if field := db.Statement.Schema.LookUpField(fieldValue.Name); field != nil {
 						field.Set(ctx, db.Statement.ReflectValue, fieldValue.Value)
 					}
