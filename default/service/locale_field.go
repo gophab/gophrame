@@ -22,17 +22,45 @@ func init() {
 }
 
 func (s *LocaleFieldService) StoreTranslations(translations []*i18n.LocaleFieldValue) {
-	var entities = make([]*domain.LocaleField, len(translations))
+	var fields = make([]*domain.LocaleField, len(translations))
 	for i, fieldValue := range translations {
-		entities[i] = &domain.LocaleField{
+		fields[i] = &domain.LocaleField{
 			LocaleFieldValue: fieldValue,
 		}
 	}
-	s.LocaleFieldRepository.SaveAll(entities)
+	s.LocaleFieldRepository.SaveAll(fields)
 }
 
 func (s *LocaleFieldService) LoadTranslations(entityName, entityId, locale string) []*i18n.LocaleFieldValue {
 	entities := s.LocaleFieldRepository.GetLocaleAll(entityName, entityId, locale)
+	if len(entities) > 0 {
+		var results = make([]*i18n.LocaleFieldValue, len(entities))
+		for i, fieldValue := range entities {
+			results[i] = fieldValue.LocaleFieldValue
+		}
+		return results
+	}
+	return []*i18n.LocaleFieldValue{}
+}
+
+func (s *LocaleFieldService) SaveAll(fields []*domain.LocaleField) []*domain.LocaleField {
+	return s.LocaleFieldRepository.SaveAll(fields)
+}
+
+func (s *LocaleFieldService) GetEntityAll(entityName, entityId string) []*i18n.LocaleFieldValue {
+	entities := s.LocaleFieldRepository.GetEntityAll(entityName, entityId)
+	if len(entities) > 0 {
+		var results = make([]*i18n.LocaleFieldValue, len(entities))
+		for i, fieldValue := range entities {
+			results[i] = fieldValue.LocaleFieldValue
+		}
+		return results
+	}
+	return []*i18n.LocaleFieldValue{}
+}
+
+func (s *LocaleFieldService) GetEntityFieldAll(entityName, entityId, field string) []*i18n.LocaleFieldValue {
+	entities := s.LocaleFieldRepository.GetEntityFieldAll(entityName, entityId, field)
 	if len(entities) > 0 {
 		var results = make([]*i18n.LocaleFieldValue, len(entities))
 		for i, fieldValue := range entities {

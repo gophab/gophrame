@@ -1,6 +1,7 @@
 package i18n
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -19,6 +20,10 @@ type LocaleFieldValue struct {
 	Name       string `gorm:"column:name;primaryKey" json:"name"`
 	Locale     string `gorm:"column:locale;default:en;primaryKey" json:"locale"`
 	Value      string `gorm:"column:value" json:"value"`
+}
+
+type I18nEnabled struct {
+	LocaleFields []*LocaleFieldValue `gorm:"-" json:"-"`
 }
 
 type Translator interface {
@@ -45,6 +50,80 @@ func Start() {
 	}
 }
 
+func getTagSection(tag, key string) string {
+	segs := strings.Split(tag, ";")
+	for i := 0; i < len(segs); i++ {
+		if strings.HasPrefix(segs[i], key+":") {
+			return segs[i]
+		}
+	}
+	return ""
+}
+
+func buildLocaleField(db *gorm.DB, item reflect.Value, field *schema.Field, locale string, columns []string) []*LocaleFieldValue {
+	ctx := db.Statement.Context
+	if v, isZero := field.ValueOf(ctx, item); !isZero {
+		// 构造
+		idField := db.Statement.Schema.LookUpField("Id")
+		id, _ := idField.ValueOf(ctx, item)
+		if fmt.Sprint(id) != "" {
+			vt := reflect.ValueOf(v).Kind()
+			switch vt {
+			case reflect.Array, reflect.Slice:
+				if bs, err := json.Marshal(v); err == nil {
+					return []*LocaleFieldValue{
+						{
+							EntityName: db.Statement.Schema.ModelType.Name(),
+							EntityId:   fmt.Sprint(id),
+							Name:       field.Name,
+							Locale:     locale,
+							Value:      string(bs),
+						},
+					}
+				}
+			case reflect.Map, reflect.Struct: //
+				if len(columns) > 0 {
+					// 只保存字段
+					var results = make([]*LocaleFieldValue, 0)
+					for _, column := range columns {
+						results = append(results, &LocaleFieldValue{
+							EntityName: db.Statement.Schema.ModelType.Name(),
+							EntityId:   fmt.Sprint(id),
+							Name:       field.Name + "." + column,
+							Locale:     locale,
+							Value:      fmt.Sprint(v),
+						})
+					}
+					return results
+				} else {
+					if bs, err := json.Marshal(v); err == nil {
+						return []*LocaleFieldValue{
+							{
+								EntityName: db.Statement.Schema.ModelType.Name(),
+								EntityId:   fmt.Sprint(id),
+								Name:       field.Name,
+								Locale:     locale,
+								Value:      string(bs),
+							},
+						}
+					}
+				}
+			default:
+				return []*LocaleFieldValue{
+					{
+						EntityName: db.Statement.Schema.ModelType.Name(),
+						EntityId:   fmt.Sprint(id),
+						Name:       field.Name,
+						Locale:     locale,
+						Value:      fmt.Sprint(v),
+					},
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // 1. store locale fields
 func LocaleUpdateHook(db *gorm.DB) {
 	if i18nFactory.Translator == nil {
@@ -66,43 +145,23 @@ func LocaleUpdateHook(db *gorm.DB) {
 
 	var localeFields = make([]*LocaleFieldValue, 0)
 
-	ctx := db.Statement.Context
 	for _, field := range db.Statement.Schema.Fields {
-		if v, b := field.Tag.Lookup("i18n"); b && v == "yes" {
-			//
+		if tag, b := field.Tag.Lookup("i18n"); b {
+			// 1. field 是基本数据类型
+			properties := strings.Split(getTagSection(tag, "property"), ",")
 			switch db.Statement.ReflectValue.Kind() {
 			case reflect.Slice, reflect.Array:
 				for i := 0; i < db.Statement.ReflectValue.Len(); i++ {
 					item := db.Statement.ReflectValue.Index(i)
-					if v, isZero := field.ValueOf(ctx, item); !isZero {
-						// 构造
-						idField := db.Statement.Schema.LookUpField("Id")
-						id, _ := idField.ValueOf(ctx, item)
-						var field = &LocaleFieldValue{
-							EntityName: db.Statement.Schema.ModelType.Name(),
-							EntityId:   fmt.Sprint(id),
-							Name:       field.Name,
-							Locale:     locale.(string),
-							Value:      fmt.Sprint(v),
-						}
-						localeFields = append(localeFields, field)
+					fieldValues := buildLocaleField(db, item, field, locale.(string), properties)
+					if fieldValues != nil {
+						localeFields = append(localeFields, fieldValues...)
 					}
 				}
 			case reflect.Struct:
-				if v, isZero := field.ValueOf(ctx, db.Statement.ReflectValue); !isZero {
-					// 构造
-					idField := db.Statement.Schema.LookUpField("Id")
-					id, _ := idField.ValueOf(ctx, db.Statement.ReflectValue)
-					if fmt.Sprint(id) != "" {
-						var field = &LocaleFieldValue{
-							EntityName: db.Statement.Schema.ModelType.Name(),
-							EntityId:   fmt.Sprint(id),
-							Name:       field.Name,
-							Locale:     locale.(string),
-							Value:      fmt.Sprint(v),
-						}
-						localeFields = append(localeFields, field)
-					}
+				fieldValues := buildLocaleField(db, db.Statement.ReflectValue, field, locale.(string), properties)
+				if fieldValues != nil {
+					localeFields = append(localeFields, fieldValues...)
 				}
 			}
 		}

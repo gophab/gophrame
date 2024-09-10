@@ -60,3 +60,43 @@ func (r *LocaleFieldRepository) GetLocaleAll(entityName string, entityId string,
 		return nil
 	}
 }
+
+func (r *LocaleFieldRepository) GetEntityAll(entityName string, entityId string) []*domain.LocaleField {
+	tx := r.DB.Model(&domain.LocaleField{}).
+		Where("entity_name = ?", entityName)
+
+	ids := strings.Split(entityId, ",")
+	if len(ids) > 1 {
+		tx = tx.Where("entity_id in ?", ids)
+	} else {
+		tx = tx.Where("entity_id = ?", entityId)
+	}
+
+	var results []*domain.LocaleField
+	if res := tx.Find(&results); res.Error == nil {
+		return results
+	} else {
+		return nil
+	}
+}
+
+func (r *LocaleFieldRepository) GetEntityFieldAll(entityName string, entityId string, field string) []*domain.LocaleField {
+	tx := r.DB.Model(&domain.LocaleField{}).
+		Where("entity_name = ?", entityName)
+
+	ids := strings.Split(entityId, ",")
+	if len(ids) > 1 {
+		tx = tx.Where("entity_id in ?", ids)
+	} else {
+		tx = tx.Where("entity_id = ?", entityId)
+	}
+
+	tx = tx.Where("name = ?", field)
+
+	var results []*domain.LocaleField
+	if res := tx.Find(&results); res.Error == nil {
+		return results
+	} else {
+		return nil
+	}
+}

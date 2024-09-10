@@ -234,7 +234,7 @@ func (j Properties) Property(name string) *Property {
 }
 
 type PropertiesEnabled struct {
-	Properties *Properties `gorm:"column:properties;type:json" json:"properties,omitempty"` /* 扩展信息 */
+	Properties *Properties `gorm:"column:properties;type:json" json:"properties,omitempty" i18n:"yes"` /* 扩展信息 */
 }
 
 func (p *PropertiesEnabled) Property(name string) *Property {
