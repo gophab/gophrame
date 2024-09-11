@@ -7,6 +7,7 @@ import (
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/query"
 	SecurityUtil "github.com/gophab/gophrame/core/security/util"
+	"github.com/gophab/gophrame/core/util"
 	"github.com/gophab/gophrame/core/util/collection"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
@@ -211,7 +212,7 @@ func (u *UserMController) AddUser(c *gin.Context) {
 		if *user.Mobile == "" {
 			user.Mobile = nil
 		} else {
-			valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
+			valid.Check(*user.Mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
 		}
 	}
 	if user.Email != nil {
@@ -267,7 +268,7 @@ func (u *UserMController) UpdateUser(c *gin.Context) {
 		if *user.Mobile == "" {
 			user.Mobile = nil
 		} else {
-			valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
+			valid.Check(*user.Mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
 		}
 	}
 	if user.Email != nil {
@@ -351,7 +352,7 @@ func (u *UserMController) PatchUser(c *gin.Context) {
 
 	mobile := params["mobile"]
 	if mobile != nil && mobile.(string) != "" {
-		valid.AlphaDash(mobile.(string), "mobile").Message("无效手机号")
+		valid.Check(mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
 	} else {
 		delete(params, "mobile")
 	}
@@ -371,7 +372,7 @@ func (u *UserMController) PatchUser(c *gin.Context) {
 
 	if valid.HasErrors() {
 		logger.MarkErrors(valid.Errors)
-		response.SystemErrorCode(c, errors.ERROR_CREATE_FAIL)
+		response.SystemErrorMessage(c, errors.ERROR_CREATE_FAIL, valid.Errors[0].Error())
 		return
 	}
 

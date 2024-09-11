@@ -490,7 +490,7 @@ func (u *AdminUserOpenController) CreateUser(c *gin.Context) {
 		if *user.Mobile == "" {
 			user.Mobile = nil
 		} else {
-			valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
+			valid.Check(*user.Mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
 		}
 	}
 	if user.Email != nil {
@@ -558,7 +558,7 @@ func (u *AdminUserOpenController) CreateUsers(c *gin.Context) {
 			if *user.Mobile == "" {
 				user.Mobile = nil
 			} else {
-				valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
+				valid.Check(*user.Mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
 			}
 		}
 		if user.Email != nil {
@@ -629,12 +629,16 @@ func (u *AdminUserOpenController) ImportUsers(c *gin.Context) {
 				}
 
 				valid := validation.Validation{}
-				if user.Mobile != nil {
-					valid.AlphaDash(user.Mobile, "mobile").Message("无效的手机号码")
+				if user.Mobile != nil && *user.Mobile != "" {
+					valid.Check(*user.Mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
+				} else {
+					user.Mobile = nil
 				}
 
-				if user.Email != nil {
+				if user.Email != nil && *user.Email != "" {
 					valid.Email(user.Email, "email").Message("无效的邮箱地址")
+				} else {
+					user.Email = nil
 				}
 
 				if valid.HasErrors() {
@@ -683,7 +687,7 @@ func (u *AdminUserOpenController) UpdateUser(c *gin.Context) {
 		if *user.Mobile == "" {
 			user.Mobile = nil
 		} else {
-			valid.AlphaDash(*user.Mobile, "mobile").Message("无效手机号")
+			valid.Check(*user.Mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
 		}
 	}
 	if user.Email != nil {
@@ -789,7 +793,7 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 
 	mobile := params["mobile"]
 	if mobile != nil && mobile.(string) != "" {
-		valid.AlphaDash(mobile.(string), "mobile").Message("无效手机号")
+		valid.Check(mobile.(string), util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
 	} else {
 		delete(params, "mobile")
 	}

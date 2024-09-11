@@ -6,6 +6,7 @@ import (
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/core/util"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
 	"github.com/gophab/gophrame/errors"
@@ -148,7 +149,7 @@ func (a *TenantMController) PatchTenant(c *gin.Context) {
 
 	telephone := data["telephone"]
 	if telephone != nil && telephone.(string) != "" {
-		valid.AlphaDash(telephone.(string), "telephone").Message("无效电话号码")
+		valid.Check(telephone.(string), util.NewInternationalTelephoneValidator("telephone")).Message("无效电话号码")
 	} else {
 		delete(data, "telephone")
 	}

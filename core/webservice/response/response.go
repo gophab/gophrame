@@ -152,10 +152,10 @@ func Exception(c *gin.Context, errCode int, errMessage string, msg string) {
 	// internal log
 	logger.Error("Code: ", errCode, " Message: ", errMessage, "\nError: ", msg, " \nStack: ", stack())
 
-	if errMessage == "" {
-		errMessage = msg
+	if msg == "" {
+		msg = errMessage
 	}
-	ErrorMessage(c, http.StatusInternalServerError, errCode, errMessage)
+	ErrorMessage(c, http.StatusInternalServerError, errCode, msg)
 }
 
 // 系统执行代码错误
