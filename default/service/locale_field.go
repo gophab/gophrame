@@ -64,8 +64,8 @@ func (s *LocaleFieldService) LoadTranslations(locale, entityName string, entityI
 				list, b := results[fieldValue.EntityId]
 				if !b {
 					list = make([]*i18n.LocaleFieldValue, 0)
-					list = append(list, fieldValue.LocaleFieldValue)
 				}
+				list = append(list, fieldValue.LocaleFieldValue)
 				results[fieldValue.EntityId] = list
 
 				var key = entityName + ":" + fieldValue.EntityId + ":" + locale
