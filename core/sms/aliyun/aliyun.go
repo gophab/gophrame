@@ -2,6 +2,7 @@ package aliyun
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/gophab/gophrame/core/json"
 	"github.com/gophab/gophrame/core/logger"
@@ -53,13 +54,50 @@ func (s *AliyunSmsSender) SendTemplateMessage(dest string, template string, para
 }
 
 func (s *AliyunSmsSender) getTemplateReq(phoneNumber, template string, params map[string]string) *dysmsapi20170525.SendSmsRequest {
+	phoneNumber = strings.ReplaceAll(phoneNumber, " ", "")
+
+	regionCode := "+86"
+	phone := phoneNumber
+	signature := config.Setting.Signature
+
+	segs := strings.Split(phoneNumber, "-")
+	if len(segs) > 1 {
+		regionCode = segs[0]
+		phone = segs[1]
+	}
+
 	if len(config.Setting.Templates) > 0 {
 		if t, b := config.Setting.Templates[template]; b {
 			template = t
 		}
+
+		if regionCode != "+86" {
+			// 国际
+			switch regionCode {
+			case "+886", "+852", "+853": // 港澳台
+				if t, b := config.Setting.Templates[template+".tc"]; b {
+					template = t
+				}
+
+				if config.Setting.SignatureTC != "" {
+					signature = config.Setting.SignatureTC
+				}
+			default: // 其他国家
+				if t, b := config.Setting.Templates[template+".en"]; b {
+					template = t
+				}
+
+				if config.Setting.SignatureEN != "" {
+					signature = config.Setting.SignatureEN
+				}
+			}
+		}
 	}
+
+	phoneNumber = regionCode + phone
+
 	return &dysmsapi20170525.SendSmsRequest{
-		SignName:      tea.String(config.Setting.Signature),
+		SignName:      tea.String(signature),
 		TemplateCode:  tea.String(template),
 		PhoneNumbers:  tea.String(phoneNumber),
 		TemplateParam: tea.String(json.String(params)),
