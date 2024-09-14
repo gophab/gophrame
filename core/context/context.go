@@ -47,7 +47,6 @@ func (gc *GlobalContext) RemoveVariable(name string) {
 	variable, b := gc.ContextVariables[name]
 	if b {
 		variable.Remove()
-		delete(gc.ContextVariables, name)
 	}
 }
 
