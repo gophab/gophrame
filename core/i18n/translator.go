@@ -208,8 +208,11 @@ func LocaleLoadHook(db *gorm.DB) {
 			}
 		case reflect.Struct:
 			if idField := db.Statement.Schema.LookUpField("Id"); idField != nil {
-				if id, b := idField.ValueOf(ctx, db.Statement.ReflectValue); !b {
-					ids = append(ids, fmt.Sprint(id))
+				var v = reflect.Indirect(db.Statement.ReflectValue)
+				if v.Type() == db.Statement.Schema.ModelType {
+					if id, b := idField.ValueOf(ctx, db.Statement.ReflectValue); !b {
+						ids = append(ids, fmt.Sprint(id))
+					}
 				}
 			}
 		}
