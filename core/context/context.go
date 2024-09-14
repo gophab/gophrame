@@ -1,8 +1,13 @@
 package context
 
-import "github.com/gophab/gophrame/core/routine"
+import (
+	"sync"
+
+	"github.com/gophab/gophrame/core/routine"
+)
 
 type GlobalContext struct {
+	sync.RWMutex
 	ContextVariables map[string]*routine.ThreadLocal[interface{}]
 }
 
@@ -11,15 +16,23 @@ var globalContext = &GlobalContext{
 }
 
 func (gc *GlobalContext) SetVariable(name string, v interface{}) {
+	gc.Lock()
+	defer gc.Unlock()
+
 	variable, b := gc.ContextVariables[name]
 	if !b {
 		variable = routine.NewThreadLocal(v)
+
 		gc.ContextVariables[name] = variable
+
 	}
 	variable.Set(v)
 }
 
 func (gc *GlobalContext) GetVariable(name string) interface{} {
+	gc.RLock()
+	defer gc.RUnlock()
+
 	variable, b := gc.ContextVariables[name]
 	if b {
 		return variable.Get()
@@ -28,9 +41,13 @@ func (gc *GlobalContext) GetVariable(name string) interface{} {
 }
 
 func (gc *GlobalContext) RemoveVariable(name string) {
+	gc.Lock()
+	defer gc.Unlock()
+
 	variable, b := gc.ContextVariables[name]
 	if b {
 		variable.Remove()
+		delete(gc.ContextVariables, name)
 	}
 }
 
