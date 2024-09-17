@@ -183,6 +183,31 @@ func FormatParamterContent(content string, params map[string]string) string {
 	})
 }
 
+func FormatParamterContentEx(content string, params map[string]interface{}) string {
+	reg, err := regexp.Compile("\\$\\{([\u4E00-\u9FA5A-Za-z0-9_]+.)*\\}")
+	if err != nil {
+		return content
+	}
+	return reg.ReplaceAllStringFunc(content, func(s string) string {
+		// ${name:default}
+		part, _ := strings.CutPrefix(s, "${")
+		part, _ = strings.CutSuffix(part, "}")
+
+		segs := strings.Split(part, ":")
+
+		txt := GetRecordFieldValue(params, segs[0], "")
+		if txt != "" {
+			return txt
+		}
+
+		if len(segs) < 2 {
+			return segs[0]
+		} else {
+			return segs[1]
+		}
+	})
+}
+
 func GenerateRandomString(length int) string {
 	rand.Seed(time.Now().UnixNano()) // 设置随机数种子
 

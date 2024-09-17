@@ -191,6 +191,7 @@ func LocaleLoadHook(db *gorm.DB) {
 	}
 
 	ctx := db.Statement.Context
+	idField := db.Statement.Schema.LookUpField("Id")
 	if len(localeFields) > 0 {
 		var ids []string = make([]string, 0)
 		switch db.Statement.ReflectValue.Kind() {
@@ -198,22 +199,28 @@ func LocaleLoadHook(db *gorm.DB) {
 			for i := 0; i < db.Statement.ReflectValue.Len(); i++ {
 				item := db.Statement.ReflectValue.Index(i)
 				var v = reflect.Indirect(item)
-				if v.Type() == db.Statement.Schema.ModelType {
-					if idField := db.Statement.Schema.LookUpField("Id"); idField != nil {
-						if id, b := idField.ValueOf(ctx, item); !b {
-							ids = append(ids, fmt.Sprint(id))
+				if v.Kind() == reflect.Struct {
+					if v.Type() == db.Statement.Schema.ModelType {
+						if idField != nil {
+							if id, b := idField.ValueOf(ctx, item); !b {
+								ids = append(ids, fmt.Sprint(id))
+							}
 						}
+					} else if id := v.FieldByName("Id"); id.IsValid() && !id.IsZero() {
+						ids = append(ids, fmt.Sprint(id))
 					}
 				}
 			}
 		case reflect.Struct:
-			if idField := db.Statement.Schema.LookUpField("Id"); idField != nil {
-				var v = reflect.Indirect(db.Statement.ReflectValue)
-				if v.Type() == db.Statement.Schema.ModelType {
+			var v = reflect.Indirect(db.Statement.ReflectValue)
+			if v.Type() == db.Statement.Schema.ModelType {
+				if idField != nil {
 					if id, b := idField.ValueOf(ctx, db.Statement.ReflectValue); !b {
 						ids = append(ids, fmt.Sprint(id))
 					}
 				}
+			} else if id := v.FieldByName("Id"); id.IsValid() && !id.IsZero() {
+				ids = append(ids, fmt.Sprint(id))
 			}
 		}
 
@@ -233,22 +240,46 @@ func LocaleLoadHook(db *gorm.DB) {
 			case reflect.Slice, reflect.Array:
 				for i := 0; i < db.Statement.ReflectValue.Len(); i++ {
 					item := db.Statement.ReflectValue.Index(i)
-					idField := db.Statement.Schema.LookUpField("Id")
-					if id, b := idField.ValueOf(ctx, item); !b {
-						filtered := localeFieldValues[fmt.Sprint(id)]
-						if len(filtered) > 0 {
-							for _, fieldValue := range filtered {
-								if field := db.Statement.Schema.LookUpField(fieldValue.Name); field != nil {
-									field.Set(ctx, item, fieldValue.Value)
+					var v = reflect.Indirect(item)
+					if v.Kind() == reflect.Struct {
+						if v.Type() == db.Statement.Schema.ModelType {
+							if idField != nil {
+								if id, b := idField.ValueOf(ctx, item); !b {
+									filtered := localeFieldValues[fmt.Sprint(id)]
+									if len(filtered) > 0 {
+										for _, fieldValue := range filtered {
+											if field := db.Statement.Schema.LookUpField(fieldValue.Name); field != nil {
+												field.Set(ctx, item, fieldValue.Value)
+											}
+										}
+									}
+								}
+							}
+						} else if id := v.FieldByName("Id"); id.IsValid() && !id.IsZero() {
+							filtered := localeFieldValues[fmt.Sprint(id.Interface())]
+							if len(filtered) > 0 {
+								for _, fieldValue := range filtered {
+									if field := v.FieldByName(fieldValue.Name); field.IsValid() && !field.IsZero() {
+										field.Set(reflect.ValueOf(fieldValue.Value))
+									}
 								}
 							}
 						}
 					}
 				}
 			case reflect.Struct:
-				for _, fieldValue := range localeFieldValues[ids[0]] {
-					if field := db.Statement.Schema.LookUpField(fieldValue.Name); field != nil {
-						field.Set(ctx, db.Statement.ReflectValue, fieldValue.Value)
+				var v = reflect.Indirect(db.Statement.ReflectValue)
+				if v.Type() == db.Statement.Schema.ModelType {
+					for _, fieldValue := range localeFieldValues[ids[0]] {
+						if field := db.Statement.Schema.LookUpField(fieldValue.Name); field != nil {
+							field.Set(ctx, db.Statement.ReflectValue, fieldValue.Value)
+						}
+					}
+				} else {
+					for _, fieldValue := range localeFieldValues[ids[0]] {
+						if field := v.FieldByName(fieldValue.Name); field.IsValid() && !field.IsZero() {
+							field.Set(reflect.ValueOf(fieldValue.Value))
+						}
 					}
 				}
 			}

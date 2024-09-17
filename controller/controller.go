@@ -1,13 +1,95 @@
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/gophab/gophrame/config"
+	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/logger"
+	"github.com/gophab/gophrame/core/permission"
+	"github.com/gophab/gophrame/core/security"
 	"github.com/gophab/gophrame/core/starter"
 	"github.com/gophab/gophrame/core/webservice/middleware"
 
 	_ "github.com/gophab/gophrame/controller/security"
 )
+
+var ApiResources = &controller.Controllers{
+	Base: "/api",
+	Handlers: []gin.HandlerFunc{
+		security.HandleTokenVerify(), // oauth2 验证
+	},
+	Controllers: []controller.Controller{},
+}
+
+var MApiResources = &controller.Controllers{
+	Base: "/mapi",
+	Handlers: []gin.HandlerFunc{
+		security.HandleTokenVerify(),      // oauth2 验证
+		permission.NeedSystemUser(),       // 需要系统用户
+		permission.CheckUserPermissions(), // 权限验证
+	},
+	Controllers: []controller.Controller{},
+}
+
+var PublicResources = &controller.Controllers{
+	Base: "/openapi/public",
+	Handlers: []gin.HandlerFunc{
+		security.CheckTokenVerify(), // oauth2 验证
+	},
+	Controllers: []controller.Controller{},
+}
+
+var UserResources = &controller.Controllers{
+	Base: "/openapi/user",
+	Handlers: []gin.HandlerFunc{
+		security.HandleTokenVerify(),      // oauth2 验证
+		permission.CheckUserPermissions(), // 权限验证
+	},
+	Controllers: []controller.Controller{},
+}
+
+var AdminResources = &controller.Controllers{
+	Base: "/openapi/admin",
+	Handlers: []gin.HandlerFunc{
+		security.HandleTokenVerify(), // oauth2 验证
+		permission.NeedAdmin(),
+		permission.CheckUserPermissions(), // 权限验证
+	},
+	Controllers: []controller.Controller{},
+}
+
+var OpenApiResources = &controller.Controllers{
+	Controllers: []controller.Controller{
+		UserResources,
+		AdminResources,
+		PublicResources,
+	},
+}
+
+var Resources = map[string]*controller.Controllers{
+	"/api":            ApiResources,
+	"/mapi":           MApiResources,
+	"/openapi":        OpenApiResources,
+	"/openapi/public": PublicResources,
+	"/openapi/user":   UserResources,
+	"/openapi/admin":  AdminResources,
+}
+
+func AddController(c controller.Controller) {
+	controller.AddController(c)
+}
+
+func AddControllers(cs ...controller.Controller) {
+	controller.AddControllers(cs...)
+}
+
+func AddSchemaControllers(schema string, cs ...controller.Controller) {
+	if resources, b := Resources[schema]; b {
+		resources.AddController(cs...)
+	} else {
+		controller.AddControllers(cs...)
+	}
+}
 
 func init() {
 	starter.RegisterInitializor(Init)
@@ -16,6 +98,7 @@ func init() {
 
 // Auto Initialize entrypoint
 func Init() {
+	controller.AddControllers(ApiResources, MApiResources, OpenApiResources)
 }
 
 // Autostart entrypoint

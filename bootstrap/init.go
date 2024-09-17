@@ -38,6 +38,9 @@ import (
 
 	// init controller
 	_ "github.com/gophab/gophrame/controller"
+
+	// init moudles
+	_ "github.com/gophab/gophrame/module"
 )
 
 // Lazy init
