@@ -19,8 +19,15 @@ type MessageRepository struct {
 
 var messageRepository = &MessageRepository{}
 
+type MessageAccessLogRepository struct {
+	*gorm.DB `inject:"database"`
+}
+
+var messageAccessLogRepository = &MessageAccessLogRepository{}
+
 func init() {
 	inject.InjectValue("messageRepository", messageRepository)
+	inject.InjectValue("messageAccessLogRepository", messageAccessLogRepository)
 }
 
 func (r *MessageRepository) CreateMessage(message *domain.Message) (*domain.Message, error) {
@@ -39,6 +46,14 @@ func (r *MessageRepository) GetById(id int64) (*domain.Message, error) {
 	var result domain.Message
 	if res := r.Model(&domain.Message{}).Where("id = ?", id).First(&result); res.Error == nil && res.RowsAffected > 0 {
 		return &result, nil
+	} else {
+		return nil, res.Error
+	}
+}
+
+func (r *MessageRepository) UpdateMessage(message *domain.Message) (*domain.Message, error) {
+	if res := r.Save(message); res.Error == nil {
+		return message, nil
 	} else {
 		return nil, res.Error
 	}
@@ -80,7 +95,7 @@ func (r *MessageRepository) Find(conds map[string]interface{}, pageable query.Pa
 	}
 
 	var list = make([]*domain.Message, 0)
-	if res := query.Page(tx, pageable).Find(&list); res.Error == nil {
+	if res := query.Page(tx, pageable).Omit("read").Find(&list); res.Error == nil {
 		return count, list, nil
 	} else {
 		return 0, []*domain.Message{}, res.Error
@@ -164,7 +179,7 @@ func (r *MessageRepository) FindSimples(conds map[string]interface{}, pageable q
 	}
 
 	var list = make([]*domain.SimpleMessage, 0)
-	if res := query.Page(tx, pageable).Find(&list); res.Error == nil {
+	if res := query.Page(tx, pageable).Omit("read").Find(&list); res.Error == nil {
 		return count, list, nil
 	} else {
 		return 0, []*domain.SimpleMessage{}, res.Error
@@ -183,19 +198,19 @@ func (r *MessageRepository) FindSimplesAvailable(conds map[string]interface{}, p
 		if tenantId != nil && tenantId.(string) != "" {
 			// user available: 包括私信、企业内部、公共
 			tx.Where(
-				tx.Where("(`to` = ? and scope = 'PRIVATE')", userId).
+				r.Where("(`to` = ? and scope = 'PRIVATE')", userId).
 					Or("tenant_id = 'SYSTEM' and scope = 'PUBLIC'").
 					Or("tenant_id = ? and scope = 'TENANT'", tenantId))
 		} else {
 			// 只有私信、公共
 			tx.Where(
-				tx.Where("(`to` = ? and scope = 'PRIVATE')", userId).
+				r.Where("(`to` = ? and scope = 'PRIVATE')", userId).
 					Or("tenant_id = 'SYSTEM' and scope = 'PUBLIC'"))
 		}
 	} else if tenantId != nil && tenantId.(string) != "" {
 		// 包括公共和企业内部
 		tx.Where(
-			tx.Where("tenant_id = 'SYSTEM' and scope = 'PUBLIC'").
+			r.Where("tenant_id = 'SYSTEM' and scope = 'PUBLIC'").
 				Or("tenant_id = ? and scope = 'TENANT'", tenantId))
 	}
 
@@ -209,7 +224,7 @@ func (r *MessageRepository) FindSimplesAvailable(conds map[string]interface{}, p
 
 	tx.Where("valid_time is null or valid_time <= ?", time.Now()).
 		Where("due_time is null or due_time >= ?", time.Now()).
-		Where("status = ?", 1)
+		Where("`status` = ?", 1)
 
 	var count int64
 	if !pageable.NoCount() {
@@ -250,8 +265,8 @@ func (r *MessageRepository) ValidateMessages() {
 		if res := query.Page(tx, pageable).Find(&list); res.Error == nil && res.RowsAffected > 0 {
 			for _, message := range list {
 				message.Status = 1
+				r.Save(message)
 			}
-			r.Updates(list)
 
 			pageable.Page++
 		} else {
@@ -322,4 +337,14 @@ func (r *MessageRepository) HistoryMessages() {
 	}
 
 	r.Delete(&domain.Message{}, "status = ?", -2)
+}
+
+func (r *MessageAccessLogRepository) AccessMessage(userId, action string, message *domain.Message) {
+	var log = domain.MessageAccessLog{
+		MessageId:   message.Id,
+		UserId:      userId,
+		Action:      action,
+		CreatedTime: time.Now(),
+	}
+	r.Save(&log)
 }

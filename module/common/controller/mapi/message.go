@@ -38,6 +38,7 @@ func (m *MessageMController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/message/:id", Handler: m.GetMessage},
 		{HttpMethod: "POST", ResourcePath: "/message", Handler: m.CreateMessage},
 		{HttpMethod: "PUT", ResourcePath: "/message", Handler: m.UpdateMessage},
+		{HttpMethod: "PATCH", ResourcePath: "/message/:id", Handler: m.PatchMessage},
 		{HttpMethod: "DELETE", ResourcePath: "/message/:id", Handler: m.DeleteMessage},
 	})
 }
@@ -45,6 +46,7 @@ func (m *MessageMController) AfterInitialize() {
 // 1.根据id查询节点
 func (a *MessageMController) GetMessage(context *gin.Context) {
 	id, err := request.Param(context, "id").MustInt64()
+	show := request.Param(context, "show").DefaultBool(false)
 	if err != nil {
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
@@ -52,6 +54,11 @@ func (a *MessageMController) GetMessage(context *gin.Context) {
 
 	if result, _ := a.MessageService.GetById(id); result != nil {
 		response.Success(context, result)
+
+		if show {
+			eventbus.DispatchEvent("SYSTEM_MESSAGE_VIEWED", result, SecurityUtil.GetCurrentUserId(context))
+		}
+
 	} else {
 		response.NotFound(context, "")
 	}
@@ -82,10 +89,11 @@ func (a *MessageMController) GetList(context *gin.Context) {
 		conds["search"] = search
 	}
 
+	conds["status"] = 1
 	conds["userId"] = SecurityUtil.GetCurrentUserId(context)
 	conds["tenantId"] = "SYSTEM"
 
-	if count, lists, err := a.MessageService.FindSimples(conds, pageable); err == nil {
+	if count, lists, err := a.MessageService.FindSimplesAvailable(conds, pageable); err == nil {
 		context.Header("X-Total-Count", strconv.FormatInt(count, 10))
 		response.Success(context, lists)
 	} else {
@@ -169,13 +177,39 @@ func (a *MessageMController) CreateMessage(c *gin.Context) {
 
 // 修改
 func (a *MessageMController) UpdateMessage(c *gin.Context) {
+	var data domain.Message
+	if err := c.ShouldBind(&data); err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	if result, err := a.MessageService.UpdateMessage(&data); err == nil {
+		response.Success(c, result)
+
+		// 操作日志
+		eventbus.DispatchEvent("SYSTEM_LOG_OPERATION", domain.NewOperationLog("UPDATE").
+			WithTarget("Message", result.Id).
+			WithContent("${operator.name} 修改了消息【${target.type}】: ${target.title}"))
+	} else {
+		response.SystemErrorMessage(c, errors.ERROR_UPDATE_FAIL, err.Error())
+	}
+}
+
+// 修改
+func (a *MessageMController) PatchMessage(c *gin.Context) {
+	id, err := request.Param(c, "id").MustInt64()
+	if err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
 	var data = make(map[string]interface{})
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
 	}
 
-	if result, err := a.MessageService.PatchMessage(data["id"].(int64), data); err == nil {
+	if result, err := a.MessageService.PatchMessage(id, data); err == nil {
 		response.Success(c, result)
 
 		// 操作日志

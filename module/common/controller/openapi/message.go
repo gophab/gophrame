@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/query"
 	SecurityUtil "github.com/gophab/gophrame/core/security/util"
@@ -74,6 +75,7 @@ func (a *MessageOpenController) GetList(context *gin.Context) {
 		conds["search"] = search
 	}
 
+	conds["status"] = 1
 	conds["userId"] = SecurityUtil.GetCurrentUserId(context)
 	conds["tenantId"] = SecurityUtil.GetCurrentTenantId(context)
 
@@ -122,6 +124,7 @@ func (a *MessageOpenController) GetManagedList(context *gin.Context) {
 // 1.根据id查询节点
 func (a *MessageOpenController) GetMessage(context *gin.Context) {
 	id, err := request.Param(context, "id").MustInt64()
+	show := request.Param(context, "show").DefaultBool(true)
 	if err != nil {
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
@@ -160,6 +163,10 @@ func (a *MessageOpenController) GetMessage(context *gin.Context) {
 	}
 
 	response.Success(context, result)
+
+	if show {
+		eventbus.DispatchEvent("SYSTEM_MESSAGE_VIEWED", result, userId)
+	}
 }
 
 // 新增
@@ -188,14 +195,77 @@ func (a *MessageOpenController) CreateMessage(c *gin.Context) {
 
 // 修改
 func (a *MessageOpenController) UpdateMessage(c *gin.Context) {
-	var data = make(map[string]interface{})
+	var data domain.Message
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
 	}
 
-	id, b := data["id"].(int64)
-	if !b {
+	result, err := a.MessageService.GetById(data.Id)
+	if err != nil {
+		response.SystemFail(c, err)
+		return
+	}
+
+	if result == nil {
+		response.NotFound(c, "Not Found")
+		return
+	}
+
+	if result.TenantId != SecurityUtil.GetCurrentTenantId(c) {
+		response.NotAllowed(c, "Not Allowed")
+		return
+	}
+
+	userId := SecurityUtil.GetCurrentUserId(c)
+
+	switch result.Scope {
+	case "PRIVATE":
+		if result.From != userId {
+			response.NotAllowed(c, "Not Allowed")
+			return
+		}
+	default:
+		response.NotAllowed(c, "Not Allowed")
+		return
+	}
+
+	result.Title = data.Title
+	result.Content = data.Content
+	result.ValidTime = data.ValidTime
+	result.DueTime = data.DueTime
+
+	if result, err := a.MessageService.UpdateMessage(result); err == nil {
+		response.Success(c, result)
+	} else {
+		response.SystemErrorMessage(c, errors.ERROR_UPDATE_FAIL, err.Error())
+	}
+}
+
+// 修改
+func (a *MessageOpenController) PatchMessage(c *gin.Context) {
+	id, err := request.Param(c, "id").MustInt64()
+	if err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	message, err := a.MessageService.GetById(id)
+	if err != nil {
+		response.SystemFail(c, err)
+		return
+	}
+	if message == nil {
+		response.Success(c, nil)
+		return
+	}
+	if message.TenantId != SecurityUtil.GetCurrentTenantId(c) {
+		response.NotAllowed(c, "Not Allowed")
+		return
+	}
+
+	var data = make(map[string]interface{})
+	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
 	}
@@ -283,6 +353,7 @@ func (m *AdminMessageOpenController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/message/:id", Handler: m.GetMessage},
 		{HttpMethod: "POST", ResourcePath: "/message", Handler: m.CreateMessage},
 		{HttpMethod: "PUT", ResourcePath: "/message", Handler: m.UpdateMessage},
+		{HttpMethod: "PATCH", ResourcePath: "/message/:id", Handler: m.PatchMessage},
 		{HttpMethod: "DELETE", ResourcePath: "/message/:id", Handler: m.DeleteMessage},
 	})
 }
@@ -312,6 +383,7 @@ func (a *AdminMessageOpenController) GetList(context *gin.Context) {
 		conds["search"] = search
 	}
 
+	conds["status"] = 1
 	conds["userId"] = SecurityUtil.GetCurrentUserId(context)
 	conds["tenantId"] = SecurityUtil.GetCurrentTenantId(context)
 
@@ -364,6 +436,7 @@ func (a *AdminMessageOpenController) GetManagedList(context *gin.Context) {
 // 1.根据id查询节点
 func (a *AdminMessageOpenController) GetMessage(context *gin.Context) {
 	id, err := request.Param(context, "id").MustInt64()
+	show := request.Param(context, "show").DefaultBool(true)
 	if err != nil {
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
@@ -402,6 +475,10 @@ func (a *AdminMessageOpenController) GetMessage(context *gin.Context) {
 	}
 
 	response.Success(context, result)
+
+	if show {
+		eventbus.DispatchEvent("SYSTEM_MESSAGE_VIEWED", result, userId)
+	}
 }
 
 // 新增
@@ -424,6 +501,11 @@ func (a *AdminMessageOpenController) CreateMessage(c *gin.Context) {
 		data.Scope = "TENANT"
 	}
 
+	if data.Scope == "PUBLIC" {
+		response.NotAllowed(c, "Not Allowed")
+		return
+	}
+
 	if result, err := a.MessageService.CreateMessage(&data); err == nil {
 		response.Success(c, result)
 	} else {
@@ -433,14 +515,66 @@ func (a *AdminMessageOpenController) CreateMessage(c *gin.Context) {
 
 // 修改
 func (a *AdminMessageOpenController) UpdateMessage(c *gin.Context) {
-	var data = make(map[string]interface{})
+	var data domain.Message
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
 	}
 
-	id, b := data["id"].(int64)
-	if !b {
+	result, err := a.MessageService.GetById(data.Id)
+	if err != nil {
+		response.SystemFail(c, err)
+		return
+	}
+
+	if result == nil {
+		response.NotFound(c, "Not Found")
+		return
+	}
+
+	if result.TenantId != SecurityUtil.GetCurrentTenantId(c) {
+		response.NotAllowed(c, "Not Allowed")
+		return
+	}
+
+	userId := SecurityUtil.GetCurrentUserId(c)
+	tenantId := SecurityUtil.GetCurrentTenantId(c)
+
+	switch result.Scope {
+	case "PRIVATE":
+		if result.From != userId {
+			response.NotAllowed(c, "Not Allowed")
+			return
+		}
+	case "TENANT", "PUBLIC":
+		if result.TenantId != tenantId {
+			response.NotAllowed(c, "Not Allowed")
+			return
+		}
+	}
+
+	result.Title = data.Title
+	result.Content = data.Content
+	result.ValidTime = data.ValidTime
+	result.DueTime = data.DueTime
+
+	if result, err := a.MessageService.UpdateMessage(result); err == nil {
+		response.Success(c, result)
+	} else {
+		response.SystemErrorMessage(c, errors.ERROR_UPDATE_FAIL, err.Error())
+	}
+}
+
+// 修改
+func (a *AdminMessageOpenController) PatchMessage(c *gin.Context) {
+	id, err := request.Param(c, "id").MustInt64()
+	if err != nil {
+		response.FailCode(c, errors.INVALID_PARAMS)
+		return
+	}
+
+	var data = make(map[string]interface{})
+	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
 	}

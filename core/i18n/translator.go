@@ -129,7 +129,11 @@ func LocaleUpdateHook(db *gorm.DB) {
 		return
 	}
 
-	locale := GetCurrentLanguage()
+	locale := GetEnableLanguage()
+	if locale == "" {
+		return
+	}
+
 	if db.Statement.Schema == nil {
 		return
 	}
@@ -174,7 +178,11 @@ func LocaleLoadHook(db *gorm.DB) {
 		return
 	}
 
-	locale := GetCurrentLanguage()
+	locale := GetEnableLanguage()
+	if locale == "" {
+		return
+	}
+
 	if db.Statement.Schema == nil {
 		return
 	}

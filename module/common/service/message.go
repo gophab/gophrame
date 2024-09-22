@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/gophab/gophrame/core/cron"
+	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/query"
 	"github.com/gophab/gophrame/core/util"
@@ -14,13 +15,16 @@ import (
 
 type MessageService struct {
 	service.BaseService
-	MessageRepository *repository.MessageRepository `inject:"messageRepository"`
+	MessageRepository          *repository.MessageRepository          `inject:"messageRepository"`
+	MessageAccessLogRepository *repository.MessageAccessLogRepository `inject:"messageAccessLogRepository"`
 }
 
 var messageService = &MessageService{}
 
 func init() {
 	inject.InjectValue("messageService", messageService)
+
+	eventbus.RegisterEventListener("SYSTEM_MESSAGE_VIEWED", messageService.OnMessageViewed)
 
 	cron.AddFunc("@every 1m", messageService.ValidateMessages)
 	cron.AddFunc("@daily", messageService.HistoryMessages)
@@ -50,6 +54,10 @@ func (s *MessageService) CreateMessage(message *domain.Message) (*domain.Message
 	return s.MessageRepository.CreateMessage(message)
 }
 
+func (s *MessageService) UpdateMessage(message *domain.Message) (*domain.Message, error) {
+	return s.MessageRepository.UpdateMessage(message)
+}
+
 func (s *MessageService) PatchMessage(id int64, data map[string]interface{}) (*domain.Message, error) {
 	return s.MessageRepository.PatchMessage(id, data)
 }
@@ -68,4 +76,11 @@ func (s *MessageService) HistoryMessages() {
 	if s.MessageRepository != nil {
 		s.MessageRepository.HistoryMessages()
 	}
+}
+
+func (s *MessageService) OnMessageViewed(event string, argv ...interface{}) {
+	var message = argv[0].(*domain.Message)
+	var userId = argv[1].(string)
+
+	s.MessageAccessLogRepository.AccessMessage(userId, "READ", message)
 }

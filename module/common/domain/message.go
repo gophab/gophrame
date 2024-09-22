@@ -34,6 +34,7 @@ type SimpleMessage struct {
 	ValidTime *time.Time `gorm:"column:valid_time" json:"validTime"`
 	DueTime   *time.Time `gorm:"column:due_time" json:"dueTime"`
 	Status    int        `gorm:"column:status;default:1" json:"status"`
+	Read      bool       `gorm:"column:read;->" json:"read"`
 }
 
 func (*Message) TableName() string {
@@ -49,9 +50,9 @@ func (*MessageHistory) TableName() string {
 }
 
 type MessageAccessLog struct {
-	MessageId   string    `gorm:"column:message_id" json:"messageId" primaryKey:"yes"`
-	UserId      string    `gorm:"column:user_id" json:"userId" primaryKey:"yes"`
-	Action      string    `gorm:"column:action" json:"action" primaryKey:"yes"`
+	MessageId   int64     `gorm:"column:message_id;primaryKey" json:"messageId" primaryKey:"yes"`
+	UserId      string    `gorm:"column:user_id;primaryKey" json:"userId" primaryKey:"yes"`
+	Action      string    `gorm:"column:action;primaryKey" json:"action" primaryKey:"yes"`
 	CreatedTime time.Time `gorm:"column:created_time;autoCreateTime;<-:create" json:"createdTime"`
 }
 

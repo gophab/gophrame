@@ -36,8 +36,8 @@ func (*EventHistory) TableName() string {
 }
 
 type EventAccessLog struct {
-	UserId     string    `gorm:"column:user_id" json:"userId" primaryKey:"yes"`
-	Action     string    `gorm:"column:action" json:"action" primaryKey:"yes"`
+	UserId     string    `gorm:"column:user_id;primaryKey" json:"userId" primaryKey:"yes"`
+	Action     string    `gorm:"column:action;primaryKey" json:"action" primaryKey:"yes"`
 	AccessTime time.Time `gorm:"column:access_time;autoCreateTime;autoUpdateTime" json:"accessTime"`
 }
 
