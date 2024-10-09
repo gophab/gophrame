@@ -55,7 +55,7 @@ func (r *ShortLinkRepository) CreateShortLink(shortLink *domain.ShortLink) (*dom
 }
 
 func (r *ShortLinkRepository) ExpireExpiredShortLinks() {
-	if res := r.Delete(&domain.ShortLink{}, "expired_time > CURRENT_TIMESTAMP"); res.Error != nil {
+	if res := r.Delete(&domain.ShortLink{}, "expired_time < CURRENT_TIMESTAMP"); res.Error != nil {
 		logger.Warn("Expire shortlink error: ", res.Error.Error())
 	}
 }
