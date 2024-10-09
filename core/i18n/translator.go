@@ -90,7 +90,7 @@ func buildLocaleField(db *gorm.DB, item reflect.Value, field *schema.Field, loca
 							EntityId:   fmt.Sprint(id),
 							Name:       field.Name + "." + column,
 							Locale:     locale,
-							Value:      fmt.Sprint(v),
+							Value:      fmt.Sprintf("%v", v),
 						})
 					}
 					return results
@@ -107,6 +107,16 @@ func buildLocaleField(db *gorm.DB, item reflect.Value, field *schema.Field, loca
 						}
 					}
 				}
+			case reflect.Pointer:
+				return []*LocaleFieldValue{
+					{
+						EntityName: db.Statement.Schema.ModelType.Name(),
+						EntityId:   fmt.Sprint(id),
+						Name:       field.Name,
+						Locale:     locale,
+						Value:      fmt.Sprintf("%v", reflect.ValueOf(v).Elem()),
+					},
+				}
 			default:
 				return []*LocaleFieldValue{
 					{
@@ -114,7 +124,7 @@ func buildLocaleField(db *gorm.DB, item reflect.Value, field *schema.Field, loca
 						EntityId:   fmt.Sprint(id),
 						Name:       field.Name,
 						Locale:     locale,
-						Value:      fmt.Sprint(v),
+						Value:      fmt.Sprintf("%v", v),
 					},
 				}
 			}
