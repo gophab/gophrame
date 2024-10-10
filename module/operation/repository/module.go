@@ -23,12 +23,6 @@ func init() {
 	inject.InjectValue("moduleRepository", moduleRepository)
 }
 
-func (a *ModuleRepository) getCounts(fid int64, title string) (count int64) {
-	sql := "SELECT COUNT(*) AS counts FROM `auth_module` WHERE fid=? AND title LIKE ?"
-	a.Raw(sql, fid, "%"+title+"%").First(&count)
-	return
-}
-
 // 查询
 func (a *ModuleRepository) List(fid int64, title string, tenantId string, pageable query.Pageable) (counts int64, data []*domain.Module) {
 	tx := a.Model(&domain.Module{}).
@@ -53,8 +47,7 @@ func (a *ModuleRepository) List(fid int64, title string, tenantId string, pageab
 			return -1, data
 		}
 	} else {
-		counts = a.getCounts(fid, title)
-		if counts <= 0 {
+		if res := tx.Count(&counts); res.Error != nil || counts <= 0 {
 			return 0, []*domain.Module{}
 		}
 		if res := tx.Find(&data); res.Error == nil {
