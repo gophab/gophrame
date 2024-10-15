@@ -61,17 +61,20 @@ func HandleCaptchaVerify(force bool) gin.HandlerFunc {
 				response.FailMessage(context, CaptchaCheckParamsInvalidCode, CaptchaCheckParamsInvalidMsg)
 				return
 			} else {
-				context.AddParam("captcha", "false")
+				context.Set("captcha", false)
 				context.Next()
 				return
 			}
 		}
 
 		if captcha.Verify(captchaId, []byte(value)) {
-			context.AddParam("captcha", "true")
+			context.Set("captcha", true)
 			context.Next()
-		} else {
+		} else if force {
 			response.FailMessage(context, CaptchaCheckFailCode, CaptchaCheckFailMsg)
+		} else {
+			context.Set("captcha", false)
+			context.Next()
 		}
 	}
 }

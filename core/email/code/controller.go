@@ -60,11 +60,9 @@ func (e *EmailCodeController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
 	// 创建一个验证码路由
 	email := g.Group("openapi/email")
 	{
-		email.Use(captcha.HandleCaptchaVerify(false))
-
 		// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
-		email.GET("/code", e.GenerateCode)            // 发送验证码
-		email.GET("/check/:email/:code", e.CheckCode) // 校验验证码
+		email.GET("/code", captcha.HandleCaptchaVerify(true), e.GenerateCode) // 发送验证码
+		email.GET("/check/:email/:code", e.CheckCode)                         // 校验验证码
 	}
 
 	return email

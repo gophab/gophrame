@@ -41,7 +41,7 @@ type OAuth2Controller struct {
 
 func (c *OAuth2Controller) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
 	// 前端接口
-	g.POST("/oauth/login", captcha.HandleCaptchaVerify(true), c.Login) // 登录
+	g.POST("/oauth/login", captcha.HandleCaptchaVerify(false), c.Login) // 登录
 
 	// 后端接口
 	g.GET("/oauth/auth", c.Auth) // 授权页面,选择需要授权的权限项
@@ -75,8 +75,13 @@ func (o *OAuth2Controller) Login(c *gin.Context) {
 		var userDetails *SecurityModel.UserDetails
 		switch loginForm.Mode {
 		case "password": // 使用用户名/密码登录
-			if o.OAuth2Server.UserHandler != nil {
-				userDetails, err = o.OAuth2Server.UserHandler.GetUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
+			if b := c.GetBool("captcha"); b {
+				if o.OAuth2Server.UserHandler != nil {
+					userDetails, err = o.OAuth2Server.UserHandler.GetUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
+				}
+			} else {
+				response.FailMessage(c, captcha.CaptchaCheckFailCode, captcha.CaptchaCheckFailMsg)
+				return
 			}
 		case "mobile": // 使用手机/验证码登录
 			if o.OAuth2Server.MobileUserHandler != nil {

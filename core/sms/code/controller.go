@@ -64,11 +64,9 @@ func (s *SmsCodeController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
 	// 创建一个验证码路由
 	smsRoot := g.Group("openapi/sms")
 	{
-		smsRoot.Use(captcha.HandleCaptchaVerify(false))
-
 		// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
-		smsRoot.GET("/code", s.GenerateCode)           // 发送验证码
-		smsRoot.GET("/code/:phone/:code", s.CheckCode) // 校验验证码
+		smsRoot.GET("/code", captcha.HandleCaptchaVerify(true), s.GenerateCode) // 发送验证码
+		smsRoot.GET("/code/:phone/:code", s.CheckCode)                          // 校验验证码
 	}
 
 	return smsRoot

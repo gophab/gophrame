@@ -102,11 +102,16 @@ func (h *DefaultUserHandler) GetMobileUserDetails(ctx context.Context, mobile st
 		return nil, errors.New("不支持手机验证码登录")
 	}
 
-	if !h.MobileValidator.CheckCode(h.MobileValidator, mobile, "login-pin", code) {
+	if !h.MobileValidator.CheckCode(h.MobileValidator, mobile, "login", code) {
 		return nil, errors.New("验证码不一致")
 	}
 
 	user, err := h.UserService.GetByMobile(mobile)
+	if user == nil {
+		mobile = strings.Replace(mobile, "+86-", "", -1)
+		user, err = h.UserService.GetByMobile(mobile)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +128,7 @@ func (h *DefaultUserHandler) GetEmailUserDetails(ctx context.Context, email stri
 		return nil, errors.New("不支持邮箱验证码登录")
 	}
 
-	if !h.EmailValidator.CheckCode(h.EmailValidator, email, "login-pin", code) {
+	if !h.EmailValidator.CheckCode(h.EmailValidator, email, "login", code) {
 		return nil, errors.New("验证码不一致")
 	}
 
