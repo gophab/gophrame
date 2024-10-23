@@ -7,7 +7,7 @@ import (
 type ContentTemplateInfo struct {
 	domain.ParametersEnabled
 	domain.PropertiesEnabled
-	Name    string `gorm:"column:name" json:"name,omitempty"`
+	Name    string `gorm:"column:name" json:"name,omitempty" i18n:"true"`
 	Title   string `gorm:"column:title" json:"title,omitempty" i18n:"true"`
 	Type    string `gorm:"column:type" json:"type,omitempty"`
 	Scene   string `gorm:"column:scene" json:"scene,omitempty"`
