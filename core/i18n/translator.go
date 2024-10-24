@@ -1,6 +1,7 @@
 package i18n
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -180,6 +181,10 @@ func LocaleUpdateHook(db *gorm.DB) {
 		// translator.StoreTranslation()
 		i18nFactory.Translator.StoreTranslations(localeFields)
 	}
+}
+
+func setSchemaLocaleField(ctx context.Context, field *schema.Field, item reflect.Value, value interface{}) {
+
 }
 
 // 2. get locale fields
