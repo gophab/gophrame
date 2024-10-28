@@ -9,7 +9,6 @@ import (
 
 	"github.com/gophab/gophrame/core/global"
 	"github.com/gophab/gophrame/core/inject"
-	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/starter"
 	"github.com/gophab/gophrame/domain"
 	"gorm.io/gorm"
@@ -173,16 +172,42 @@ func LocaleUpdateHook(db *gorm.DB) {
 	}
 }
 
+func getFields(str string) (results []string) {
+	if strings.TrimSpace(str) == "" {
+		return nil
+	}
+
+	results = strings.Split(strings.TrimSpace(str), ",")
+	return
+}
+
+func getPropertyFields(str string) (results map[string][]string) {
+	results = make(map[string][]string)
+	if str == "" {
+		return
+	}
+	var segs = strings.Split(str, ";")
+	for _, seg := range segs {
+		kv := strings.Split(strings.TrimSpace(seg), ":")
+		if len(kv) > 1 {
+			var key = kv[0]
+			var fields = getFields(kv[1])
+			results[strings.ToLower(key)] = fields
+		}
+	}
+	return
+}
+
 // data[field] = value
 func setSchemaLocaleField(ctx context.Context, data reflect.Value, field *schema.Field, value interface{}) {
-	if field.Name == "Properties" {
+	if field.DataType == "json" {
+		// 属性字段：type == domain.Properties
 		var properties []string
 		if propertiesEnabled, ok := data.Interface().(I18nPropertiesEnabled); ok {
-			properties = strings.Split(propertiesEnabled.I18nProperties(), ",")
+			properties = getPropertyFields(propertiesEnabled.I18nProperties())[strings.ToLower(field.Name)]
 		} else if tag, b := field.Tag.Lookup("i18n"); b {
-			properties = strings.Split(getTagSection(tag, "properties"), ",")
+			properties = getFields(getTagSection(tag, "properties"))
 		}
-		// logger.Debug("properties: ", strings.Join(properties, ","))
 
 		if len(properties) > 0 {
 			// 1. 获取原始数据
@@ -191,9 +216,6 @@ func setSchemaLocaleField(ctx context.Context, data reflect.Value, field *schema
 			var err error = nil
 			if ov, b := field.ValueOf(ctx, data); !b && ov != nil {
 				oldJsonValue = *ov.(*domain.Properties)
-				// if v, b := ov.(string); b && v != "" {
-				// 	err = json.Unmarshal([]byte(v), &oldJsonValue)
-				// }
 			}
 
 			if v, b := value.(string); b && v != "" {
@@ -212,38 +234,43 @@ func setSchemaLocaleField(ctx context.Context, data reflect.Value, field *schema
 				if updated {
 					if bytes, err := json.Marshal(oldJsonValue); err == nil {
 						field.Set(ctx, data, string(bytes))
-						logger.Debug("Update i18n properties: ", strings.Join(properties, ","))
+						// logger.Debug("Update i18n properties: ", strings.Join(properties, ","))
 					}
 				}
 			}
 
 			return
 		}
-	}
 
+		// 2. Struct 字段
+		// if field.Name == "Dimensions" {
+		// 	logger.Debug("Dimensions")
+		// }
+	}
 	field.Set(ctx, data, value)
 }
 
 // field = value
 func setLocaleField(data reflect.Value, fieldName string, value interface{}) {
-	if field := data.FieldByName(fieldName); field.IsValid() && !field.IsZero() {
-		if fieldName == "Properties" && field.Type().Name() == "json" {
+	if dataField := data.FieldByName(fieldName); dataField.IsValid() && !dataField.IsZero() {
+		if dataField.Type().Name() == "json" {
 			var properties []string
 			if propertiesEnabled, ok := data.Interface().(I18nPropertiesEnabled); ok {
-				properties = strings.Split(propertiesEnabled.I18nProperties(), ",")
+				properties = getPropertyFields(propertiesEnabled.I18nProperties())[strings.ToLower(fieldName)]
 			} else {
 				if field, b := data.Type().FieldByName(fieldName); b {
 					if tag, b := field.Tag.Lookup("i18n"); b {
-						properties = strings.Split(getTagSection(tag, "properties"), ",")
+						properties = getFields(getTagSection(tag, "properties"))
 					}
 				}
 			}
+
 			if len(properties) > 0 {
 				// 1. 获取原始数据
 				var oldJsonValue = make(map[string]interface{})
 				var jsonValue = make(map[string]interface{})
 				var err error = nil
-				if ov := field.String(); ov != "" {
+				if ov := dataField.String(); ov != "" {
 					err = json.Unmarshal([]byte(ov), &oldJsonValue)
 				}
 
@@ -264,7 +291,7 @@ func setLocaleField(data reflect.Value, fieldName string, value interface{}) {
 
 					if updated {
 						if bytes, err := json.Marshal(oldJsonValue); err == nil {
-							field.Set(reflect.ValueOf(string(bytes)))
+							dataField.Set(reflect.ValueOf(string(bytes)))
 							// logger.Debug("Update i18n properties: ", strings.Join(properties, ","))
 						}
 					}
@@ -274,7 +301,7 @@ func setLocaleField(data reflect.Value, fieldName string, value interface{}) {
 			}
 		}
 
-		field.Set(reflect.ValueOf(value))
+		dataField.Set(reflect.ValueOf(value))
 	}
 }
 
