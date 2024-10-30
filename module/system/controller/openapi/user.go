@@ -626,6 +626,13 @@ func (u *AdminUserOpenController) ImportUsers(c *gin.Context) {
 				}
 
 				valid := validation.Validation{}
+				if user.Name != nil && *user.Name != "" {
+					valid.Min(*user.Name, 5, "name").Message("至少5个字符")
+					valid.AlphaDash(*user.Name, "name").Message("账号格式错误")
+				} else {
+					user.Name = nil
+				}
+
 				if user.Mobile != nil && *user.Mobile != "" {
 					valid.Check(*user.Mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
 				} else {
