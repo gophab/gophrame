@@ -88,6 +88,7 @@ func (r *MessageRepository) Find(conds map[string]interface{}, pageable query.Pa
 			tx.Where(fmt.Sprintf("`%s` = ?", k), v)
 		}
 	}
+	tx.Where("del_flag = ?", false)
 
 	var count int64
 	if !pageable.NoCount() {
@@ -139,7 +140,8 @@ func (r *MessageRepository) FindAvailable(conds map[string]interface{}, pageable
 
 	tx.Where("valid_time <= ?", time.Now()).
 		Where("due_time is null or due_time >= ?", time.Now()).
-		Where("status = ?", 1)
+		Where("status = ?", 1).
+		Where("del_flag = ?", false)
 
 	var count int64
 	if !pageable.NoCount() {
@@ -172,6 +174,8 @@ func (r *MessageRepository) FindSimples(conds map[string]interface{}, pageable q
 			tx.Where(fmt.Sprintf("`%s` = ?", k), v)
 		}
 	}
+
+	tx.Where("del_flag = ?", false)
 
 	var count int64
 	if !pageable.NoCount() {
@@ -224,7 +228,8 @@ func (r *MessageRepository) FindSimplesAvailable(conds map[string]interface{}, p
 
 	tx.Where("valid_time is null or valid_time <= ?", time.Now()).
 		Where("due_time is null or due_time >= ?", time.Now()).
-		Where("`status` = ?", 1)
+		Where("`status` = ?", 1).
+		Where("del_flag = ?", false)
 
 	var count int64
 	if !pageable.NoCount() {
@@ -250,7 +255,8 @@ func (r *MessageRepository) ValidateMessages() {
 	tx := r.Model(&domain.Message{}).
 		Where("status = ?", 0).
 		Where("valid_time <= ? or valid_time is null", time.Now()).
-		Where("due_time > ? or due_time is null", time.Now())
+		Where("due_time > ? or due_time is null", time.Now()).
+		Where("del_flag = ?", false)
 
 	pageable := &query.Pagination{
 		Page: 1,
@@ -277,7 +283,8 @@ func (r *MessageRepository) ValidateMessages() {
 	// expired
 	tx = r.Model(&domain.Message{}).
 		Where("status = ?", 1).
-		Where("due_time <= ?", time.Now())
+		Where("due_time <= ?", time.Now()).
+		Where("del_flag = ?", false)
 
 	pageable = &query.Pagination{
 		Page: 1,
