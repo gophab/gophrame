@@ -821,7 +821,7 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 		return
 	}
 
-	var availableFields = []string{"name", "login", "mobile", "email", "admin", "status"}
+	var availableFields = []string{"name", "avatar", "login", "mobile", "email", "admin", "status"}
 	var user = make(map[string]interface{})
 	for _, k := range availableFields {
 		if v, b := params[k]; b {
