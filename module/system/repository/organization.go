@@ -110,7 +110,7 @@ func (r *OrganizationRepository) UpdateData(organization *domain.Organization) (
 
 // 删除
 func (r *OrganizationRepository) DeleteData(id int64) bool {
-	if res := r.Delete(&domain.Organization{}, id); res.Error == nil {
+	if res := r.Delete(&domain.Organization{}, "id=?", id); res.Error == nil {
 		return true
 	} else {
 		logger.Error("Organization 删除数据出错：", res.Error.Error())
