@@ -4,6 +4,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gophab/gophrame/core/i18n"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/errors"
@@ -99,8 +100,10 @@ func (e *eventbus) PublishEvent(event string, args ...interface{}) {
 // 3.执行事件
 func (e *eventbus) DispatchEvent(event string, args ...interface{}) {
 	if queue, exists := e.GetEventListeners(event); exists {
+		locale := i18n.GetEnableLanguage()
 		for _, fn := range queue {
 			go func(cb EventListener) {
+				i18n.SetCurrentLanguage(locale)
 				cb(event, args...)
 			}(fn)
 		}
