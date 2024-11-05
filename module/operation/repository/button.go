@@ -134,5 +134,5 @@ func (b *ButtonRepository) UpdateData(data *domain.Button) (bool, error) {
 
 // 删除
 func (b *ButtonRepository) DeleteData(id int64) error {
-	return b.Delete(b, id).Error
+	return b.Delete(&domain.Button{}, "id=?", id).Error
 }

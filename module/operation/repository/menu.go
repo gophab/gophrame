@@ -194,7 +194,7 @@ func (a *MenuRepository) GetSubNodeCount(id int64) (count int64) {
 
 // 删除数据
 func (a *MenuRepository) DeleteData(id int64) (bool, error) {
-	if res := a.Delete(a, id); res.Error == nil {
+	if res := a.Delete(&domain.Menu{}, "id=?", id); res.Error == nil {
 		go a.DeleteDataHook(id) // 删除菜单关联的所有数据
 		return true, nil
 	} else {

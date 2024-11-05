@@ -139,7 +139,7 @@ func (a *ModuleRepository) updatePathInfoNodeLevel(curItemid int64) bool {
 
 // 删除数据
 func (a *ModuleRepository) DeleteData(id int64) (bool, error) {
-	if res := a.Delete(&domain.Module{}, id); res.Error == nil {
+	if res := a.Delete(&domain.Module{}, "id=?", id); res.Error == nil {
 		// 删除下
 		a.Delete(&domain.Module{}, "fids like ?", fmt.Sprintf("%%,%d,%%", id))
 		return true, nil
