@@ -67,8 +67,9 @@ func (s *AliyunSmsSender) getTemplateReq(phoneNumber, template string, params ma
 	}
 
 	if len(config.Setting.Templates) > 0 {
+		var temp string = ""
 		if t, b := config.Setting.Templates[template]; b {
-			template = t
+			temp = t
 		}
 
 		if regionCode != "+86" {
@@ -76,7 +77,7 @@ func (s *AliyunSmsSender) getTemplateReq(phoneNumber, template string, params ma
 			switch regionCode {
 			case "+886", "+852", "+853": // 港澳台
 				if t, b := config.Setting.Templates[template+".tc"]; b {
-					template = t
+					temp = t
 				}
 
 				if config.Setting.SignatureTC != "" {
@@ -84,13 +85,17 @@ func (s *AliyunSmsSender) getTemplateReq(phoneNumber, template string, params ma
 				}
 			default: // 其他国家
 				if t, b := config.Setting.Templates[template+".en"]; b {
-					template = t
+					temp = t
 				}
 
 				if config.Setting.SignatureEN != "" {
 					signature = config.Setting.SignatureEN
 				}
 			}
+		}
+
+		if temp != "" {
+			template = temp
 		}
 	}
 

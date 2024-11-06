@@ -101,7 +101,7 @@ func (r *ContentTemplateRepository) PatchContentTemplate(id string, data map[str
 	}
 
 	data["id"] = id
-	if res := transaction.Session().Model(&domain.ContentTemplate{}).Where("id=?", id).UpdateColumns(util.DbFields(data)); res.Error == nil && res.RowsAffected > 0 {
+	if res := transaction.Session().Model(&domain.ContentTemplate{}).Where("id=?", id).UpdateColumns(util.DbFields(data)); res.Error == nil {
 		return result, nil
 	} else {
 		return nil, res.Error
