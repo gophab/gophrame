@@ -480,7 +480,7 @@ func (u *AdminUserOpenController) CreateUser(c *gin.Context) {
 			user.Login = nil
 		} else {
 			valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
-			valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+			valid.MinSize(*user.Login, 5, "login").Message("最短为5字符")
 		}
 	}
 	if user.Mobile != nil {
@@ -500,7 +500,7 @@ func (u *AdminUserOpenController) CreateUser(c *gin.Context) {
 
 	if valid.HasErrors() {
 		logger.MarkErrors(valid.Errors)
-		response.FailCode(c, errors.ERROR_CREATE_FAIL)
+		response.FailMessage(c, errors.ERROR_CREATE_FAIL, valid.Errors[0].Message)
 		return
 	}
 
@@ -548,7 +548,7 @@ func (u *AdminUserOpenController) CreateUsers(c *gin.Context) {
 				user.Login = nil
 			} else {
 				valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
-				valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+				valid.MinSize(*user.Login, 5, "login").Message("最短为5字符")
 			}
 		}
 		if user.Mobile != nil {
@@ -626,11 +626,14 @@ func (u *AdminUserOpenController) ImportUsers(c *gin.Context) {
 				}
 
 				valid := validation.Validation{}
-				if user.Name != nil && *user.Name != "" {
-					valid.Min(*user.Name, 5, "name").Message("至少5个字符")
-					valid.AlphaDash(*user.Name, "name").Message("账号格式错误")
+
+				valid.MaxSize(user.Name, 100, "name").Message("最长为100字符")
+
+				if user.Login != nil && *user.Login != "" {
+					valid.Min(*user.Login, 5, "login").Message("至少5个字符")
+					valid.AlphaDash(*user.Login, "login").Message("账号格式错误")
 				} else {
-					user.Name = nil
+					user.Login = nil
 				}
 
 				if user.Mobile != nil && *user.Mobile != "" {
@@ -643,6 +646,13 @@ func (u *AdminUserOpenController) ImportUsers(c *gin.Context) {
 					valid.Email(user.Email, "email").Message("无效的邮箱地址")
 				} else {
 					user.Email = nil
+				}
+
+				if user.Password != nil && *user.Password != "" {
+					valid.MaxSize(*user.Password, 100, "password").Message("最长为100字符")
+					valid.MinSize(*user.Password, 6, "password").Message("最短为6字符")
+				} else {
+					user.Password = nil
 				}
 
 				if valid.HasErrors() {
@@ -684,7 +694,7 @@ func (u *AdminUserOpenController) UpdateUser(c *gin.Context) {
 			user.Login = nil
 		} else {
 			valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
-			valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+			valid.MinSize(*user.Login, 5, "login").Message("最短为5字符")
 		}
 	}
 	if user.Mobile != nil {

@@ -203,7 +203,7 @@ func (u *UserMController) AddUser(c *gin.Context) {
 			user.Login = nil
 		} else {
 			valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
-			valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+			valid.MinSize(*user.Login, 5, "login").Message("最短为5字符")
 		}
 	}
 	if user.Mobile != nil {
@@ -259,7 +259,7 @@ func (u *UserMController) UpdateUser(c *gin.Context) {
 			user.Login = nil
 		} else {
 			valid.MaxSize(*user.Login, 100, "login").Message("最长为100字符")
-			valid.MinSize(*user.Login, 6, "login").Message("最短为5字符")
+			valid.MinSize(*user.Login, 5, "login").Message("最短为5字符")
 		}
 	}
 	if user.Mobile != nil {
@@ -343,7 +343,7 @@ func (u *UserMController) PatchUser(c *gin.Context) {
 	login := params["login"]
 	if login != nil && login.(string) != "" {
 		valid.MaxSize(login.(string), 100, "login").Message("最长为100字符")
-		valid.MinSize(login.(string), 6, "login").Message("最短为5字符")
+		valid.MinSize(login.(string), 5, "login").Message("最短为5字符")
 	} else {
 		delete(params, "login")
 	}
