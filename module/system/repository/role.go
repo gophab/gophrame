@@ -118,9 +118,20 @@ func (r *RoleRepository) FindAvailableRoles(maps map[string]interface{}, pageabl
 	return count, role, nil
 }
 
-func (r *RoleRepository) GetRoles(maps interface{}) ([]*domain.Role, error) {
+func (r *RoleRepository) GetRoles(maps map[string]interface{}) ([]*domain.Role, error) {
 	var roles []*domain.Role
-	err := r.Model(&domain.Role{}).Where(maps).Find(&roles).Error
+	tx := r.Model(&domain.Role{})
+
+	for k, v := range maps {
+		if k == "user_id" {
+			query := r.Model(&domain.RoleUser{}).Select("role_id").Where("user_id", v)
+			tx.Where("id in (?)", query)
+		} else {
+			tx.Where(k+"=?", v)
+		}
+	}
+
+	err := tx.Find(&roles).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
