@@ -311,10 +311,13 @@ func (r *MessageRepository) ValidateMessages() {
 
 func (r *MessageRepository) HistoryMessages() {
 	// valid
+	timeDue := time.Now().Add(-time.Hour * 24 * 180)
+
 	tx := r.Model(&domain.Message{}).
 		Where("status = ?", -1).
-		Or("created_time < ?", time.Now().Add(-time.Hour*24*180)).
-		Or("del_flag = ?", true)
+		Or("created_time < ?", timeDue).
+		Or("del_flag = ?", true).
+		Order("created_time asc")
 
 	pageable := &query.Pagination{
 		Page: 1,
@@ -327,23 +330,20 @@ func (r *MessageRepository) HistoryMessages() {
 	for {
 		var list = make([]*domain.Message, 0)
 		if res := query.Page(tx, pageable).Find(&list); res.Error == nil && res.RowsAffected > 0 {
-			var histories = make([]*domain.MessageHistory, len(list))
-			for index, message := range list {
+			for _, message := range list {
 				var history = domain.MessageHistory{Message: *message}
-				histories[index] = &history
-
-				message.Status = -2
+				r.Model(&domain.MessageHistory{}).Create(history)
 			}
-			r.Model(&domain.MessageHistory{}).CreateInBatches(histories, pageable.Size)
-			r.Model(&domain.Message{}).Updates(list)
-
 			pageable.Page++
 		} else {
 			break
 		}
 	}
 
-	r.Delete(&domain.Message{}, "status = ?", -2)
+	r.Where("status = ?", -1).
+		Or("created_time < ?", timeDue).
+		Or("del_flag = ?", true).
+		Delete(&domain.Message{})
 }
 
 func (r *MessageAccessLogRepository) AccessMessage(userId, action string, message *domain.Message) {
