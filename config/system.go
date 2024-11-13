@@ -1,8 +1,6 @@
 package config
 
 import (
-	"time"
-
 	"github.com/gophab/gophrame/core/config"
 
 	_ "github.com/gophab/gophrame/core/captcha/config"
@@ -14,6 +12,7 @@ import (
 	_ "github.com/gophab/gophrame/core/rabbitmq/config"
 	_ "github.com/gophab/gophrame/core/redis/config"
 	_ "github.com/gophab/gophrame/core/security/config"
+	_ "github.com/gophab/gophrame/core/server/config"
 	_ "github.com/gophab/gophrame/core/sms/config"
 	_ "github.com/gophab/gophrame/core/snowflake/config"
 	_ "github.com/gophab/gophrame/core/social/config"
@@ -34,23 +33,9 @@ type FileUploadSetting struct {
 var FileUpload *FileUploadSetting = &Config.FileUpload
 
 /**
- * 服务配置：地址/端口
- */
-type ServerSetting struct {
-	BindAddr         string        `json:"bindAddr" yaml:"bindAddr"`
-	Port             int           `json:"port"`
-	ReadTimeout      time.Duration `json:"readTimeout" yaml:"readTimeout"`
-	WriteTimeout     time.Duration `json:"wirteTimeout" yaml:"writeTimeout"`
-	AllowCrossDomain bool          `json:"allowCrossDomain" yaml:"allowCrossDomain"`
-}
-
-var Server = &Config.Server
-
-/**
  * 全局配置
  */
 type Configuration struct {
-	Server     ServerSetting     `json:"server"`
 	FileUpload FileUploadSetting `json:"fileUpload" yaml:"fileUpload"`
 }
 

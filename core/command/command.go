@@ -18,4 +18,8 @@ func init() {
 	if Mode == "debug" {
 		global.Debug = true
 	}
+
+	if Profile != "" {
+		global.Profile = Profile
+	}
 }

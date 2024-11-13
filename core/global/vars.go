@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
@@ -31,7 +32,8 @@ type CORSWhitelist struct {
 var (
 	BasePath string // 定义项目的根目录
 
-	Debug bool = false
+	Debug   bool   = false
+	Profile string = ""
 
 	Swagger bool = true
 
@@ -58,6 +60,8 @@ var (
 	Cors *CORS = &CORS{
 		Mode: "allow-all",
 	}
+
+	Wg sync.WaitGroup
 )
 
 func init() {

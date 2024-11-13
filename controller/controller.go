@@ -2,11 +2,11 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gophab/gophrame/config"
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/permission"
 	"github.com/gophab/gophrame/core/security"
+	"github.com/gophab/gophrame/core/server/config"
 	"github.com/gophab/gophrame/core/starter"
 	"github.com/gophab/gophrame/core/webservice/middleware"
 
@@ -104,8 +104,8 @@ func Init() {
 // Autostart entrypoint
 func Start() {
 	logger.Info("Starting Framework Controllers...")
-	logger.Info("Allow Cross Domain: ", config.Config.Server.AllowCrossDomain)
-	if config.Config.Server.AllowCrossDomain {
+	logger.Info("Allow Cross Domain: ", config.Setting.AllowCrossDomain)
+	if config.Setting.AllowCrossDomain {
 		middleware.UseCors()
 	}
 }

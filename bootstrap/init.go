@@ -18,6 +18,7 @@ import (
 	_ "github.com/gophab/gophrame/core/oss"
 	_ "github.com/gophab/gophrame/core/rabbitmq"
 	_ "github.com/gophab/gophrame/core/redis"
+	_ "github.com/gophab/gophrame/core/server"
 	_ "github.com/gophab/gophrame/core/sms"
 	_ "github.com/gophab/gophrame/core/sms/code"
 	_ "github.com/gophab/gophrame/core/websocket"
