@@ -78,3 +78,11 @@ func init() {
 		log.Fatal(ERROR_BASE_PATH, ErrorBasePath)
 	}
 }
+
+func Join(f func()) {
+	Wg.Add(1)
+	go func() {
+		defer Wg.Done()
+		f()
+	}()
+}

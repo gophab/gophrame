@@ -9,6 +9,8 @@ import (
 	_ "github.com/gophab/gophrame/core/snowflake"
 
 	// core
+	"github.com/gophab/gophrame/core/command"
+
 	_ "github.com/gophab/gophrame/core/casbin"
 	_ "github.com/gophab/gophrame/core/database"
 	_ "github.com/gophab/gophrame/core/email"
@@ -51,16 +53,19 @@ func Init() {
 	// 1. Register() - RegisterConfig() - RegisterInitializor() - RegisterStarter() - RegisterTerminater - RegisterPlugin - RegisterPlugin
 	logger.Info("Initializing Framework Bootstrap...")
 
-	// 1. 读取配置
+	// 1. 解析命令行参数
+	command.Init()
+
+	// 2. 读取配置
 	config.Init()
 
-	// 2. 启动器
+	// 3. 启动器
 	starter.Init()
 
-	// 3. 启动router
+	// 4. 启动router
 	router.Init()
 
-	// 2. 启动器
+	// 5. 启动器
 	starter.Start()
 
 	logger.Info("Initialized Framework Bootstrap")
