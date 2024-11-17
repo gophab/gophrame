@@ -64,15 +64,29 @@ func isDir(path string) (bool, error) {
 	return fileInfo.IsDir(), nil
 }
 
+// func dirFiles(dir string) ([]string, error) {
+// 	var files []string
+// 	//方法一
+// 	var walkFunc = func(path string, info os.FileInfo, err error) error {
+// 		if !info.IsDir() {
+// 			files = append(files, path)
+// 		}
+// 		return nil
+// 	}
+// 	err := filepath.Walk(dir, walkFunc)
+// 	return files, err
+// }
+
 func dirFiles(dir string) ([]string, error) {
 	var files []string
-	//方法一
-	var walkFunc = func(path string, info os.FileInfo, err error) error {
-		files = append(files, path)
-		return nil
+	results, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
 	}
-	err := filepath.Walk(dir, walkFunc)
-	return files, err
+	for _, file := range results {
+		files = append(files, dir+"/"+file.Name())
+	}
+	return files, nil
 }
 
 func zipDir(zipWriter *zip.Writer, file string, oldForm, newForm string) error {
