@@ -28,6 +28,22 @@ func (s Sort) For(v string) Sort {
 	return Sort{By: by, Direction: dir}
 }
 
+func OrderBy(v string) Sort {
+	segs := strings.Split(v, " ")
+	by := segs[0]
+	dir := "ASC"
+	if len(segs) > 1 {
+		dir = segs[1]
+	}
+	return Sort{By: by, Direction: dir}
+}
+
+type Sorts []Sort
+
+func (s Sorts) For(v string) Sorts {
+	return append(s, OrderBy(v))
+}
+
 type Pageable interface {
 	GetPage() int
 	GetSize() int
