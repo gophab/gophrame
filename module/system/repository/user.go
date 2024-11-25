@@ -225,6 +225,15 @@ func (h *UserRepository) GetUserById(id string) (*domain.User, error) {
 	return &user, nil
 }
 
+func (h *UserRepository) GetUserByIds(ids []string) ([]*domain.User, error) {
+	var users []*domain.User
+	if res := h.Preload("Roles").Where("id in ? AND del_flag = ? ", ids, false).Find(&users); res.Error != nil || res.RowsAffected <= 0 {
+		return nil, res.Error
+	}
+
+	return users, nil
+}
+
 func (h *UserRepository) UpdateUser(entity *domain.User) error {
 	var user domain.User
 	if res := h.Where("id = ? AND del_flag = ? ", entity.Id, false).Find(&user); res.Error != nil {

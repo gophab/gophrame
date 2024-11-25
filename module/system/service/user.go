@@ -50,6 +50,15 @@ func (s *UserService) GetById(id string) (*domain.User, error) {
 	return user, nil
 }
 
+func (s *UserService) GetByIds(ids []string) ([]*domain.User, error) {
+	users, err := s.UserRepository.GetUserByIds(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (s *UserService) GetAll(user *dto.User, pageable query.Pageable) (int64, []domain.User) {
 	if user.Id != nil {
 		maps := make(map[string]interface{})
