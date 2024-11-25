@@ -219,15 +219,16 @@ StructLoop:
 	for i := 0; i < o.reflectValue.Elem().NumField(); i++ {
 		field := o.reflectValue.Elem().Field(i)
 		fieldType := field.Type()
-		fieldTag := o.reflectType.Elem().Field(i).Tag
-		fieldName := o.reflectType.Elem().Field(i).Name
+		typeField := o.reflectType.Elem().Field(i)
+		fieldTag := typeField.Tag
+		fieldName := typeField.Name
 		tag, err := parseTag(string(fieldTag))
 		if err != nil {
 			if g.Logger != nil {
 				g.Logger.Debugf(
 					"unexpected tag format `%s` for field %s in type %s",
 					string(fieldTag),
-					o.reflectType.Elem().Field(i).Name,
+					typeField.Name,
 					o.reflectType,
 				)
 			}
