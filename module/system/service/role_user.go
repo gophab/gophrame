@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 
+	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/query"
 	"github.com/gophab/gophrame/service"
@@ -22,6 +23,8 @@ var roleUserService *RoleUserService = &RoleUserService{}
 
 func init() {
 	inject.InjectValue("roleUserService", roleUserService)
+
+	eventbus.RegisterEventListener("USER_CREATED", roleUserService.onUserCreated)
 }
 
 func (u *RoleUserService) ListMembers(roleId, search, tenantId string, pageable query.Pageable) (int64, []*domain.RoleMember) {
@@ -87,4 +90,24 @@ func (u *RoleUserService) DeleteRoleUserIds(roleId string, userIds []string) err
 		}
 	}
 	return nil
+}
+
+func (s *RoleUserService) onUserCreated(event string, args ...interface{}) {
+	var user = args[0].(*domain.User)
+
+	if user.TenantId == "SYSTEM" {
+		// 1. Default add to ROLE:00000000000002 - 系统用户
+		role, err := s.RoleRepository.GetByName("operator", "SYSTEM")
+		if err == nil && role != nil {
+			// 自动添加到系统用户角色
+			s.AddRoleUserIds(role.Id, []string{user.Id})
+		}
+	} else {
+		// 2. Default add to ROLE:00000000000004 - 企业用户
+		role, err := s.RoleRepository.GetByName("operator", "SYSTEM")
+		if err == nil && role != nil {
+			// 自动添加到系统用户角色
+			s.AddRoleUserIds(role.Id, []string{user.Id})
+		}
+	}
 }

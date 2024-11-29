@@ -138,6 +138,7 @@ func (r *UserRepository) Find(conds map[string]interface{}, pageable query.Pagea
 
 	var search = conds["search"]
 	var id = conds["id"]
+	var ids = conds["ids"]
 	var name = conds["name"]
 	var login = conds["login"]
 	var email = conds["email"]
@@ -150,6 +151,9 @@ func (r *UserRepository) Find(conds map[string]interface{}, pageable query.Pagea
 	} else {
 		if id != nil && id != "" {
 			tx = tx.Where("id = ?", id)
+		}
+		if ids != nil {
+			tx = tx.Where("id in ?", ids)
 		}
 		if name != nil && name != "" {
 			tx = tx.Where("name like ?", "%"+name.(string)+"%")

@@ -102,6 +102,15 @@ func (s *RoleService) GetById(id string) (*domain.Role, error) {
 	return role, nil
 }
 
+func (s *RoleService) GetByName(name string) (*domain.Role, error) {
+	role, err := s.RoleRepository.GetByName(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
 func (s *RoleService) GetUserRoles(userId string) ([]*domain.Role, error) {
 	var conds = make(map[string]interface{})
 	conds["user_id"] = userId

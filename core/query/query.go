@@ -111,16 +111,17 @@ func (p *Query) InfiniteWithDefaultOrder(pageable Pageable, defaultOrders ...str
 }
 
 func Page(tx *gorm.DB, pageable Pageable) *gorm.DB {
-	// Order
-	if !pageable.NoSort() {
-		for _, sort := range pageable.GetSort() {
-			tx.Statement.Order(sort.String())
+	if pageable != nil {
+		// Order
+		if !pageable.NoSort() {
+			for _, sort := range pageable.GetSort() {
+				tx.Statement.Order(sort.String())
+			}
 		}
+
+		// Page/Size
+		tx.Statement.Offset(pageable.GetOffset()).Limit(pageable.GetLimit())
 	}
-
-	// Page/Size
-	tx.Statement.Offset(pageable.GetOffset()).Limit(pageable.GetLimit())
-
 	return tx
 }
 

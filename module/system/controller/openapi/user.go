@@ -6,7 +6,6 @@ import (
 
 	"github.com/gophab/gophrame/core/controller"
 	EmailCode "github.com/gophab/gophrame/core/email/code"
-	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/excel"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
@@ -512,7 +511,6 @@ func (u *AdminUserOpenController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	eventbus.PublishEvent("USER_CREATED", res)
 	response.OK(c, res)
 }
 
@@ -577,7 +575,6 @@ func (u *AdminUserOpenController) CreateUsers(c *gin.Context) {
 			if err != nil {
 				logger.Error("Create user error: ", err.Error())
 			} else {
-				eventbus.PublishEvent("USER_CREATED", res)
 				result = append(result, res)
 			}
 		}

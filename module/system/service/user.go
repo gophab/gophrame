@@ -37,6 +37,7 @@ func init() {
 	logger.Debug("Inject UserService")
 	inject.InjectValue("userService", userService)
 	inject.InjectValue("commonUserService", commonUserService)
+	_ = (service.UserService)(commonUserService)
 	eventbus.RegisterEventListener("USER_LOGIN", userService.onUserLogin)
 	logger.Info("Initialized UserService")
 }
@@ -355,6 +356,32 @@ func (s *CommonUserService) GetById(id string) (*CommonDTO.User, error) {
 	} else {
 		return nil, nil
 	}
+}
+
+func (s *CommonUserService) GetByIds(ids []string) ([]*CommonDTO.User, error) {
+	_, list := userService.Find(map[string]interface{}{
+		"ids": ids,
+	}, nil)
+
+	if len(list) > 0 {
+		var results = make([]*CommonDTO.User, 0)
+		for _, result := range list {
+			var user = &CommonDTO.User{
+				Id:         &result.Id,
+				InviteCode: &result.InviteCode,
+				InviterId:  result.InviterId,
+				Name:       result.Name,
+				Mobile:     result.Mobile,
+				Email:      result.Email,
+				Admin:      &result.Admin,
+				TenantId:   &result.TenantId,
+			}
+			results = append(results, user)
+		}
+		return results, nil
+	}
+
+	return []*CommonDTO.User{}, nil
 }
 
 func (s *CommonUserService) GetByMobile(mobile string) (*CommonDTO.User, error) {
