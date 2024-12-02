@@ -102,8 +102,8 @@ func (s *RoleService) GetById(id string) (*domain.Role, error) {
 	return role, nil
 }
 
-func (s *RoleService) GetByName(name string) (*domain.Role, error) {
-	role, err := s.RoleRepository.GetByName(name)
+func (s *RoleService) GetByName(name, tenantId string) (*domain.Role, error) {
+	role, err := s.RoleRepository.GetByName(name, tenantId)
 	if err != nil {
 		return nil, err
 	}

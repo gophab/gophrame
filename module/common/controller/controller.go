@@ -14,8 +14,8 @@ func init() {
 	logger.Info("Intitializing Module Common Controllers...")
 	controller.AddSchemaControllers("/api", api.Resources)
 	controller.AddSchemaControllers("/mapi", mapi.Resources)
+	controller.AddSchemaControllers("/openapi", openapi.UserResources)
 	controller.AddSchemaControllers("/openapi/public", openapi.PublicResources)
-	controller.AddSchemaControllers("/openapi/user", openapi.UserResources)
 	controller.AddSchemaControllers("/openapi/admin", openapi.AdminResources)
 
 }

@@ -56,7 +56,7 @@ func (r *RoleRepository) GetByIds(ids []string) (result []domain.Role) {
 
 func (r *RoleRepository) GetByName(name string, tenantId string) (*domain.Role, error) {
 	var role domain.Role
-	err := r.Model(&domain.Role{}).Where("name = ? AND tenant_id = ? and del_flag = false ", id, tenantId).First(&role).Error
+	err := r.Model(&domain.Role{}).Where("name = ? AND tenant_id = ? and del_flag = false ", name, tenantId).First(&role).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		if tenantId != "SYSTEM" {
 			return r.GetByName(name, "SYSTEM")
@@ -66,11 +66,6 @@ func (r *RoleRepository) GetByName(name string, tenantId string) (*domain.Role, 
 	}
 
 	return &role, nil
-}
-
-func (r *RoleRepository) GetByIds(ids []string) (result []domain.Role) {
-	r.Where("id IN ?", ids).Find(&result)
-	return
 }
 
 func (r *RoleRepository) GetRoleTotal(maps interface{}) (int64, error) {

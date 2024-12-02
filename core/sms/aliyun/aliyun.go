@@ -60,6 +60,10 @@ func (s *AliyunSmsSender) getTemplateReq(phoneNumber, template string, params ma
 	phone := phoneNumber
 	signature := config.Setting.Signature
 
+	if config.Setting.Product != "" {
+		params["product"] = config.Setting.Product
+	}
+
 	segs := strings.Split(phoneNumber, "-")
 	if len(segs) > 1 {
 		regionCode = segs[0]

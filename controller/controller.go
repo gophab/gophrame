@@ -59,11 +59,12 @@ var AdminResources = &controller.Controllers{
 }
 
 var OpenApiResources = &controller.Controllers{
-	Controllers: []controller.Controller{
-		UserResources,
-		AdminResources,
-		PublicResources,
+	Base: "/openapi",
+	Handlers: []gin.HandlerFunc{
+		security.HandleTokenVerify(),      // oauth2 验证
+		permission.CheckUserPermissions(), // 权限验证
 	},
+	Controllers: []controller.Controller{},
 }
 
 var Resources = map[string]*controller.Controllers{
@@ -87,7 +88,12 @@ func AddSchemaControllers(schema string, cs ...controller.Controller) {
 	if resources, b := Resources[schema]; b {
 		resources.AddController(cs...)
 	} else {
-		controller.AddControllers(cs...)
+		controllers := &controller.Controllers{
+			Base:        schema,
+			Controllers: append([]controller.Controller{}, cs[:]...),
+		}
+		Resources[schema] = controllers
+		controller.AddControllers(controllers)
 	}
 }
 
@@ -98,7 +104,7 @@ func init() {
 
 // Auto Initialize entrypoint
 func Init() {
-	controller.AddControllers(ApiResources, MApiResources, OpenApiResources)
+	controller.AddControllers(ApiResources, MApiResources, OpenApiResources, PublicResources, UserResources, AdminResources)
 }
 
 // Autostart entrypoint
