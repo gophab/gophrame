@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gophab/gophrame/core/captcha/config"
 	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
 )
@@ -17,6 +18,12 @@ import (
 type CaptchaController struct {
 	controller.ResourceController
 	CaptchaService *CaptchaService `inject:"captchaService"`
+}
+
+var captchaController = &CaptchaController{}
+
+func init() {
+	inject.InjectValue("captchaController", captchaController)
 }
 
 // 生成验证码

@@ -4,6 +4,7 @@ import (
 	"github.com/dchest/captcha"
 	"github.com/gophab/gophrame/core/captcha/config"
 	"github.com/gophab/gophrame/core/code"
+	"github.com/gophab/gophrame/core/inject"
 	"github.com/mojocn/base64Captcha"
 )
 
@@ -20,6 +21,12 @@ type Captcha struct {
 type CaptchaService struct {
 	Store   code.CodeStore `inject:"captchaCodeStore"`
 	captcha *base64Captcha.Captcha
+}
+
+var captchaService *CaptchaService = &CaptchaService{}
+
+func init() {
+	inject.InjectValue("captchaService", captchaService)
 }
 
 func (s *CaptchaService) Init() {

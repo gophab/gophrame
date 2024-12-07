@@ -1,6 +1,7 @@
 package captcha
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/dchest/captcha"
@@ -14,6 +15,7 @@ import (
 type CaptchaForm struct {
 	CaptchaId    string `form:"captcha_id" json:"captcha_id"`
 	CaptchaValue string `form:"captcha_value" json:"captcha_value"`
+	CaptchaKeep  bool   `form:"captcha_keep" json:"captcha_keep"`
 }
 
 func HandleCaptchaVerify(force bool) gin.HandlerFunc {
@@ -29,12 +31,14 @@ func HandleCaptchaVerify(force bool) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		captchaId := context.Param(captchaIdKey)
 		value := context.Param(captchaValueKey)
+		keep := context.Param("captcha_keep") == "true"
 
 		if captchaId == "" || value == "" {
 			var data CaptchaForm
 			if err := form.ShouldBind(context, &data); err == nil {
 				captchaId = data.CaptchaId
 				value = data.CaptchaValue
+				keep = data.CaptchaKeep
 			} else {
 				logger.Warn("Captch parameters bind error: ", err.Error())
 			}
@@ -52,6 +56,9 @@ func HandleCaptchaVerify(force bool) gin.HandlerFunc {
 					if strings.HasPrefix(seg, captchaValueKey+"=") {
 						value = strings.TrimPrefix(seg, captchaValueKey+"=")
 					}
+					if strings.HasPrefix(seg, "captcha_keep=") {
+						keep, _ = strconv.ParseBool(strings.TrimPrefix(seg, "captcha_keep="))
+					}
 				}
 			}
 		}
@@ -68,6 +75,10 @@ func HandleCaptchaVerify(force bool) gin.HandlerFunc {
 		}
 
 		if captcha.Verify(captchaId, []byte(value)) {
+			if keep {
+				// captcha.Store.Set(captchaId, []byte(value))
+				captchaService.Store.CreateCode(captchaId, "", value)
+			}
 			context.Set("captcha", true)
 			context.Next()
 		} else if force {
