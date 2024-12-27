@@ -96,17 +96,17 @@ func (s *RoleUserService) onUserCreated(event string, args ...interface{}) {
 	var user = args[0].(*domain.User)
 
 	if user.TenantId == "SYSTEM" {
-		// 1. Default add to ROLE:00000000000002 - 系统用户
+		// 1. Default add to ROLE:00000000000001 - 系统用户
 		role, err := s.RoleRepository.GetByName("operator", "SYSTEM")
 		if err == nil && role != nil {
 			// 自动添加到系统用户角色
 			s.AddRoleUserIds(role.Id, []string{user.Id})
 		}
 	} else {
-		// 2. Default add to ROLE:00000000000004 - 企业用户
-		role, err := s.RoleRepository.GetByName("operator", "SYSTEM")
+		// 2. Default add to ROLE:00000000000003 - 企业用户
+		role, err := s.RoleRepository.GetByName("member", "SYSTEM")
 		if err == nil && role != nil {
-			// 自动添加到系统用户角色
+			// 自动添加到企业用户角色
 			s.AddRoleUserIds(role.Id, []string{user.Id})
 		}
 	}
