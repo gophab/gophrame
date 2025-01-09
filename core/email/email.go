@@ -4,8 +4,10 @@ import (
 	"crypto/tls"
 
 	"github.com/gophab/gophrame/core/email/config"
+	"github.com/gophab/gophrame/core/i18n"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/util"
+
 	"gopkg.in/gomail.v2"
 )
 
@@ -32,7 +34,8 @@ func (s *GoEmailSender) Init() {
 
 func (s *GoEmailSender) SendTemplateEmail(addr string, template string, params map[string]string) error {
 	m := gomail.NewMessage()
-	m.SetHeader("From", config.Setting.Sender.From)
+	m.SetAddressHeader("From", config.Setting.Sender.From, i18n.T(config.Setting.Sender.FromName))
+	// m.SetHeader("From", config.Setting.Sender.From)
 	m.SetHeader("To", addr)
 
 	m.SetHeader("Subject", params["title"])

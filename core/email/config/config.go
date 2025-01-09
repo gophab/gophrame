@@ -11,6 +11,7 @@ type EmailSenderSetting struct {
 	AuthUser string `json:"authUser" yaml:"authUser"`
 	AuthPass string `json:"authPass" yaml:"authPass"`
 	From     string `json:"from" yaml:"from"`
+	FromName string `json:"fromName" yaml:"fromName"`
 }
 
 type EmailSetting struct {
