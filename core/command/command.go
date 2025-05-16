@@ -6,6 +6,7 @@ import (
 	"github.com/gophab/gophrame/core/global"
 )
 
+var Root string = "root"
 var Mode string = "production"
 var Profile string = ""
 
@@ -13,6 +14,7 @@ var Profile string = ""
 func init() {
 	pflag.StringVar(&Mode, "mode", "production", "Run application in debug|production mode")
 	pflag.StringVar(&Profile, "profile", "", "Run application with profile")
+	pflag.StringVar(&Root, "root", "", "Working Root")
 }
 
 // 1. Command 解析
@@ -27,5 +29,9 @@ func Init() {
 
 	if Profile != "" {
 		global.Profile = Profile
+	}
+
+	if Root != "" {
+		global.BasePath = Root
 	}
 }

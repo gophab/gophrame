@@ -21,6 +21,14 @@ var ApiResources = &controller.Controllers{
 	Controllers: []controller.Controller{},
 }
 
+var InternalResources = &controller.Controllers{
+	Base: "/api/_",
+	Handlers: []gin.HandlerFunc{
+		security.CheckAuthCode("_!@#$QWERasdfzxcv_"), // oauth2 验证
+	},
+	Controllers: []controller.Controller{},
+}
+
 var MApiResources = &controller.Controllers{
 	Base: "/mapi",
 	Handlers: []gin.HandlerFunc{
@@ -69,6 +77,7 @@ var OpenApiResources = &controller.Controllers{
 
 var Resources = map[string]*controller.Controllers{
 	"/api":            ApiResources,
+	"/api/_":          InternalResources,
 	"/mapi":           MApiResources,
 	"/openapi":        OpenApiResources,
 	"/openapi/public": PublicResources,
@@ -104,7 +113,7 @@ func init() {
 
 // Auto Initialize entrypoint
 func Init() {
-	controller.AddControllers(ApiResources, MApiResources, OpenApiResources, PublicResources, UserResources, AdminResources)
+	controller.AddControllers(ApiResources, InternalResources, MApiResources, OpenApiResources, PublicResources, UserResources, AdminResources)
 }
 
 // Autostart entrypoint

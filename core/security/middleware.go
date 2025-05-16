@@ -11,6 +11,7 @@ import (
 	"github.com/gophab/gophrame/core/security/remote"
 	"github.com/gophab/gophrame/core/security/server"
 	SecurityUtil "github.com/gophab/gophrame/core/security/util"
+	"github.com/gophab/gophrame/core/webservice/response"
 )
 
 type (
@@ -45,6 +46,22 @@ var (
 		},
 	}
 )
+
+func CheckAuthCode(key string) gin.HandlerFunc {
+	return func(context *gin.Context) {
+		if authCode, b := context.Request.Header["X-Auth-Code"]; b && len(authCode) > 0 {
+			if authCode[0] == key {
+				context.Next()
+				return
+			}
+		}
+
+		response.Unauthorized(context, ErrorsNoAuthorization)
+		//终止可能已经被加载的其他回调函数的执行
+		context.Abort()
+		return
+	}
+}
 
 // CheckTokenVerify Verify the access token of the middleware
 // 如果有用户信息，则设置用户信息，没有则设置为空，允许公开访问

@@ -92,6 +92,39 @@ func (u *RoleUserService) DeleteRoleUserIds(roleId string, userIds []string) err
 	return nil
 }
 
+func (u *RoleUserService) AddUserRoleIds(userId string, roleIds []string) ([]*domain.RoleUser, error) {
+	//获取用户的所有岗位id
+	if user, err := u.UserService.GetById(userId); err == nil {
+		var roleUsers []*domain.RoleUser = make([]*domain.RoleUser, 0)
+		for _, roleId := range roleIds {
+			roleUser := &domain.RoleUser{
+				RoleId: roleId,
+				UserId: userId,
+			}
+			roleUser.TenantId = user.TenantId
+
+			roleUsers = append(roleUsers, roleUser)
+		}
+		for _, roleUser := range roleUsers {
+			if res := u.RoleUserRepository.FirstOrCreate(roleUser); res.Error != nil {
+				return nil, res.Error
+			}
+		}
+		return roleUsers, nil
+	}
+	return nil, nil
+}
+
+func (u *RoleUserService) DeleteUserRoleIds(roleId string, userIds []string) error {
+	//获取用户的所有岗位id
+	for _, userId := range userIds {
+		if b := u.RoleUserRepository.DeleteData(roleId, userId); !b {
+			return errors.New("Delete Error")
+		}
+	}
+	return nil
+}
+
 func (s *RoleUserService) onUserCreated(event string, args ...interface{}) {
 	var user = args[0].(*domain.User)
 
@@ -108,6 +141,24 @@ func (s *RoleUserService) onUserCreated(event string, args ...interface{}) {
 		if err == nil && role != nil {
 			// 自动添加到企业用户角色
 			s.AddRoleUserIds(role.Id, []string{user.Id})
+		}
+	}
+
+	// 创建时设置角色
+	if len(user.Roles) > 0 {
+		var roleIds = make([]string, 0)
+		for _, role := range user.Roles {
+			if len(role.Id) > 0 {
+				roleIds = append(roleIds, role.Id)
+			} else if len(role.Name) > 0 {
+				if r, err := s.RoleRepository.GetByName(role.Name, user.TenantId); err == nil && r != nil {
+					roleIds = append(roleIds, r.Id)
+				}
+			}
+		}
+
+		if len(roleIds) > 0 {
+			s.AddUserRoleIds(user.Id, roleIds)
 		}
 	}
 }

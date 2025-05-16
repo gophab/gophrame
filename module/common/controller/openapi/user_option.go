@@ -31,6 +31,7 @@ func (c *UserOptionOpenController) AfterInitialize() {
 		{HttpMethod: "GET", ResourcePath: "/options", Handler: c.GetUserOptions},
 		{HttpMethod: "POST", ResourcePath: "/options", Handler: c.AddUserOptions},
 		{HttpMethod: "PUT", ResourcePath: "/options", Handler: c.SetUserOptions},
+		{HttpMethod: "PATCH", ResourcePath: "/options", Handler: c.UpdateUserOptions},
 		{HttpMethod: "DELETE", ResourcePath: "/option/:key", Handler: c.RemoveUserOption},
 		{HttpMethod: "DELETE", ResourcePath: "/options", Handler: c.RemoveUserOptions},
 	})
@@ -101,6 +102,39 @@ func (c *UserOptionOpenController) SetUserOptions(ctx *gin.Context) {
 	}
 
 	if _, err := c.UserOptionService.SetUserOptions(&userOptions); err != nil {
+		response.SystemErrorMessage(ctx, errors.ERROR_UPDATE_FAIL, err.Error())
+		return
+	}
+
+	c.GetUserOptions(ctx)
+}
+
+func (c *UserOptionOpenController) UpdateUserOptions(ctx *gin.Context) {
+	currentUserId := SecurityUtil.GetCurrentUserId(ctx)
+	body, err := ctx.GetRawData()
+	if err != nil {
+		response.FailCode(ctx, errors.INVALID_PARAMS)
+		return
+	}
+
+	var userOptions = domain.UserOptions{
+		UserId: currentUserId,
+	}
+
+	var data map[string]string
+	_ = json.Unmarshal(body, &data)
+	for k, v := range data {
+		userOptions.Options[k] = domain.UserOption{
+			UserId: currentUserId,
+			Option: domain.Option{
+				Name:      k,
+				Value:     v,
+				ValueType: "STRING",
+			},
+		}
+	}
+
+	if _, err := c.UserOptionService.UpdateUserOptions(&userOptions); err != nil {
 		response.SystemErrorMessage(ctx, errors.ERROR_UPDATE_FAIL, err.Error())
 		return
 	}

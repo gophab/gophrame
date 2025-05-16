@@ -3,7 +3,7 @@ package domain
 import "strings"
 
 type Option struct {
-	Name        string `gorm:"column:name" json:"name"`
+	Name        string `gorm:"column:name;primaryKey" json:"name"`
 	Value       string `gorm:"column:value" json:"value"`
 	ValueType   string `gorm:"column:value_type" json:"valueType"`
 	Description string `gorm:"column:description;default:null" json:"description"`

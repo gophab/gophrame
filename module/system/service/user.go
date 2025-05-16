@@ -103,6 +103,17 @@ func (s *UserService) Create(user *dto.User) (*domain.User, error) {
 		return nil, err
 	}
 
+	if len(user.Roles) > 0 {
+		// 设置用户角色
+		res.Roles = make([]domain.Role, 0)
+		for _, role := range user.Roles {
+			var r = domain.Role{}
+			r.Name = role.Name
+			r.Id = role.Id
+			res.Roles = append(res.Roles, r)
+		}
+	}
+
 	if user.InviteCode != nil {
 		res.InviteCode = *user.InviteCode
 	}

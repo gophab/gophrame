@@ -2,7 +2,7 @@ package domain
 
 type UserOption struct {
 	Option
-	UserId string `gorm:"column:user_id"`
+	UserId string `gorm:"column:user_id;primaryKey"`
 }
 
 func (*UserOption) TableName() string {

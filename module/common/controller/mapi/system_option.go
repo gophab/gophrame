@@ -78,7 +78,7 @@ func (c *SystemOptionMController) SetSystemOptions(ctx *gin.Context) {
 		var data map[string]string
 		_ = json.Unmarshal(body, &data)
 		for k, v := range data {
-			systemOptions.Options[k] = domain.SysOption{
+			systemOptions.Options[k] = &domain.SysOption{
 				TenantId: "SYSTEM",
 				Option: domain.Option{
 					Name:      k,

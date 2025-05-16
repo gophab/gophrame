@@ -11,5 +11,6 @@ var Resources = &controller.Controllers{
 		messageMController,
 		systemOptionMController,
 		tenantOptionMController,
+		taskMController,
 	},
 }

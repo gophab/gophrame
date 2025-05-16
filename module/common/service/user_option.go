@@ -139,3 +139,20 @@ func (s *UserOptionService) SetUserOptions(userOptions *domain.UserOptions) (*do
 
 	return userOptions, nil
 }
+
+func (s *UserOptionService) UpdateUserOptions(userOptions *domain.UserOptions) (*domain.UserOptions, error) {
+	// 2. Save
+	var options []domain.UserOption
+	for _, v := range userOptions.Options {
+		v.UserId = userOptions.UserId
+		// 1. Remove User Options
+		s.RemoveUserOption(v.UserId, v.Name)
+		options = append(options, v)
+	}
+
+	if _, err := s.AddUserOptions(options); err != nil {
+		return nil, err
+	}
+
+	return userOptions, nil
+}

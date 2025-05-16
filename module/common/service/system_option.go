@@ -22,12 +22,12 @@ func init() {
 var defaultSystemOptions = map[string]string{}
 
 func (s *SysOptionService) GetDefaultOptions(tenantId string) (*domain.SysOptions, error) {
-	result := &domain.SysOptions{TenantId: tenantId, Options: make(map[string]domain.SysOption)}
+	result := &domain.SysOptions{TenantId: tenantId, Options: make(map[string]*domain.SysOption)}
 
 	if tenantId != "DEFAULT" {
 		// DEFAULT by code
 		for k, v := range defaultSystemOptions {
-			result.Options[k] = domain.SysOption{
+			result.Options[k] = &domain.SysOption{
 				TenantId: tenantId,
 				Option: domain.Option{
 					Name:      k,
@@ -92,22 +92,24 @@ func (s *SysOptionService) AddSysOption(option *domain.SysOption) (*domain.SysOp
 }
 
 func (s *SysOptionService) DeleteSysOption(option *domain.SysOption) (*domain.SysOption, error) {
-	if res := s.SysOptionRepository.Delete(option); res.Error == nil {
+	if res := s.SysOptionRepository.Delete(&domain.SysOption{}).Where("name = ? and tenant_id = ?", option.Name, option.TenantId); res.Error == nil {
 		return option, nil
 	} else {
 		return nil, res.Error
 	}
 }
 
-func (s *SysOptionService) AddSysOptions(options []domain.SysOption) (*[]domain.SysOption, error) {
-	var result = make([]domain.SysOption, len(options))
+func (s *SysOptionService) AddSysOptions(options []*domain.SysOption) ([]*domain.SysOption, error) {
+	var result = make([]*domain.SysOption, len(options))
 	for i, option := range options {
 		if res := s.SysOptionRepository.Save(option); res.Error != nil {
+			//if res := s.SysOptionRepository.Updates(option); res.Error != nil {
 			return nil, res.Error
+			//}
 		}
 		result[i] = option
 	}
-	return &result, nil
+	return result, nil
 }
 
 func (s *SysOptionService) RemoveAllTenantOptions(tenantId string) error {
@@ -115,7 +117,7 @@ func (s *SysOptionService) RemoveAllTenantOptions(tenantId string) error {
 }
 
 func (s *SysOptionService) RemoveTenantOption(tenantId string, key string) (*domain.SysOption, error) {
-	return nil, s.SysOptionRepository.Delete(&domain.SysOption{TenantId: tenantId, Option: domain.Option{Name: key}}).Error
+	return nil, s.SysOptionRepository.Delete(&domain.SysOption{}, "tenant_id = ? and name = ?", tenantId, key).Error
 }
 
 func (s *SysOptionService) SetTenantOption(tenantId string, key string, value string) (*domain.SysOption, error) {
@@ -142,9 +144,27 @@ func (s *SysOptionService) SetTenantOptions(tenantOptions *domain.SysOptions) (*
 	}
 
 	// 2. Save
-	var options []domain.SysOption
+	var options = make([]*domain.SysOption, 0)
+	for _, v := range tenantOptions.Options {
+
+		v.TenantId = tenantOptions.TenantId
+		options = append(options, v)
+	}
+
+	if _, err := s.AddSysOptions(options); err != nil {
+		return nil, err
+	}
+
+	return tenantOptions, nil
+}
+
+func (s *SysOptionService) UpdateTenantOptions(tenantOptions *domain.SysOptions) (*domain.SysOptions, error) {
+	// 2. Save
+	var options = make([]*domain.SysOption, 0)
 	for _, v := range tenantOptions.Options {
 		v.TenantId = tenantOptions.TenantId
+		// 1. Remove Sys Options
+		s.RemoveTenantOption(v.TenantId, v.Name)
 		options = append(options, v)
 	}
 

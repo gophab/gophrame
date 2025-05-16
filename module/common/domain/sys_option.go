@@ -10,12 +10,12 @@ var StandardSysOption = map[string]interface{}{
 
 type SysOption struct {
 	Option
-	Public           bool      `gorm:"column:public" json:"public"`
-	CreatedTime      time.Time `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
-	CreatedBy        string    `gorm:"column:created_by" json:"createdBy"`
-	LastModifiedTime time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime"`
-	LastModifiedBy   string    `gorm:"column:last_modified_by" json:"lastModifiedBy"`
-	TenantId         string    `gorm:"column:tenant_id" json:"tenantId"`
+	Public           bool       `gorm:"column:public" json:"public"`
+	CreatedTime      time.Time  `gorm:"column:created_time;autoCreateTime" json:"createdTime"`
+	CreatedBy        string     `gorm:"column:created_by" json:"createdBy"`
+	LastModifiedTime *time.Time `gorm:"column:last_modified_time;autoUpdateTime" json:"lastModifiedTime"`
+	LastModifiedBy   string     `gorm:"column:last_modified_by" json:"lastModifiedBy"`
+	TenantId         string     `gorm:"column:tenant_id;primaryKey" json:"tenantId"`
 }
 
 func (*SysOption) TableName() string {
@@ -24,7 +24,7 @@ func (*SysOption) TableName() string {
 
 type SysOptions struct {
 	TenantId string
-	Options  map[string]SysOption
+	Options  map[string]*SysOption
 }
 
 func (s *SysOptions) GetOption(name string) (string, bool) {
@@ -40,7 +40,7 @@ func (s *SysOptions) SetOption(name string, value string) bool {
 		option.Value = value
 		s.Options[name] = option
 	} else {
-		s.Options[name] = SysOption{
+		s.Options[name] = &SysOption{
 			Option: Option{
 				Name:      name,
 				Value:     value,

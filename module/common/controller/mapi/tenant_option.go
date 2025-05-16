@@ -1,10 +1,9 @@
 package mapi
 
 import (
-	"encoding/json"
-
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/json"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
 	"github.com/gophab/gophrame/errors"
@@ -62,14 +61,14 @@ func (s *TenantOptionMController) AddTenantOptions(c *gin.Context) {
 	}
 
 	if body, err := c.GetRawData(); err == nil {
-		var data map[string]string
-		_ = json.Unmarshal(body, &data)
+		var data = make(map[string]interface{})
+		_ = json.Json(string(body), &data)
 		for k, v := range data {
 			if _, err := s.TenantOptionService.AddSysOption(&domain.SysOption{
 				TenantId: tenantId,
 				Option: domain.Option{
 					Name:      k,
-					Value:     v,
+					Value:     json.String(v),
 					ValueType: "STRING",
 				},
 			}); err != nil {
@@ -93,16 +92,17 @@ func (s *TenantOptionMController) SetTenantOptions(c *gin.Context) {
 	if body, err := c.GetRawData(); err == nil {
 		var tenantOptions = domain.SysOptions{
 			TenantId: tenantId,
+			Options:  make(map[string]*domain.SysOption),
 		}
 
-		var data map[string]string
-		_ = json.Unmarshal(body, &data)
+		var data = make(map[string]interface{})
+		_ = json.Json(string(body), &data)
 		for k, v := range data {
-			tenantOptions.Options[k] = domain.SysOption{
+			tenantOptions.Options[k] = &domain.SysOption{
 				TenantId: tenantId,
 				Option: domain.Option{
 					Name:      k,
-					Value:     v,
+					Value:     json.String(v),
 					ValueType: "STRING",
 				},
 			}

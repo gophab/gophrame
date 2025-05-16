@@ -6,10 +6,6 @@ import (
 	"strings"
 
 	"github.com/gophab/gophrame/core/global"
-
-	"github.com/casbin/casbin"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 const (
@@ -30,44 +26,44 @@ type CORSWhitelist struct {
 	AllowCredentials bool   `mapstructure:"allow-credentials" json:"allow-credentials" yaml:"allow-credentials"`
 }
 
-var (
-	BasePath *string = &global.BasePath // 定义项目的根目录
+// var (
+// 	BasePath *string = &global.BasePath // 定义项目的根目录
 
-	Debug *bool = &global.Debug
+// 	Debug *bool = &global.Debug
 
-	EventDestroyPrefix = "Destroy_" //  程序退出时需要销毁的事件前缀
-	ConfigKeyPrefix    = "Config_"  //  配置文件键值缓存时，键的前缀
+// 	EventDestroyPrefix = "Destroy_" //  程序退出时需要销毁的事件前缀
+// 	ConfigKeyPrefix    = "Config_"  //  配置文件键值缓存时，键的前缀
 
-	DateFormat = "2006-01-02 15:04:05" //  配置文件键值缓存时，键的前缀
+// 	DateFormat = "2006-01-02 15:04:05" //  配置文件键值缓存时，键的前缀
 
-	//gorm 数据库客户端，如果您操作数据库使用的是gorm，请取消以下注释，在 bootstrap>init 文件，进行初始化即可使用
-	DB *gorm.DB // 全局gorm的客户端连接
+// 	//gorm 数据库客户端，如果您操作数据库使用的是gorm，请取消以下注释，在 bootstrap>init 文件，进行初始化即可使用
+// 	DB *gorm.DB // 全局gorm的客户端连接
 
-	//gin engine
-	Engine *gin.Engine
+// 	//gin engine
+// 	Engine *gin.Engine
 
-	//websocket
-	WebsocketHub interface{}
+// 	//websocket
+// 	WebsocketHub interface{}
 
-	//casbin 全局操作指针
-	Enforcer *casbin.SyncedEnforcer
+// 	//casbin 全局操作指针
+// 	Enforcer *casbin.SyncedEnforcer
 
-	// CORS
-	Cors *CORS = &CORS{
-		Mode: "allow-all",
-	}
-)
+// 	// CORS
+// 	Cors *CORS = &CORS{
+// 		Mode: "allow-all",
+// 	}
+// )
 
 func init() {
 	// 1.初始化程序根目录
 	if path, err := os.Getwd(); err == nil {
 		// 路径进行处理，兼容单元测试程序程序启动时的奇怪路径
 		if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "-test") {
-			*BasePath = strings.Replace(strings.Replace(path, `\test`, "", 1), `/test`, "", 1)
+			global.BasePath = strings.Replace(strings.Replace(path, `\test`, "", 1), `/test`, "", 1)
 		} else {
-			*BasePath = path
+			global.BasePath = path
 		}
-		log.Println("Base application path: ", BasePath)
+		log.Println("Base application path: ", global.BasePath)
 	} else {
 		log.Fatal(ERROR_BASE_PATH, ErrorBasePath)
 	}

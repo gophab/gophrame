@@ -24,6 +24,7 @@ var UserResources *controller.Controllers = &controller.Controllers{
 		messageOpenController,
 		tenantOptionOpenController,
 		userOptionOpenController,
+		taskOpenController,
 	},
 }
 
@@ -32,5 +33,6 @@ var AdminResources *controller.Controllers = &controller.Controllers{
 		adminEventOpenController,
 		adminMessageOpenController,
 		adminTenantOptionOpenController,
+		adminTaskOpenController,
 	},
 }
