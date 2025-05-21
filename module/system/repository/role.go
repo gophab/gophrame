@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strings"
+
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/query"
 	"github.com/gophab/gophrame/core/security/server"
@@ -140,6 +142,12 @@ func (r *RoleRepository) GetRoles(maps map[string]interface{}) ([]*domain.Role, 
 		if k == "user_id" {
 			query := r.Model(&domain.RoleUser{}).Select("role_id").Where("user_id", v)
 			tx.Where("id in (?)", query)
+		} else if k == "ids" {
+			if ids, b := v.([]string); b {
+				tx.Where("id in (?)", ids)
+			} else if ids, b := v.(string); b {
+				tx.Where("id in (?)", strings.Split(ids, ","))
+			}
 		} else {
 			tx.Where(k+"=?", v)
 		}

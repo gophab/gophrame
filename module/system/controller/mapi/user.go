@@ -124,7 +124,7 @@ func (u *UserMController) GetUsers(c *gin.Context) {
 
 		count, list := u.UserService.Find(conds, query.GetPageable(c))
 
-		tenantIds := collection.MapToSet[string](list, func(i interface{}) string {
+		tenantIds := collection.MapToSet(list, func(i interface{}) string {
 			return i.(*domain.User).TenantId
 		})
 
@@ -142,6 +142,8 @@ func (u *UserMController) GetUsers(c *gin.Context) {
 			v.Password = ""
 			v.Tenant = tenants[v.TenantId]
 		}
+
+		u.UserService.LoadUsersRoles(list)
 
 		response.Page(c, count, list)
 	}
@@ -161,15 +163,19 @@ func (u *UserMController) GetUser(c *gin.Context) {
 		return
 	}
 
-	if result, err := u.UserService.GetById(id); err == nil {
-		if result == nil {
-			response.NotFound(c, id)
-		} else {
-			response.Success(c, result)
-		}
-	} else {
+	result, err := u.UserService.GetById(id)
+	if err != nil {
 		response.SystemErrorMessage(c, errors.ERROR_GET_S_FAIL, err.Error())
+		return
 	}
+
+	if result == nil {
+		response.NotFound(c, id)
+		return
+	}
+
+	u.UserService.LoadUserRoles(result)
+	response.Success(c, result)
 }
 
 // @Summary   增加用户
@@ -226,11 +232,14 @@ func (u *UserMController) AddUser(c *gin.Context) {
 		return
 	}
 
-	if res, err := service.GetUserService().Create(&user); err == nil {
-		response.Success(c, res)
-	} else {
+	res, err := service.GetUserService().Create(&user)
+	if err != nil {
 		response.SystemErrorMessage(c, errors.ERROR_CREATE_FAIL, err.Error())
+		return
 	}
+
+	u.UserService.LoadUserRoles(res)
+	response.Success(c, res)
 }
 
 // @Summary   更新用户
@@ -300,11 +309,14 @@ func (u *UserMController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if result, err := service.GetUserService().Update(&user); err != nil {
+	result, err := service.GetUserService().Update(&user)
+	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_UPDATE_FAIL)
-	} else {
-		response.Success(c, result)
+		return
 	}
+
+	u.UserService.LoadUserRoles(result)
+	response.Success(c, result)
 }
 
 // @Summary   更新用户
@@ -322,7 +334,9 @@ func (u *UserMController) PatchUser(c *gin.Context) {
 		return
 	}
 
-	var params map[string]interface{}
+	var user = make(map[string]interface{})
+
+	var params domain.User
 	if err := c.BindJSON(&params); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -330,34 +344,48 @@ func (u *UserMController) PatchUser(c *gin.Context) {
 
 	valid := validation.Validation{}
 
-	name := params["name"]
-	if name != nil && name.(string) != "" {
-		valid.MaxSize(name.(string), 100, "login").Message("最长为100字符")
-		valid.MinSize(name.(string), 2, "name").Message("最短为2字符")
-	} else {
-		delete(params, "name")
+	name := params.Name
+	if name != nil && *name != "" {
+		valid.MaxSize(*name, 100, "name").Message("最长为100字符")
+		valid.MinSize(*name, 2, "name").Message("最短为2字符")
+
+		user["name"] = *name
 	}
 
-	login := params["login"]
-	if login != nil && login.(string) != "" {
-		valid.MaxSize(login.(string), 100, "login").Message("最长为100字符")
-		valid.MinSize(login.(string), 5, "login").Message("最短为5字符")
-	} else {
-		delete(params, "login")
+	login := params.Login
+	if login != nil && *login != "" {
+		valid.MaxSize(*login, 100, "login").Message("最长为100字符")
+		valid.MinSize(*login, 6, "login").Message("最短为5字符")
+
+		user["login"] = *login
 	}
 
-	mobile := params["mobile"]
-	if mobile != nil && mobile.(string) != "" {
-		valid.Check(mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
-	} else {
-		delete(params, "mobile")
+	mobile := params.Mobile
+	if mobile != nil && *mobile != "" {
+		valid.Check(*mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
+
+		user["mobile"] = *mobile
 	}
 
-	email := params["email"]
-	if email != nil && email.(string) != "" {
-		valid.Email(email.(string), "email").Message("无效邮箱地址")
-	} else {
-		delete(params, "email")
+	email := params.Email
+	if email != nil && *email != "" {
+		valid.Email(*email, "email").Message("无效邮箱地址")
+
+		user["email"] = *email
+	}
+
+	if params.Avatar != nil {
+		user["avatar"] = *params.Avatar
+	}
+
+	user["admin"] = params.Admin
+
+	if params.Status != nil {
+		user["status"] = *params.Status
+	}
+
+	if params.Roles != nil {
+		user["roles"] = params.Roles
 	}
 
 	// password := params["password"]
@@ -372,21 +400,14 @@ func (u *UserMController) PatchUser(c *gin.Context) {
 		return
 	}
 
-	var availableFields = []string{"name", "avatar", "login", "mobile", "email", "admin", "status", "tenantId"}
-	var user = make(map[string]interface{})
-
-	for _, k := range availableFields {
-		if v, b := params[k]; b {
-			user[k] = v
-		}
-	}
-
+	// var availableFields = []string{"name", "avatar", "login", "mobile", "email", "admin", "status", "tenantId"}
 	var result *domain.User
 	if result, err = service.GetUserService().PatchAll(id, user); err != nil {
 		response.SystemErrorCode(c, errors.ERROR_UPDATE_FAIL)
 		return
 	}
 
+	u.UserService.LoadUserRoles(result)
 	response.Success(c, result)
 }
 
@@ -434,12 +455,14 @@ func (u *UserMController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if res, err := u.UserService.Create(&user); err != nil {
+	res, err := u.UserService.Create(&user)
+	if err != nil {
 		response.FailMessage(c, 400, err.Error())
 		return
-	} else {
-		response.Success(c, res)
 	}
+
+	u.UserService.LoadUserRoles(res)
+	response.Success(c, res)
 }
 
 func (u *UserMController) ResetUserPassword(c *gin.Context) {

@@ -22,12 +22,12 @@ type OrganizationRepository struct {
 	*gorm.DB `inject:"database"`
 }
 
-func (r *OrganizationRepository) GetCount(fid int64, name string) (count int64) {
+func (r *OrganizationRepository) GetCount(fid string, name string) (count int64) {
 	r.Model(&domain.Organization{}).Select("id").Where("fid=? AND name like ?", fid, "%"+name+"%").Count(&count)
 	return
 }
 
-func (r *OrganizationRepository) GetById(id int64) (*domain.Organization, error) {
+func (r *OrganizationRepository) GetById(id string) (*domain.Organization, error) {
 	var result domain.Organization
 	if err := r.Model(&domain.Organization{}).Where("id = ?", id).Find(&result); err.Error != nil {
 		return nil, err.Error
@@ -38,8 +38,36 @@ func (r *OrganizationRepository) GetById(id int64) (*domain.Organization, error)
 	}
 }
 
+func (r *OrganizationRepository) GetParentById(id string) (*domain.Organization, error) {
+	if org, err := r.GetById(id); err == nil && org != nil {
+		if org.Fid != "" {
+			return r.GetById(org.Fid)
+		} else {
+			return nil, nil
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func (r *OrganizationRepository) GetAllParentsById(id string) ([]*domain.Organization, error) {
+	if parent, err := r.GetParentById(id); err == nil && parent != nil {
+		if parent.Fid != "" {
+			if parents, err := r.GetAllParentsById(parent.Fid); err == nil && len(parents) > 0 {
+				return append([]*domain.Organization{parent}, parents...), nil
+			} else {
+				return []*domain.Organization{parent}, err
+			}
+		} else {
+			return []*domain.Organization{parent}, nil
+		}
+	} else {
+		return []*domain.Organization{}, err
+	}
+}
+
 // 查询
-func (r *OrganizationRepository) List(fid int64, name string, pageable query.Pageable) (counts int64, list []domain.Organization) {
+func (r *OrganizationRepository) List(fid string, name string, pageable query.Pageable) (counts int64, list []*domain.Organization) {
 	if counts = r.GetCount(fid, name); counts > 0 {
 		sql := `
 			SELECT
@@ -54,7 +82,7 @@ func (r *OrganizationRepository) List(fid int64, name string, pageable query.Pag
 }
 
 // 根据fid查询子级节点全部数据
-func (r *OrganizationRepository) GetSubListByfid(fid int64) []domain.Organization {
+func (r *OrganizationRepository) GetSubListByFid(fid string) []*domain.Organization {
 	sql := `
 		SELECT
 			a.*,
@@ -62,13 +90,27 @@ func (r *OrganizationRepository) GetSubListByfid(fid int64) []domain.Organizatio
 		FROM sys_organization a
 		WHERE fid = ?
 	`
-	var inSlice []domain.Organization
+	var inSlice []*domain.Organization
 	if res := r.Raw(sql, fid).Find(&inSlice); res.Error == nil && len(inSlice) > 0 {
 		return inSlice
 	} else if res.Error != nil {
 		logger.Error("Organization 根据fid查询子级出错:", res.Error.Error())
 	}
 	return nil
+}
+
+// 根据fid查询子级节点全部数据
+func (r *OrganizationRepository) GetAllSubListByFid(fid string) []*domain.Organization {
+	var subs = r.GetSubListByFid(fid)
+	if len(subs) > 0 {
+		for _, sub := range subs {
+			list := r.GetAllSubListByFid(sub.Id)
+			if len(list) > 0 {
+				subs = append(subs, list...)
+			}
+		}
+	}
+	return subs
 }
 
 // 新增
@@ -109,7 +151,7 @@ func (r *OrganizationRepository) UpdateData(organization *domain.Organization) (
 }
 
 // 删除
-func (r *OrganizationRepository) DeleteData(id int64) bool {
+func (r *OrganizationRepository) DeleteData(id string) bool {
 	if res := r.Delete(&domain.Organization{}, "id=?", id); res.Error == nil {
 		return true
 	} else {
@@ -119,13 +161,13 @@ func (r *OrganizationRepository) DeleteData(id int64) bool {
 }
 
 // 查询该 id 是否存在子节点
-func (r *OrganizationRepository) HasSubNode(id int64) (count int64) {
+func (r *OrganizationRepository) HasSubNode(id string) (count int64) {
 	r.Model(&domain.Organization{}).Select("id").Where("fid=?", id).Count(&count)
 	return count
 }
 
 // 更新path_info 、node_level 字段
-func (r *OrganizationRepository) updatePathInfoNodeLevel(curItemid int64) bool {
+func (r *OrganizationRepository) updatePathInfoNodeLevel(curItemid string) bool {
 	sql := `
 		UPDATE sys_organization a  LEFT JOIN sys_organization  b
 		ON  a.fid=b.id
@@ -140,7 +182,7 @@ func (r *OrganizationRepository) updatePathInfoNodeLevel(curItemid int64) bool {
 	return false
 }
 
-func (a *OrganizationRepository) GetByIds(ids []int64) (result []domain.Organization) {
+func (a *OrganizationRepository) GetByIds(ids []string) (result []*domain.Organization) {
 	a.Where("id IN ?", ids).Find(&result)
 	return
 }

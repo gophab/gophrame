@@ -1,6 +1,9 @@
 package domain
 
-import "github.com/gophab/gophrame/domain"
+import (
+	"github.com/gophab/gophrame/domain"
+	"gorm.io/gorm"
+)
 
 type ButtonInfo struct {
 	OperationInfo
@@ -11,6 +14,11 @@ type ButtonInfo struct {
 type Button struct {
 	domain.AuditingEnabled
 	ButtonInfo
+}
+
+func (m *Button) BeforeCreate(tx *gorm.DB) (err error) {
+	m.Entity.BeforeCreate(tx)
+	return m.AuditingEnabled.BeforeCreate(tx)
 }
 
 // 表名

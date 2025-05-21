@@ -68,7 +68,7 @@ func (m *MenuMController) UpdateMenu(c *gin.Context) {
 }
 
 func (m *MenuMController) DeleteMenu(c *gin.Context) {
-	id, err := request.Param(c, "id").MustInt64()
+	id, err := request.Param(c, "id").MustString()
 	if err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -82,7 +82,7 @@ func (m *MenuMController) DeleteMenu(c *gin.Context) {
 }
 
 func (m *MenuMController) GetMenu(c *gin.Context) {
-	id, err := request.Param(c, "id").MustInt64()
+	id, err := request.Param(c, "id").MustString()
 	if err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -96,7 +96,7 @@ func (m *MenuMController) GetMenu(c *gin.Context) {
 }
 
 func (m *MenuMController) GetMenus(c *gin.Context) {
-	fid := request.Param(c, "fid").DefaultInt64(-1)
+	fid := request.Param(c, "fid").DefaultString("")
 	title := request.Param(c, "title").DefaultString("")
 	buttons := request.Param(c, "buttons").DefaultBool(false)
 	tree := request.Param(c, "tree").DefaultBool(false)
@@ -127,7 +127,7 @@ func (m *MenuMController) GetMenus(c *gin.Context) {
 }
 
 func (m *MenuMController) GetSubMenus(c *gin.Context) {
-	fid, err := request.Param(c, "id").MustInt64()
+	fid, err := request.Param(c, "id").MustString()
 	if err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return

@@ -26,6 +26,225 @@ func init() {
 	inject.InjectValue("authorityRepository", authorityRepository)
 }
 
+func (a *AuthorityRepository) GetRoleAuthority(roleId string, authType string, authId string) (*domain.RoleAuthority, error) {
+	var result *domain.RoleAuthority
+	if res := a.Model(&domain.RoleAuthority{}).Where("role_id = ? and auth_type = ? and auth_id = ?", roleId, authType, authId).First(&result); res.Error == nil && res.RowsAffected > 0 {
+		return result, nil
+	} else {
+		return nil, res.Error
+	}
+}
+
+func (a *AuthorityRepository) GetRoleAuthorities(roleId string, authType string) ([]*domain.RoleAuthority, error) {
+	var results = make([]*domain.RoleAuthority, 0)
+	if res := a.Model(&domain.RoleAuthority{}).Where("role_id = ? and auth_type = ?", roleId, authType).Find(&results); res.Error == nil && res.RowsAffected > 0 {
+		return results, nil
+	} else {
+		return []*domain.RoleAuthority{}, res.Error
+	}
+}
+
+func (a *AuthorityRepository) GetRolesAuthorities(roleIds []string, authType string) ([]*domain.RoleAuthority, error) {
+	var results = make([]*domain.RoleAuthority, 0)
+	if res := a.Model(&domain.RoleAuthority{}).Where("role_id in ? and auth_type = ?", roleIds, authType).Find(&results); res.Error == nil && res.RowsAffected > 0 {
+		return results, nil
+	} else {
+		return []*domain.RoleAuthority{}, res.Error
+	}
+}
+
+func (a *AuthorityRepository) GetUserAuthority(userId string, authType string, authId string) (*domain.UserAuthority, error) {
+	var result *domain.UserAuthority
+	if res := a.Model(&domain.UserAuthority{}).Where("user_id = ? and auth_type = ? and auth_id = ?", userId, authType, authId).First(&result); res.Error == nil && res.RowsAffected > 0 {
+		return result, nil
+	} else {
+		return nil, res.Error
+	}
+}
+
+func (a *AuthorityRepository) GetUserAuthorities(userId string, authType string) ([]*domain.UserAuthority, error) {
+	var results = make([]*domain.UserAuthority, 0)
+	if res := a.Model(&domain.UserAuthority{}).Where("user_id = ? and auth_type = ?", userId, authType).Find(&results); res.Error == nil && res.RowsAffected > 0 {
+		return results, nil
+	} else {
+		return []*domain.UserAuthority{}, res.Error
+	}
+}
+
+func (a *AuthorityRepository) GetOrganizationAuthority(organizationId string, authType string, authId string) (*domain.OrganizationAuthority, error) {
+	var result *domain.OrganizationAuthority
+	if res := a.Model(&domain.OrganizationAuthority{}).Where("organization_id = ? and auth_type = ? and auth_id = ?", organizationId, authType, authId).First(&result); res.Error == nil && res.RowsAffected > 0 {
+		return result, nil
+	} else {
+		return nil, res.Error
+	}
+}
+
+func (a *AuthorityRepository) GetOrganizationAuthorities(organizationId string, authType string) ([]*domain.OrganizationAuthority, error) {
+	var results = make([]*domain.OrganizationAuthority, 0)
+	if res := a.Model(&domain.OrganizationAuthority{}).Where("organization_id = ? and auth_type = ?", organizationId, authType).Find(&results); res.Error == nil && res.RowsAffected > 0 {
+		return results, nil
+	} else {
+		return []*domain.OrganizationAuthority{}, res.Error
+	}
+}
+
+func (a *AuthorityRepository) GetOrganizationsAuthorities(organizationIds []string, authType string) ([]*domain.OrganizationAuthority, error) {
+	var results = make([]*domain.OrganizationAuthority, 0)
+	if res := a.Model(&domain.OrganizationAuthority{}).Where("organization_id in ? and auth_type = ?", organizationIds, authType).Find(&results); res.Error == nil && res.RowsAffected > 0 {
+		return results, nil
+	} else {
+		return []*domain.OrganizationAuthority{}, res.Error
+	}
+}
+
+// 给角色授权
+func (a *AuthorityRepository) SetAuthoritiesByRoleId(roleId string, authType string, authIds []string) {
+	// 1. clear
+	// TODO: DeleteRoleOperations
+	a.DeleteRoleAuthoritiesByAuthType(roleId, authType)
+
+	// 2. add
+	for _, authId := range authIds {
+		var authority = &domain.RoleAuthority{
+			RoleId: roleId,
+			Authority: domain.Authority{
+				AuthType: authType,
+				AuthId:   authId,
+				Status:   1,
+			},
+		}
+		if res := a.FirstOrCreate(authority); res.Error != nil {
+			logger.Warn("Persist RoleAuthority error: ", res.Error.Error())
+			break
+		}
+	}
+}
+
+// 给用户授权
+func (a *AuthorityRepository) SetAuthoritiesByUserId(userId string, authType string, authIds []string) {
+	// 1. clear
+	// TODO: DeleteRoleOperations
+	a.DeleteUserAuthoritiesByAuthType(userId, authType)
+
+	// 2. add
+	for _, authId := range authIds {
+		var authority = &domain.UserAuthority{
+			UserId: userId,
+			Authority: domain.Authority{
+				AuthType: authType,
+				AuthId:   authId,
+				Status:   1,
+			},
+		}
+		if res := a.FirstOrCreate(authority); res.Error != nil {
+			logger.Warn("Persist UserAuthority error: ", res.Error.Error())
+			break
+		}
+	}
+}
+
+// 给用户授权
+func (a *AuthorityRepository) SetAuthoritiesByOrganizationId(organizationId string, authType string, authIds []string) {
+	// 1. clear
+	// TODO: DeleteRoleOperations
+	a.DeleteOrganizationAuthoritiesByAuthType(organizationId, authType)
+
+	// 2. add
+	for _, authId := range authIds {
+		var authority = &domain.OrganizationAuthority{
+			OrganizationId: organizationId,
+			Authority: domain.Authority{
+				AuthType: authType,
+				AuthId:   authId,
+				Status:   1,
+			},
+		}
+		if res := a.FirstOrCreate(authority); res.Error != nil {
+			logger.Warn("Persist OrganizationAuthority error: ", res.Error.Error())
+			break
+		}
+	}
+}
+
+func (a *AuthorityRepository) DeleteRoleAuthority(roleId string, authType string, authId string) {
+	var authority = &domain.RoleAuthority{
+		RoleId: roleId,
+		Authority: domain.Authority{
+			AuthType: authType,
+			AuthId:   authId,
+		},
+	}
+	if res := a.Delete(&authority); res.Error != nil {
+		logger.Warn("Delete UserAuthority error: ", res.Error.Error())
+	}
+}
+
+func (a *AuthorityRepository) DeleteRoleAuthorities(roleId string) {
+	if res := a.Delete(&domain.RoleAuthority{}, "role_id = ?", roleId); res.Error != nil {
+		logger.Warn("Delete RoleAuthority error: ", res.Error.Error())
+	}
+}
+
+func (a *AuthorityRepository) DeleteRoleAuthoritiesByAuthType(roleId string, authType string) {
+	if res := a.Delete(&domain.RoleAuthority{}, "role_id = ? AND auth_type = ?", roleId, authType); res.Error != nil {
+		logger.Warn("Delete RoleAuthority error: ", res.Error.Error())
+	}
+}
+
+func (a *AuthorityRepository) DeleteUserAuthority(userId string, authType string, authId string) {
+	var authority = &domain.UserAuthority{
+		UserId: userId,
+		Authority: domain.Authority{
+			AuthType: authType,
+			AuthId:   authId,
+		},
+	}
+	if res := a.Delete(&authority); res.Error != nil {
+		logger.Warn("Delete UserAuthority error: ", res.Error.Error())
+	}
+}
+
+func (a *AuthorityRepository) DeleteUserAuthoritiesByAuthType(userId string, authType string) {
+	if res := a.Delete(&domain.UserAuthority{}, "user_id = ? AND auth_type = ?", userId, authType); res.Error != nil {
+		logger.Warn("Delete UserAuthority error: ", res.Error.Error())
+	}
+}
+
+func (a *AuthorityRepository) DeleteUserAuthorities(userId string) {
+	if res := a.Delete(&domain.UserAuthority{}, "user_id = ?", userId); res.Error != nil {
+		logger.Warn("Delete UserAuthority error: ", res.Error.Error())
+	}
+}
+
+func (a *AuthorityRepository) DeleteOrganizationAuthority(organizationId string, authType string, authId string) {
+	var authority = &domain.OrganizationAuthority{
+		OrganizationId: organizationId,
+		Authority: domain.Authority{
+			AuthType: authType,
+			AuthId:   authId,
+		},
+	}
+	if res := a.Delete(&authority); res.Error != nil {
+		logger.Warn("Delete OrganizationAuthority error: ", res.Error.Error())
+	}
+}
+
+func (a *AuthorityRepository) DeleteOrganizationAuthorities(organizationId string) {
+	if res := a.Delete(&domain.OrganizationAuthority{}, "organization_id = ?", organizationId); res.Error != nil {
+		logger.Warn("Delete OrganizationAuthority error: ", res.Error.Error())
+	}
+}
+
+func (a *AuthorityRepository) DeleteOrganizationAuthoritiesByAuthType(organizationId string, authType string) {
+	if res := a.Delete(&domain.OrganizationAuthority{}, "organization_id = ? AND auth_type = ?", organizationId, authType); res.Error != nil {
+		logger.Warn("Delete OrganizationAuthority error: ", res.Error.Error())
+	}
+}
+
+// ////////////////////////////////////////
+// Special for Operation (Menu & Button)
+// ////////////////////////////////////////
 func (u *AuthorityRepository) GetMenuByRoleIds(roleIds []string) (result []*OperationModel.Menu, err error) {
 	sql := `
 		SELECT  
@@ -69,9 +288,9 @@ func (u *AuthorityRepository) GetButtonListByMenuId(roleIds []string, menuId int
 	return
 }
 
-// GetSystemAuthorities 待分配的系统菜单、按钮 数据列表
+// GetSystemOperations 待分配的系统菜单、按钮 数据列表
 // 注意：按钮的id有可能和主菜单id重复，所以按钮id基准值增加 100000 （10万），后续分配权限时减去 10万即可
-func (a *AuthorityRepository) GetSystemAuthorities() (counts int64, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetSystemOperations() (counts int64, data []*OperationModel.Operation) {
 	var menuNodes []*OperationModel.Operation
 	sql := `
 		SELECT 
@@ -131,12 +350,12 @@ func (a *AuthorityRepository) GetSystemAuthorities() (counts int64, data []*Oper
 
 func (a *AuthorityRepository) makeTree(src []*OperationModel.Operation, dest *[]*OperationModel.Operation) error {
 	var result = *dest
-	var srcMap = make(map[int64]*OperationModel.Operation)
+	var srcMap = make(map[string]*OperationModel.Operation)
 	for _, item := range src {
 		srcMap[item.Id] = item
 	}
 	for _, item := range src {
-		if item.Fid != 0 {
+		if item.Fid != "" {
 			var parent = srcMap[item.Fid]
 			if parent != nil {
 				if parent.Children == nil {
@@ -153,7 +372,7 @@ func (a *AuthorityRepository) makeTree(src []*OperationModel.Operation, dest *[]
 }
 
 // 已分配给部门、岗位的系统菜单、按钮
-func (a *AuthorityRepository) GetAuthoritiesByRoleId(roleId string) (counts int64, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetOperationsByRoleId(roleId string) (counts int64, data []*OperationModel.Operation) {
 	var menuNodes []*OperationModel.Operation
 	sql := `
 		SELECT  
@@ -213,19 +432,19 @@ func (a *AuthorityRepository) GetAuthoritiesByRoleId(roleId string) (counts int6
 	}
 }
 
-func (a *AuthorityRepository) GetAuthoritiesByRoleIds(roleIds []string) (result []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetOperationsByRoleIds(roleIds []string) (result []*OperationModel.Operation) {
 	var authorities = make(map[string]*domain.Authority)
 
 	var tmp = make([]*domain.RoleAuthority, 0)
 	if a.Where("role_id IN ?", roleIds).Find(&tmp).Error == nil && len(tmp) > 0 {
 		for _, auth := range tmp {
-			authorities[fmt.Sprintf("%s:%d", auth.AuthType, auth.AuthId)] = &auth.Authority
+			authorities[fmt.Sprintf("%s:%s", auth.AuthType, auth.AuthId)] = &auth.Authority
 		}
 	}
 
 	// 4. 合并
 	if len(authorities) > 0 {
-		var menuIds = make([]int64, 0)
+		var menuIds = make([]string, 0)
 		for _, auth := range authorities {
 			if auth.AuthType == "menu" {
 				menuIds = append(menuIds, auth.AuthId)
@@ -254,7 +473,7 @@ func (a *AuthorityRepository) GetAuthoritiesByRoleIds(roleIds []string) (result 
 			a.Raw(sql, menuIds).Scan(&menuNodes)
 
 			if len(menuNodes) > 0 {
-				var buttonIds = make([]int64, 0)
+				var buttonIds = make([]string, 0)
 				for _, auth := range authorities {
 					if auth.AuthType == "button" {
 						buttonIds = append(buttonIds, auth.AuthId)
@@ -294,9 +513,10 @@ func (a *AuthorityRepository) GetAuthoritiesByRoleIds(roleIds []string) (result 
 }
 
 // 给角色分配系统菜单、按钮
-func (a *AuthorityRepository) SetAuthoritiesByRoleId(roleId string, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) SetOperationsByRoleId(roleId string, data []*OperationModel.Operation) {
 	// 1. clear
-	a.DeleteRoleAuthorities(roleId)
+	// TODO: DeleteRoleOperations
+	a.DeleteRoleOperations(roleId)
 
 	// 2. add
 	for _, operation := range data {
@@ -315,7 +535,7 @@ func (a *AuthorityRepository) SetAuthoritiesByRoleId(roleId string, data []*Oper
 	}
 }
 
-func (a *AuthorityRepository) AddAuthoritiesByRoleId(roleId string, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) AddOperationsByRoleId(roleId string, data []*OperationModel.Operation) {
 	for _, operation := range data {
 		var authority = &domain.RoleAuthority{
 			RoleId: roleId,
@@ -332,39 +552,8 @@ func (a *AuthorityRepository) AddAuthoritiesByRoleId(roleId string, data []*Oper
 	}
 }
 
-func (a *AuthorityRepository) DeleteAuthoritiesByRoleId(roleId string, data []*OperationModel.Operation) {
-	for _, operation := range data {
-		a.DeleteRoleAuthority(roleId, operation.Type, operation.Id)
-	}
-}
-
-func (a *AuthorityRepository) DeleteRoleAuthority(roleId string, authType string, authId int64) {
-	var authority = &domain.RoleAuthority{
-		RoleId: roleId,
-		Authority: domain.Authority{
-			AuthType: authType,
-			AuthId:   authId,
-		},
-	}
-	if res := a.Delete(&authority); res.Error != nil {
-		logger.Warn("Delete RoleAuthority error: ", res.Error.Error())
-	}
-}
-
-func (a *AuthorityRepository) DeleteRoleAuthorities(roleId string) {
-	if res := a.Delete(&domain.RoleAuthority{}, "role_id = ?", roleId); res.Error != nil {
-		logger.Warn("Delete RoleAuthority error: ", res.Error.Error())
-	}
-}
-
-func (a *AuthorityRepository) DeleteRoleAuthoritiesByAuthType(roleId string, authType string) {
-	if res := a.Delete(&domain.RoleAuthority{}, "role_id = ? AND auth_type = ?", roleId, authType); res.Error != nil {
-		logger.Warn("Delete RoleAuthority error: ", res.Error.Error())
-	}
-}
-
 // 给角色分配系统菜单、按钮
-func (a *AuthorityRepository) SetAuthoritiesByUserId(userId string, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) SetOpertionsByUserId(userId string, data []*OperationModel.Operation) {
 	// 1. clear
 	a.DeleteUserAuthorities(userId)
 
@@ -379,19 +568,25 @@ func (a *AuthorityRepository) SetAuthoritiesByUserId(userId string, data []*Oper
 			},
 		}
 		if res := a.FirstOrCreate(authority); res.Error != nil {
-			logger.Warn("Persist RoleAuthority error: ", res.Error.Error())
+			logger.Warn("Persist UserAuthority error: ", res.Error.Error())
 			break
 		}
 	}
 }
 
-func (a *AuthorityRepository) DeleteAuthoritiesByUserId(userId string, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) DeleteOperationsByRoleId(roleId string, data []*OperationModel.Operation) {
+	for _, operation := range data {
+		a.DeleteRoleAuthority(roleId, operation.Type, operation.Id)
+	}
+}
+
+func (a *AuthorityRepository) DeleteOpertionsByUserId(userId string, data []*OperationModel.Operation) {
 	for _, operation := range data {
 		a.DeleteUserAuthority(userId, operation.Type, operation.Id)
 	}
 }
 
-func (a *AuthorityRepository) AddAuthoritiesByUserId(userId string, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) AddOpertionsByUserId(userId string, data []*OperationModel.Operation) {
 	for _, operation := range data {
 		var authority = &domain.UserAuthority{
 			UserId: userId,
@@ -402,39 +597,14 @@ func (a *AuthorityRepository) AddAuthoritiesByUserId(userId string, data []*Oper
 			},
 		}
 		if res := a.FirstOrCreate(authority); res.Error != nil {
-			logger.Warn("Persist RoleAuthority error: ", res.Error.Error())
+			logger.Warn("Persist UserAuthority error: ", res.Error.Error())
 			break
 		}
 	}
 }
 
-func (a *AuthorityRepository) DeleteUserAuthority(userId string, authType string, authId int64) {
-	var authority = &domain.UserAuthority{
-		UserId: userId,
-		Authority: domain.Authority{
-			AuthType: authType,
-			AuthId:   authId,
-		},
-	}
-	if res := a.Delete(&authority); res.Error != nil {
-		logger.Warn("Delete UserAuthority error: ", res.Error.Error())
-	}
-}
-
-func (a *AuthorityRepository) DeleteUserAuthorities(userId string) {
-	if res := a.Delete(&domain.UserAuthority{}, "user_id = ?", userId); res.Error != nil {
-		logger.Warn("Delete UserAuthority error: ", res.Error.Error())
-	}
-}
-
-func (a *AuthorityRepository) DeleteUserAuthoritiesByAuthType(userId string, authType string) {
-	if res := a.Delete(&domain.UserAuthority{}, "user_id = ? AND auth_type = ?", userId, authType); res.Error != nil {
-		logger.Warn("Delete UserAuthority error: ", res.Error.Error())
-	}
-}
-
 // 根据用户id查询已经分配的菜单
-func (a *AuthorityRepository) GetAuthoritiesByUserId(userId string) (count int64, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetOpertionsByUserId(userId string) (count int64, data []*OperationModel.Operation) {
 	var menuNodes []*OperationModel.Operation
 	sql := `
 		SELECT  
@@ -495,9 +665,9 @@ func (a *AuthorityRepository) GetAuthoritiesByUserId(userId string) (count int64
 }
 
 // 给角色分配系统菜单、按钮
-func (a *AuthorityRepository) SetAuthoritiesByOrganizationId(organizationId string, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) SetOperationsByOrganizationId(organizationId string, data []*OperationModel.Operation) {
 	// 1. clear
-	a.DeleteOrganizationAuthorities(organizationId)
+	a.DeleteOrganizationOperations(organizationId)
 
 	// 2. add
 	for _, operation := range data {
@@ -510,13 +680,13 @@ func (a *AuthorityRepository) SetAuthoritiesByOrganizationId(organizationId stri
 			},
 		}
 		if res := a.FirstOrCreate(authority); res.Error != nil {
-			logger.Warn("Persist RoleAuthority error: ", res.Error.Error())
+			logger.Warn("Persist OrganizationAuthority error: ", res.Error.Error())
 			break
 		}
 	}
 }
 
-func (a *AuthorityRepository) AddAuthoritiesByOrganizationId(organizationId string, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) AddOperationsByOrganizationId(organizationId string, data []*OperationModel.Operation) {
 	for _, operation := range data {
 		var authority = &domain.OrganizationAuthority{
 			OrganizationId: organizationId,
@@ -527,45 +697,38 @@ func (a *AuthorityRepository) AddAuthoritiesByOrganizationId(organizationId stri
 			},
 		}
 		if res := a.FirstOrCreate(authority); res.Error != nil {
-			logger.Warn("Persist RoleAuthority error: ", res.Error.Error())
+			logger.Warn("Persist OrganizationAuthority error: ", res.Error.Error())
 			break
 		}
 	}
 }
 
-func (a *AuthorityRepository) DeleteAuthoritiesByOrganizationId(organizationId string, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) DeleteOperationsByOrganizationId(organizationId string, data []*OperationModel.Operation) {
 	for _, operation := range data {
 		a.DeleteOrganizationAuthority(organizationId, operation.Type, operation.Id)
 	}
 }
 
-func (a *AuthorityRepository) DeleteOrganizationAuthority(organizationId string, authType string, authId int64) {
-	var authority = &domain.OrganizationAuthority{
-		OrganizationId: organizationId,
-		Authority: domain.Authority{
-			AuthType: authType,
-			AuthId:   authId,
-		},
-	}
-	if res := a.Delete(&authority); res.Error != nil {
-		logger.Warn("Delete OrganizationAuthority error: ", res.Error.Error())
+func (a *AuthorityRepository) DeleteRoleOperations(roleId string) {
+	if res := a.Delete(&domain.RoleAuthority{}, "role_id = ? and auth_type in ?", roleId, []string{"menu", "button"}); res.Error != nil {
+		logger.Warn("Delete RoleAuthority error: ", res.Error.Error())
 	}
 }
 
-func (a *AuthorityRepository) DeleteOrganizationAuthorities(organizationId string) {
-	if res := a.Delete(&domain.OrganizationAuthority{}, "organization_id = ?", organizationId); res.Error != nil {
-		logger.Warn("Delete OrganizationAuthority error: ", res.Error.Error())
+func (a *AuthorityRepository) DeleteUserOperations(userId string) {
+	if res := a.Delete(&domain.UserAuthority{}, "user_id = ? and auth_type in ?", userId, []string{"menu", "button"}); res.Error != nil {
+		logger.Warn("Delete UserAuthority error: ", res.Error.Error())
 	}
 }
 
-func (a *AuthorityRepository) DeleteOrganizationAuthoritiesByAuthType(organizationId string, authType string) {
-	if res := a.Delete(&domain.OrganizationAuthority{}, "organization_id = ? AND auth_type = ?", organizationId, authType); res.Error != nil {
+func (a *AuthorityRepository) DeleteOrganizationOperations(organizationId string) {
+	if res := a.Delete(&domain.OrganizationAuthority{}, "organization_id = ? and auth_type in ?", organizationId, []string{"menu", "button"}); res.Error != nil {
 		logger.Warn("Delete OrganizationAuthority error: ", res.Error.Error())
 	}
 }
 
 // 根据用户id查询已经分配的菜单
-func (a *AuthorityRepository) GetAuthoritiesByOrganizationId(organizationId string) (count int64, data []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetOperationsByOrganizationId(organizationId string) (count int64, data []*OperationModel.Operation) {
 	var menuNodes []*OperationModel.Operation
 	sql := `
 		SELECT  
@@ -625,20 +788,20 @@ func (a *AuthorityRepository) GetAuthoritiesByOrganizationId(organizationId stri
 	}
 }
 
-func (a *AuthorityRepository) GetAuthoritiesByOrganizationIds(organizationIds []string) (result []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetOperationsByOrganizationIds(organizationIds []string) (result []*OperationModel.Operation) {
 	var authorities = make(map[string]*domain.Authority)
 
 	// 3. organization -> organization_authorities
 	var tmp = make([]*domain.OrganizationAuthority, 0)
 	if a.Where("organization_id IN ?", organizationIds).Find(&tmp).Error == nil && len(tmp) > 0 {
 		for _, auth := range tmp {
-			authorities[fmt.Sprintf("%s:%d", auth.AuthType, auth.AuthId)] = &auth.Authority
+			authorities[fmt.Sprintf("%s:%s", auth.AuthType, auth.AuthId)] = &auth.Authority
 		}
 	}
 
 	// 4. 合并
 	if len(authorities) > 0 {
-		var menuIds = make([]int64, 0)
+		var menuIds = make([]string, 0)
 		for _, auth := range authorities {
 			if auth.AuthType == "menu" {
 				menuIds = append(menuIds, auth.AuthId)
@@ -668,7 +831,7 @@ func (a *AuthorityRepository) GetAuthoritiesByOrganizationIds(organizationIds []
 			a.Raw(sql, menuIds).Scan(&menuNodes)
 
 			if len(menuNodes) > 0 {
-				var buttonIds = make([]int64, 0)
+				var buttonIds = make([]string, 0)
 				for _, auth := range authorities {
 					if auth.AuthType == "button" {
 						buttonIds = append(buttonIds, auth.AuthId)
@@ -726,17 +889,17 @@ func (a *AuthorityRepository) GetAuthoritiesByOrganizationIds(organizationIds []
 // }
 
 // 根据用户id查询已经分配的菜单
-func (a *AuthorityRepository) GetRoleAuthorities(roleId string) (result []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetRoleOperations(roleId string) (result []*OperationModel.Operation) {
 	var roleIdSet = make(collection.Set[string])
 	// a.loadRoleIds(roleIdSet, roleId)
 	roleIdSet.Add(roleId)
-	return a.GetAuthoritiesByRoleIds(roleIdSet.AsList())
+	return a.GetOperationsByRoleIds(roleIdSet.AsList())
 }
 
-func (a *AuthorityRepository) GetRolesAuthorities(roleIds []string) (result []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetRolesOperations(roleIds []string) (result []*OperationModel.Operation) {
 	var roleIdSet = make(collection.Set[string])
 	roleIdSet.AddAll(roleIds)
-	return a.GetAuthoritiesByRoleIds(roleIdSet.AsList())
+	return a.GetOperationsByRoleIds(roleIdSet.AsList())
 }
 
 // func (a *AuthorityRepository) loadOrganizationIds(organizationIds collection.Set[string], organizationId string) {
@@ -755,24 +918,24 @@ func (a *AuthorityRepository) GetRolesAuthorities(roleIds []string) (result []*O
 // }
 
 // 根据用户id查询已经分配的菜单
-func (a *AuthorityRepository) GetOrganizationAuthorities(organizationId string) (result []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetOrganizationOperations(organizationId string) (result []*OperationModel.Operation) {
 	var organizationIdSet = make(collection.Set[string])
 	organizationIdSet.Add(organizationId)
 	// a.loadOrganizationIds(organizationIdSet, organizationId)
-	return a.GetAuthoritiesByRoleIds(organizationIdSet.AsList())
+	return a.GetOperationsByRoleIds(organizationIdSet.AsList())
 }
 
-func (a *AuthorityRepository) GetOrganizationsAuthorities(organizationIds []string) (result []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetOrganizationsOperations(organizationIds []string) (result []*OperationModel.Operation) {
 	var organizationIdSet = make(collection.Set[string])
 	// for _, organizationId := range organizationIds {
 	// 	a.loadOrganizationIds(organizationIdSet, organizationId)
 	// }
 	organizationIdSet.AddAll(organizationIds)
-	return a.GetAuthoritiesByOrganizationIds(organizationIdSet.AsList())
+	return a.GetOperationsByOrganizationIds(organizationIdSet.AsList())
 }
 
 // 根据用户id查询已经分配的菜单
-func (a *AuthorityRepository) GetUserAuthorities(userId string) (result []*OperationModel.Operation) {
+func (a *AuthorityRepository) GetUserAvailableOperations(userId string) (result []*OperationModel.Operation) {
 	var operations = make(map[string]*OperationModel.Operation)
 
 	// 1. user -> organization -> organization_authorities
@@ -786,10 +949,10 @@ func (a *AuthorityRepository) GetUserAuthorities(userId string) (result []*Opera
 	`
 	var organizationIds = make([]string, 0)
 	if res := a.Raw(sql, userId).Find(&organizationIds); res.Error == nil && len(organizationIds) > 0 {
-		var ops = a.GetOrganizationsAuthorities(organizationIds)
+		var ops = a.GetOrganizationsOperations(organizationIds)
 		if len(ops) > 0 {
 			for _, op := range ops {
-				operations[fmt.Sprintf("%s:%d", op.Type, op.Id)] = op
+				operations[fmt.Sprintf("%s:%s", op.Type, op.Id)] = op
 			}
 		}
 	}
@@ -805,19 +968,19 @@ func (a *AuthorityRepository) GetUserAuthorities(userId string) (result []*Opera
 	`
 	var roleIds = make([]string, 0)
 	if res := a.Raw(sql, userId).Find(&roleIds); res.Error == nil && len(roleIds) > 0 {
-		var ops = a.GetRolesAuthorities(roleIds)
+		var ops = a.GetRolesOperations(roleIds)
 		if len(ops) > 0 {
 			for _, op := range ops {
-				operations[fmt.Sprintf("%s:%d", op.Type, op.Id)] = op
+				operations[fmt.Sprintf("%s:%s", op.Type, op.Id)] = op
 			}
 		}
 	}
 
 	// 3. user -> user_authorities
-	_, ops := a.GetAuthoritiesByUserId(userId)
+	_, ops := a.GetOpertionsByUserId(userId)
 	if len(ops) > 0 {
 		for _, op := range ops {
-			operations[fmt.Sprintf("%s:%d", op.Type, op.Id)] = op
+			operations[fmt.Sprintf("%s:%s", op.Type, op.Id)] = op
 		}
 	}
 
@@ -831,7 +994,7 @@ func (a *AuthorityRepository) GetUserAuthorities(userId string) (result []*Opera
 }
 
 // 删除 casbin 表接口已分配的权限
-func (a *AuthorityRepository) DeleteCasbibRules(authPostMountHasMenuButtonId string, nodeType string) (resBool bool) {
+func (a *AuthorityRepository) DeleteCasbinRules(authPostMountHasMenuButtonId string, nodeType string) (resBool bool) {
 	resBool = true
 	if nodeType == "button" {
 		sql := "DELETE FROM auth_casbin_rule WHERE fr_auth_post_mount_has_menu_button_id=? AND ptype='p' "
@@ -946,7 +1109,7 @@ func (a *AuthorityRepository) AssginCasbinAuthGroupToOrg(orgId int) (resBool boo
 }
 
 func (a *AuthorityRepository) makeChildren(fnodes, cnodes []*OperationModel.Operation) {
-	var fMap = map[int64]*OperationModel.Operation{}
+	var fMap = map[string]*OperationModel.Operation{}
 	for _, n := range fnodes {
 		fMap[n.Id] = n
 	}

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/gophab/gophrame/domain"
+	"gorm.io/gorm"
 )
 
 type MenuInfo struct {
@@ -18,6 +19,11 @@ type Menu struct {
 	MenuInfo
 	Children []*Menu   `gorm:"-" json:"children,omitempty"`
 	Buttons  []*Button `gorm:"foreignkey:Fid" json:"buttons,omitempty"`
+}
+
+func (m *Menu) BeforeCreate(tx *gorm.DB) (err error) {
+	m.Entity.BeforeCreate(tx)
+	return m.AuditingEnabled.BeforeCreate(tx)
 }
 
 // 表名

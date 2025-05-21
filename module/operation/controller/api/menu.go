@@ -68,7 +68,7 @@ func (m *MenuController) UpdateMenu(c *gin.Context) {
 }
 
 func (m *MenuController) DeleteMenu(c *gin.Context) {
-	id, err := request.Param(c, "id").MustInt64()
+	id, err := request.Param(c, "id").MustString()
 	if err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -82,7 +82,7 @@ func (m *MenuController) DeleteMenu(c *gin.Context) {
 }
 
 func (m *MenuController) GetMenu(c *gin.Context) {
-	id, err := request.Param(c, "id").MustInt64()
+	id, err := request.Param(c, "id").MustString()
 	if err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -96,7 +96,7 @@ func (m *MenuController) GetMenu(c *gin.Context) {
 }
 
 func (m *MenuController) GetMenus(c *gin.Context) {
-	fid := request.Param(c, "fid").Int64()
+	fid := request.Param(c, "fid").DefaultString("")
 	title := request.Param(c, "title").DefaultString("")
 	buttons := request.Param(c, "buttons").DefaultBool(false)
 	pageable := query.GetPageable(c)
@@ -120,7 +120,7 @@ func (m *MenuController) GetMenus(c *gin.Context) {
 }
 
 func (m *MenuController) GetSubMenus(c *gin.Context) {
-	fid, err := request.Param(c, "id").MustInt64()
+	fid, err := request.Param(c, "id").MustString()
 	if err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return

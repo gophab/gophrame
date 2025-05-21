@@ -219,7 +219,19 @@ func (a *RoleUserRepository) GetByUserId(userId string) (result []*domain.RoleUs
 }
 
 // 修改
+func (a *RoleUserRepository) DeleteByUserId(userId string) {
+	a.Delete(&domain.RoleUser{}, "user_id = ?", userId)
+	return
+}
+
+// 修改
 func (a *RoleUserRepository) GetByRoleId(roleId string) (result []*domain.RoleUser) {
 	a.Where("role_id = ?", roleId).Find(&result)
+	return
+}
+
+// 修改
+func (a *RoleUserRepository) DeleteByRoleId(roleId string) {
+	a.Delete(&domain.RoleUser{}, "role_id = ?", roleId)
 	return
 }

@@ -25,17 +25,13 @@ type UserInfo struct {
 type User struct {
 	domain.DeletableEntity
 	UserInfo
-	Password   string  `gorm:"column:password" json:"-"`
-	Admin      bool    `gorm:"column:admin;default:false" json:"admin"`
-	Roles      []Role  `gorm:"many2many:sys_role_user;" json:"roles,omitempty"` /* 角色 */
-	InviteCode string  `gorm:"-" json:"inviteCode,omitempty"`                   /* 邀请码 */
-	Tenant     *Tenant `gorm:"->" json:"tenant,omitempty"`                      /* 所在企业ID */
-}
-
-type UserWithOrganization struct {
-	User
-	OrganizationId   int64  `gorm:"->" json:"organizationId"`
-	OrganizationName string `gorm:"->" json:"organizationName"`
+	Password         string  `gorm:"column:password" json:"-"`
+	Admin            bool    `gorm:"column:admin;default:false" json:"admin"`
+	Roles            []*Role `gorm:"many2many:sys_role_user;" json:"roles,omitempty"`        /* 角色 */
+	InviteCode       string  `gorm:"-" json:"inviteCode,omitempty"`                          /* 邀请码 */
+	OrganizationId   *int64  `gorm:"column:organization_id" json:"organizationId,omitempty"` /* 所在组织ID */
+	OrganizationName string  `gorm:"->" json:"organizationName,omitempty"`                   /* 所在组织 */
+	Tenant           *Tenant `gorm:"->" json:"tenant,omitempty"`                             /* 所在企业 */
 }
 
 func (u *User) TableName() string {

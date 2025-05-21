@@ -15,7 +15,8 @@ import (
 
 type RoleService struct {
 	service.BaseService
-	RoleRepository *repository.RoleRepository `inject:"roleRepository"`
+	RoleRepository     *repository.RoleRepository     `inject:"roleRepository"`
+	RoleUserRepository *repository.RoleUserRepository `inject:"roleUserRepository"`
 }
 
 var roleService *RoleService = &RoleService{}

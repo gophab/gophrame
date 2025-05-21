@@ -21,7 +21,7 @@ func init() {
 }
 
 // 查询类
-func (a *OrganizationUserRepository) GetCount(organizationId int64, userName string) (count int64) {
+func (a *OrganizationUserRepository) GetCount(organizationId string, userName string) (count int64) {
 	sql := `
 		SELECT 
 			count(*) as counts  
@@ -36,7 +36,7 @@ func (a *OrganizationUserRepository) GetCount(organizationId int64, userName str
 	return
 }
 
-func (a *OrganizationUserRepository) ListMembers(organizationId int64, userName string, pageable query.Pageable) (count int64, data []domain.OrganizationMember) {
+func (a *OrganizationUserRepository) ListMembers(organizationId string, userName string, pageable query.Pageable) (count int64, data []domain.OrganizationMember) {
 	count = a.GetCount(organizationId, userName)
 	sql := `
 		SELECT  
@@ -111,7 +111,7 @@ func (a *OrganizationUserRepository) UpdateData(data *domain.OrganizationUser) b
 }
 
 // 删除
-func (a *OrganizationUserRepository) DeleteData(organizationId float64, userId string) bool {
+func (a *OrganizationUserRepository) DeleteData(organizationId string, userId string) bool {
 	// 只能删除除了 admin 之外的用户
 	var count int64
 	a.Model(&domain.OrganizationUser{}).Select("user_id").Where("organization_id=? AND user_id=?", organizationId, userId).First(&count)

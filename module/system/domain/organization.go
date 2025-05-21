@@ -3,8 +3,8 @@ package domain
 import "github.com/gophab/gophrame/domain"
 
 type Organization struct {
-	domain.Model
-	Fid      int64          `json:"fid" fid:"Id"`
+	domain.DeletableEntity
+	Fid      string         `json:"fid" fid:"Id"`
 	Name     string         `json:"name"`
 	Status   string         `json:"status"`
 	PathInfo string         `json:"pathInfo"`

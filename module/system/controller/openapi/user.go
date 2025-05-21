@@ -18,6 +18,7 @@ import (
 
 	"github.com/gophab/gophrame/errors"
 
+	"github.com/gophab/gophrame/module/system/domain"
 	"github.com/gophab/gophrame/module/system/service"
 	"github.com/gophab/gophrame/module/system/service/dto"
 	"github.com/gophab/gophrame/module/system/service/mapper"
@@ -414,9 +415,11 @@ func (u *AdminUserOpenController) GetUsers(c *gin.Context) {
 
 	if organization {
 		count, list := u.UserService.GetAllWithOrganization(name, query.GetPageable(c))
+		u.UserService.LoadUsersRoles(list)
 		response.Page(c, count, list)
 	} else {
 		count, list := u.UserService.Find(conds, query.GetPageable(c))
+		u.UserService.LoadUsersRoles(list)
 		response.Page(c, count, list)
 	}
 }
@@ -445,6 +448,8 @@ func (u *AdminUserOpenController) GetUser(c *gin.Context) {
 		response.NotFound(c, "")
 		return
 	}
+
+	u.UserService.LoadUserRoles(result)
 
 	response.Success(c, result)
 }
@@ -511,6 +516,8 @@ func (u *AdminUserOpenController) CreateUser(c *gin.Context) {
 		return
 	}
 
+	u.UserService.LoadUserRoles(res)
+
 	response.OK(c, res)
 }
 
@@ -530,7 +537,7 @@ func (u *AdminUserOpenController) CreateUsers(c *gin.Context) {
 	}
 
 	valid := validation.Validation{}
-	result := make([]interface{}, 0)
+	result := make([]*domain.User, 0)
 	for _, user := range users {
 		var skip = false
 		// name 不为空
@@ -579,6 +586,8 @@ func (u *AdminUserOpenController) CreateUsers(c *gin.Context) {
 			}
 		}
 	}
+
+	u.UserService.LoadUsersRoles(result)
 
 	response.OK(c, result)
 }
@@ -739,12 +748,14 @@ func (u *AdminUserOpenController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if result, err := service.GetUserService().Update(&user); err != nil {
+	result, err := service.GetUserService().Update(&user)
+	if err != nil {
 		response.SystemErrorCode(c, errors.ERROR_UPDATE_FAIL)
 		return
-	} else {
-		response.OK(c, result)
 	}
+
+	u.UserService.LoadUserRoles(result)
+	response.OK(c, result)
 }
 
 // @Summary   更新用户
@@ -778,7 +789,9 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 		return
 	}
 
-	var params map[string]interface{}
+	var user = make(map[string]interface{})
+
+	var params domain.User
 	if err := c.BindJSON(&params); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -786,34 +799,48 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 
 	valid := validation.Validation{}
 
-	name := params["name"]
-	if name != nil && name.(string) != "" {
-		valid.MaxSize(name.(string), 100, "login").Message("最长为100字符")
-		valid.MinSize(name.(string), 2, "name").Message("最短为2字符")
-	} else {
-		delete(params, "name")
+	name := params.Name
+	if name != nil && *name != "" {
+		valid.MaxSize(*name, 100, "name").Message("最长为100字符")
+		valid.MinSize(*name, 2, "name").Message("最短为2字符")
+
+		user["name"] = *name
 	}
 
-	login := params["login"]
-	if login != nil && login.(string) != "" {
-		valid.MaxSize(login.(string), 100, "login").Message("最长为100字符")
-		valid.MinSize(login.(string), 6, "login").Message("最短为5字符")
-	} else {
-		delete(params, "login")
+	login := params.Login
+	if login != nil && *login != "" {
+		valid.MaxSize(*login, 100, "login").Message("最长为100字符")
+		valid.MinSize(*login, 6, "login").Message("最短为5字符")
+
+		user["login"] = *login
 	}
 
-	mobile := params["mobile"]
-	if mobile != nil && mobile.(string) != "" {
-		valid.Check(mobile.(string), util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
-	} else {
-		delete(params, "mobile")
+	mobile := params.Mobile
+	if mobile != nil && *mobile != "" {
+		valid.Check(*mobile, util.NewInternationalTelephoneValidator("mobile")).Message("无效手机号")
+
+		user["mobile"] = *mobile
 	}
 
-	email := params["email"]
-	if email != nil && email.(string) != "" {
-		valid.Email(email.(string), "email").Message("无效邮箱地址")
-	} else {
-		delete(params, "email")
+	email := params.Email
+	if email != nil && *email != "" {
+		valid.Email(*email, "email").Message("无效邮箱地址")
+
+		user["email"] = *email
+	}
+
+	if params.Avatar != nil {
+		user["avatar"] = *params.Avatar
+	}
+
+	user["admin"] = params.Admin
+
+	if params.Status != nil {
+		user["status"] = *params.Status
+	}
+
+	if params.Roles != nil {
+		user["roles"] = params.Roles
 	}
 
 	// password := params["password"]
@@ -828,13 +855,7 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 		return
 	}
 
-	var availableFields = []string{"name", "avatar", "login", "mobile", "email", "admin", "status"}
-	var user = make(map[string]interface{})
-	for _, k := range availableFields {
-		if v, b := params[k]; b {
-			user[k] = v
-		}
-	}
+	// var availableFields = []string{"name", "avatar", "login", "mobile", "email", "admin", "status"}
 
 	result, err := service.GetUserService().PatchAll(id, user)
 	if err != nil {
@@ -842,6 +863,7 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 		return
 	}
 
+	u.UserService.LoadUserRoles(result)
 	response.Success(c, result)
 }
 

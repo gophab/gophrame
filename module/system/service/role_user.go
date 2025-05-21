@@ -25,6 +25,7 @@ func init() {
 	inject.InjectValue("roleUserService", roleUserService)
 
 	eventbus.RegisterEventListener("USER_CREATED", roleUserService.onUserCreated)
+	eventbus.RegisterEventListener("USER_UPDATED", roleUserService.onUserUpdated)
 }
 
 func (u *RoleUserService) ListMembers(roleId, search, tenantId string, pageable query.Pageable) (int64, []*domain.RoleMember) {
@@ -46,6 +47,18 @@ func (u *RoleUserService) GetUserRoleIds(userId string) []string {
 	}
 
 	return roleIds
+}
+
+// 根据用户id查询所有可能的岗位节点id
+func (u *RoleUserService) GetUserRoles(userId string) []*domain.RoleUser {
+	//获取用户的所有岗位id
+	roleUsers := u.RoleUserRepository.GetByUserId(userId)
+	return roleUsers
+}
+
+func (u *RoleUserService) DeleteUserRoles(userId string) {
+	//获取用户的所有岗位id
+	u.RoleUserRepository.DeleteByUserId(userId)
 }
 
 func (u *RoleUserService) GetRoleUserIds(roleId string) []string {
@@ -158,6 +171,31 @@ func (s *RoleUserService) onUserCreated(event string, args ...interface{}) {
 		}
 
 		if len(roleIds) > 0 {
+			s.AddUserRoleIds(user.Id, roleIds)
+		}
+	}
+}
+
+func (s *RoleUserService) onUserUpdated(event string, args ...interface{}) {
+	var user = args[0].(*domain.User)
+
+	// 创建时设置角色
+	if user.Roles != nil {
+		// 清除所有
+		s.DeleteUserRoles(user.Id)
+
+		if len(user.Roles) > 0 {
+			var roleIds = make([]string, 0)
+			for _, role := range user.Roles {
+				if len(role.Id) > 0 {
+					roleIds = append(roleIds, role.Id)
+				} else if len(role.Name) > 0 {
+					if r, err := s.RoleRepository.GetByName(role.Name, user.TenantId); err == nil && r != nil {
+						roleIds = append(roleIds, r.Id)
+					}
+				}
+			}
+
 			s.AddUserRoleIds(user.Id, roleIds)
 		}
 	}

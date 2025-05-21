@@ -41,7 +41,7 @@ func (m *OrganizationController) AfterInitialize() {
 
 // 1.根据id查询节点
 func (a *OrganizationController) GetOrganization(context *gin.Context) {
-	id, err := request.Param(context, "id").MustInt64()
+	id, err := request.Param(context, "id").MustString()
 	if err != nil {
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
@@ -56,7 +56,7 @@ func (a *OrganizationController) GetOrganization(context *gin.Context) {
 
 // 1.省份城市列表
 func (a *OrganizationController) GetList(context *gin.Context) {
-	fid := request.Param(context, "fid").DefaultInt64(0)
+	fid := request.Param(context, "fid").DefaultString("")
 	name := request.Param(context, "name").DefaultString("")
 	pageable := query.GetPageable(context)
 
@@ -71,7 +71,7 @@ func (a *OrganizationController) GetList(context *gin.Context) {
 
 // 1.根据fid查询子节点列表
 func (a *OrganizationController) GetSubList(context *gin.Context) {
-	fid, err := request.Param(context, "id").MustInt64()
+	fid, err := request.Param(context, "id").MustString()
 	if err != nil {
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
@@ -116,7 +116,7 @@ func (a *OrganizationController) UpdateOrganization(c *gin.Context) {
 
 // 删除
 func (a *OrganizationController) DeleteOrganization(c *gin.Context) {
-	id, err := request.Param(c, "id").MustInt64()
+	id, err := request.Param(c, "id").MustString()
 	if err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return

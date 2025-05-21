@@ -22,8 +22,10 @@ import (
 
 type UserService struct {
 	service.BaseService
-	UserRepository *repository.UserRepository `inject:"userRepository"`
-	Enforcer       *casbin.SyncedEnforcer     `inject:"enforcer"`
+	UserRepository  *repository.UserRepository `inject:"userRepository"`
+	RoleUserService *RoleUserService           `inject:"roleUserService"`
+	RoleService     *RoleService               `inject:"roleService"`
+	Enforcer        *casbin.SyncedEnforcer     `inject:"enforcer"`
 }
 
 var userService *UserService = &UserService{}
@@ -105,9 +107,9 @@ func (s *UserService) Create(user *dto.User) (*domain.User, error) {
 
 	if len(user.Roles) > 0 {
 		// 设置用户角色
-		res.Roles = make([]domain.Role, 0)
+		res.Roles = make([]*domain.Role, 0)
 		for _, role := range user.Roles {
-			var r = domain.Role{}
+			var r = &domain.Role{}
 			r.Name = role.Name
 			r.Id = role.Id
 			res.Roles = append(res.Roles, r)
@@ -175,7 +177,18 @@ func (s *UserService) Update(user *dto.User) (*domain.User, error) {
 	}
 
 	if err = s.UserRepository.UpdateUser(exists); err == nil {
-		eventbus.PublishEvent("USER_UPDATED", user)
+		if len(user.Roles) > 0 {
+			// 设置用户角色
+			exists.Roles = make([]*domain.Role, 0)
+			for _, role := range user.Roles {
+				var r = &domain.Role{}
+				r.Name = role.Name
+				r.Id = role.Id
+				exists.Roles = append(exists.Roles, r)
+			}
+		}
+
+		eventbus.PublishEvent("USER_UPDATED", exists)
 	}
 
 	return exists, err
@@ -203,13 +216,16 @@ func (s *UserService) PatchAll(id string, kv map[string]interface{}) (*domain.Us
 	}
 
 	kv["id"] = id
-	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).UpdateColumns(util.DbFields(kv)); res.Error != nil {
+	if res := s.UserRepository.Model(&domain.User{}).Where("id=?", id).Omit("roles").UpdateColumns(util.DbFields(kv)); res.Error != nil {
 		return nil, res.Error
 	}
 
 	if user, err := s.GetById(id); err != nil {
 		return nil, err
 	} else {
+		if roles, b := kv["roles"]; b {
+			user.Roles = roles.([]*domain.Role)
+		}
 		eventbus.PublishEvent("USER_UPDATED", user)
 		return user, err
 	}
@@ -280,7 +296,7 @@ func (a *UserService) Find(conds map[string]interface{}, pageable query.Pageable
 }
 
 // 查询用户信息(带岗位)
-func (a *UserService) GetAllWithOrganization(name string, pageable query.Pageable) (int64, []domain.UserWithOrganization) {
+func (a *UserService) GetAllWithOrganization(name string, pageable query.Pageable) (int64, []*domain.User) {
 	return a.UserRepository.GetUserWithOrganizations(name, pageable)
 }
 
@@ -311,6 +327,24 @@ func (s *UserService) ChangeUserPassword(id string, oldpassword, password string
 		return false, res.Error
 	}
 	return res.RowsAffected > 0, nil
+}
+
+func (s *UserService) LoadUserRoles(user *domain.User) (*domain.User, error) {
+	if user.Roles == nil {
+		user.Roles, _ = s.RoleService.GetUserRoles(user.Id)
+	}
+	return user, nil
+}
+
+func (s *UserService) LoadUsersRoles(users []*domain.User) ([]*domain.User, error) {
+	if len(users) > 0 {
+		for _, user := range users {
+			if _, err := s.LoadUserRoles(user); err != nil {
+				return users, err
+			}
+		}
+	}
+	return users, nil
 }
 
 func (s *UserService) onUserLogin(event string, args ...interface{}) {

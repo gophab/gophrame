@@ -39,7 +39,12 @@ func init() {
 
 func (m *AdminAuthorityOpenController) AfterInitialize() {
 	m.SetResourceHandlers([]controller.ResourceHandler{
-		{HttpMethod: "GET", ResourcePath: "/authorities", Handler: m.GetConsoleAuthorities},
+		{HttpMethod: "GET", ResourcePath: "/operations", Handler: m.GetConsoleOperations},
+		{HttpMethod: "GET", ResourcePath: "/role/:id/operations", Handler: m.GetRoleOperations},
+		{HttpMethod: "GET", ResourcePath: "/user/:id/operations", Handler: m.GetUserOperations},
+		{HttpMethod: "PUT", ResourcePath: "/role/:id/operations", Handler: m.SetRoleOperations},
+		{HttpMethod: "PUT", ResourcePath: "/user/:id/operations", Handler: m.SetUserOperations},
+
 		{HttpMethod: "GET", ResourcePath: "/role/:id/authorities", Handler: m.GetRoleAuthorities},
 		{HttpMethod: "GET", ResourcePath: "/user/:id/authorities", Handler: m.GetUserAuthorities},
 		{HttpMethod: "PUT", ResourcePath: "/role/:id/authorities", Handler: m.SetRoleAuthorities},
@@ -73,9 +78,79 @@ func filter(list []*domain.Operation) []*domain.Operation {
 }
 
 // 待分配的系统菜单以及挂接的按钮
-func (c *AdminAuthorityOpenController) GetConsoleAuthorities(context *gin.Context) {
-	_, list := c.AuthorityService.GetSystemAuthorities()
+func (c *AdminAuthorityOpenController) GetConsoleOperations(context *gin.Context) {
+	_, list := c.AuthorityService.GetSystemOperations()
 	response.Success(context, filter(list))
+}
+
+// 待分配的系统菜单以及挂接的按钮
+func (c *AdminAuthorityOpenController) GetRoleOperations(context *gin.Context) {
+	roleId, err := request.Param(context, "id").MustString()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+	count, list := c.AuthorityService.GetRoleOperations(roleId)
+	response.Page(context, count, list)
+}
+
+// 根据用户ID获取所有权限的来源
+func (c *AdminAuthorityOpenController) GetUserOperations(context *gin.Context) {
+	userId, err := request.Param(context, "id").MustString()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	//根据用户ID,查询隶属哪些组织机构
+	if data := c.AuthorityService.GetUserOperations(userId); data != nil {
+		response.Success(context, data)
+	} else {
+		response.NotFound(context, "")
+	}
+
+}
+
+// 待分配的系统菜单以及挂接的按钮
+func (c *AdminAuthorityOpenController) SetRoleOperations(context *gin.Context) {
+	roleId, err := request.Param(context, "id").MustString()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	var request []*domain.Operation
+	if err := context.ShouldBind(&request); err != nil {
+		logger.Warn("数据绑定出错", err.Error())
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	c.AuthorityService.SetRoleOperations(roleId, request)
+
+	count, list := c.AuthorityService.GetRoleOperations(roleId)
+	response.Page(context, count, list)
+}
+
+// 待分配的系统菜单以及挂接的按钮
+func (c *AdminAuthorityOpenController) SetUserOperations(context *gin.Context) {
+	userId, err := request.Param(context, "id").MustString()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	var request []*domain.Operation
+	if err := context.ShouldBind(&request); err != nil {
+		logger.Warn("数据绑定出错", err.Error())
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	c.AuthorityService.SetUserOperations(userId, request)
+
+	list := c.AuthorityService.GetUserOperations(userId)
+	response.Success(context, list)
 }
 
 // 待分配的系统菜单以及挂接的按钮
@@ -85,8 +160,15 @@ func (c *AdminAuthorityOpenController) GetRoleAuthorities(context *gin.Context) 
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
 	}
-	count, list := c.AuthorityService.GetRoleAuthorities(roleId)
-	response.Page(context, count, list)
+
+	authType, err := request.Param(context, "auth_type").MustString()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	list, _ := c.AuthorityService.GetRoleAuthorities(roleId, authType)
+	response.Page(context, int64(len(list)), list)
 }
 
 // 根据用户ID获取所有权限的来源
@@ -97,8 +179,14 @@ func (c *AdminAuthorityOpenController) GetUserAuthorities(context *gin.Context) 
 		return
 	}
 
+	authType, err := request.Param(context, "auth_type").MustString()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
 	//根据用户ID,查询隶属哪些组织机构
-	if data := c.AuthorityService.GetUserAuthorities(userId); data != nil {
+	if data := c.AuthorityService.GetUserAuthorities(userId, authType); data != nil {
 		response.Success(context, data)
 	} else {
 		response.NotFound(context, "")
@@ -114,17 +202,23 @@ func (c *AdminAuthorityOpenController) SetRoleAuthorities(context *gin.Context) 
 		return
 	}
 
-	var request []*domain.Operation
+	authType, err := request.Param(context, "auth_type").MustString()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	var request []string
 	if err := context.ShouldBind(&request); err != nil {
 		logger.Warn("数据绑定出错", err.Error())
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
 	}
 
-	c.AuthorityService.SetRoleAuthorities(roleId, request)
+	c.AuthorityService.SetRoleAuthorities(roleId, authType, request)
 
-	count, list := c.AuthorityService.GetRoleAuthorities(roleId)
-	response.Page(context, count, list)
+	list, _ := c.AuthorityService.GetRoleAuthorities(roleId, authType)
+	response.Page(context, int64(len(list)), list)
 }
 
 // 待分配的系统菜单以及挂接的按钮
@@ -135,30 +229,54 @@ func (c *AdminAuthorityOpenController) SetUserAuthorities(context *gin.Context) 
 		return
 	}
 
-	var request []*domain.Operation
+	authType, err := request.Param(context, "auth_type").MustString()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	var request []string
 	if err := context.ShouldBind(&request); err != nil {
 		logger.Warn("数据绑定出错", err.Error())
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
 	}
 
-	c.AuthorityService.SetUserAuthorities(userId, request)
+	c.AuthorityService.SetUserAuthorities(userId, authType, request)
 
-	list := c.AuthorityService.GetUserAuthorities(userId)
+	list := c.AuthorityService.GetUserAuthorities(userId, authType)
 	response.Success(context, list)
 }
 
 func (m *AuthorityOpenController) AfterInitialize() {
 	m.SetResourceHandlers([]controller.ResourceHandler{
+		{HttpMethod: "GET", ResourcePath: "/operations", Handler: m.GetUserOperations},
 		{HttpMethod: "GET", ResourcePath: "/authorities", Handler: m.GetUserAuthorities},
+
 		{HttpMethod: "GET", ResourcePath: "/menus", Handler: m.GetUserMenus},
 		// {HttpMethod: "GET", ResourcePath: "/user/menu/:id/buttons", Handler: m.GetUserMenuButtons},
 	})
 }
 
-func (c *AuthorityOpenController) GetUserAuthorities(context *gin.Context) {
+func (c *AuthorityOpenController) GetUserOperations(context *gin.Context) {
 	currentUserId := SecurityUtils.GetCurrentUserId(context)
-	authorities := c.AuthorityService.GetUserAvailableAuthorities(currentUserId)
+	operations := c.AuthorityService.GetUserAvailableOperations(currentUserId)
+	if len(operations) > 0 {
+		response.OK(context, operations)
+	} else {
+		response.OK(context, []any{})
+	}
+}
+
+func (c *AuthorityOpenController) GetUserAuthorities(context *gin.Context) {
+	authType, err := request.Param(context, "auth_type").MustString()
+	if err != nil {
+		response.FailCode(context, errors.INVALID_PARAMS)
+		return
+	}
+
+	currentUserId := SecurityUtils.GetCurrentUserId(context)
+	authorities := c.AuthorityService.GetUserAvailableAuthorities(currentUserId, authType)
 	if len(authorities) > 0 {
 		response.OK(context, authorities)
 	} else {

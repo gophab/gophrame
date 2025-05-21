@@ -51,7 +51,7 @@ func User2UserDetails(user *domain.User) *SecurityModel.UserDetails {
 			Name:     user.Name,
 			Avatar:   user.Avatar,
 			Admin:    user.Admin,
-			Roles: array.Map(user.Roles, func(item domain.Role) string {
+			Roles: array.Map(user.Roles, func(item *domain.Role) string {
 				return item.Name
 			}),
 		}

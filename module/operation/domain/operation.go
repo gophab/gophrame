@@ -7,9 +7,9 @@ import (
 // 菜单分配文件相关的数据类型
 // Type: [menu | button]
 type OperationInfo struct {
+	domain.Entity
 	domain.PropertiesEnabled
-	Id     int64  `gorm:"primaryKey" json:"id" primaryKey:"yes"`
-	Fid    int64  `gorm:"column:fid;default:0" json:"fid" fid:"Id"`
+	Fid    string `gorm:"column:fid;default:0" json:"fid" fid:"Id"`
 	Name   string `gorm:"column:name" json:"name"`
 	Icon   string `gorm:"column:icon" json:"icon,omitempty"`
 	Title  string `gorm:"column:title" json:"title,omitempty" i18n:"yes"`

@@ -4,7 +4,7 @@ import "github.com/gophab/gophrame/domain"
 
 type OrganizationUser struct {
 	domain.Relation
-	OrganizationId int64  `gorm:"column:organization_id" json:"organizationId"`
+	OrganizationId string `gorm:"column:organization_id" json:"organizationId"`
 	UserId         string `gorm:"column:user_id" json:"userId"`
 	PositionId     *int64 `gorm:"column:position_id" json:"positionId"`
 	Status         int    `gorm:"column:status;default:1" json:"status"`

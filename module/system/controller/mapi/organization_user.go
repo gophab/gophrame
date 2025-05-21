@@ -31,7 +31,7 @@ func (m *OrganizationUserMController) AfterInitialize() {
 }
 
 func (o *OrganizationUserMController) GetOrganizationMemebers(c *gin.Context) {
-	organizationId := request.Param(c, "organizationId").Int64()
+	organizationId := request.Param(c, "organizationId").DefaultString("")
 	name := request.Param(c, "name").DefaultString("")
 	pageable := query.GetPageable(c)
 

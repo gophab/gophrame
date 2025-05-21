@@ -336,14 +336,12 @@ func (u *UserRepository) getCounts(userName string) (counts int64) {
 }
 
 // 权限分配查询（包含用户岗位信息）
-func (a *UserRepository) GetUserWithOrganizations(userName string, pageable query.Pageable) (totalCounts int64, list []domain.UserWithOrganization) {
+func (a *UserRepository) GetUserWithOrganizations(userName string, pageable query.Pageable) (totalCounts int64, list []*domain.User) {
 	totalCounts = a.getCounts(userName)
 	if totalCounts > 0 {
 		sql := `
 			SELECT  
-				a.id, 
-				a.login, 
-				a.name, 
+				a.*, 
 				(
 					SELECT  
 						REPLACE(IFNULL(GROUP_CONCAT(name ORDER BY id ASC),''),',',' | ')

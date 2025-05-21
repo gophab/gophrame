@@ -22,9 +22,9 @@ func init() {
 	inject.InjectValue("menuRepository", menuRepository)
 }
 
-func (a *MenuRepository) getCounts(fid int64, title string) (count int64) {
+func (a *MenuRepository) getCounts(fid string, title string) (count int64) {
 	var tx = a.Model(&domain.Menu{})
-	if fid >= 0 {
+	if fid != "" {
 		tx.Where("fid = ?", fid)
 	}
 	if title != "" {
@@ -35,14 +35,14 @@ func (a *MenuRepository) getCounts(fid int64, title string) (count int64) {
 }
 
 // 查询
-func (a *MenuRepository) List(fid int64, title string, pageable query.Pageable) (counts int64, data []*domain.Menu) {
+func (a *MenuRepository) List(fid string, title string, pageable query.Pageable) (counts int64, data []*domain.Menu) {
 	tx := a.Model(&domain.Menu{}).
 		Order("sort ASC").
 		Order("fid ASC").
 		Limit(pageable.GetLimit()).
 		Offset(pageable.GetOffset())
 
-	if fid >= 0 {
+	if fid != "" {
 		tx.Where("fid=?", fid)
 	}
 
@@ -67,14 +67,14 @@ func (a *MenuRepository) List(fid int64, title string, pageable query.Pageable) 
 }
 
 // 查询
-func (a *MenuRepository) ListWithButtons(fid int64, title string, pageable query.Pageable) (counts int64, data []*domain.Menu) {
+func (a *MenuRepository) ListWithButtons(fid string, title string, pageable query.Pageable) (counts int64, data []*domain.Menu) {
 	tx := a.Model(&domain.Menu{}).Preload("Buttons").
 		Order("sort ASC").
 		Order("fid ASC").
 		Limit(pageable.GetLimit()).
 		Offset(pageable.GetOffset())
 
-	if fid >= 0 {
+	if fid != "" {
 		tx.Where("fid=?", fid)
 	}
 
@@ -99,7 +99,7 @@ func (a *MenuRepository) ListWithButtons(fid int64, title string, pageable query
 }
 
 // 通过fid查询子节点数据
-func (a *MenuRepository) GetById(id int64) (data *domain.Menu, err error) {
+func (a *MenuRepository) GetById(id string) (data *domain.Menu, err error) {
 	sql := `
 		SELECT  
 			a.*,
@@ -114,7 +114,7 @@ func (a *MenuRepository) GetById(id int64) (data *domain.Menu, err error) {
 }
 
 // 通过fid查询子节点数据
-func (a *MenuRepository) GetByFid(fid int64) (data []*domain.Menu, err error) {
+func (a *MenuRepository) GetByFid(fid string) (data []*domain.Menu, err error) {
 	sql := `
 		SELECT  
 			a.*,
@@ -129,7 +129,7 @@ func (a *MenuRepository) GetByFid(fid int64) (data []*domain.Menu, err error) {
 }
 
 // 获取菜单fid的节点深度
-func (a *MenuRepository) GetMenuLevel(fid int64) (level int64) {
+func (a *MenuRepository) GetMenuLevel(fid string) (level int64) {
 	_ = a.Model(&domain.Menu{}).Select("level").Where("id=?", fid).First(&level)
 	return
 }
@@ -165,7 +165,7 @@ func (a *MenuRepository) UpdateMenu(data *domain.Menu) (bool, error) {
 }
 
 // 新增、更新继续hook，更新path_info 、node_level 字段
-func (a *MenuRepository) updatePathInfoNodeLevel(curItemid int64) bool {
+func (a *MenuRepository) updatePathInfoNodeLevel(curItemid string) bool {
 	sql := `
 		UPDATE 
 			auth_menu a  
@@ -185,7 +185,7 @@ func (a *MenuRepository) updatePathInfoNodeLevel(curItemid int64) bool {
 }
 
 // 根据id查询是否有子节点数据
-func (a *MenuRepository) GetSubNodeCount(id int64) (count int64) {
+func (a *MenuRepository) GetSubNodeCount(id string) (count int64) {
 	if res := a.Model(&domain.Menu{}).Where("fid = ?", id).Count(&count); res.Error != nil {
 		logger.Error("AuthSystemMenuModel 查询子节点是否有数据出错：", res.Error.Error())
 	}
@@ -193,7 +193,7 @@ func (a *MenuRepository) GetSubNodeCount(id int64) (count int64) {
 }
 
 // 删除数据
-func (a *MenuRepository) DeleteData(id int64) (bool, error) {
+func (a *MenuRepository) DeleteData(id string) (bool, error) {
 	if res := a.Delete(&domain.Menu{}, "id=?", id); res.Error == nil {
 		go a.DeleteDataHook(id) // 删除菜单关联的所有数据
 		return true, nil
@@ -204,7 +204,7 @@ func (a *MenuRepository) DeleteData(id int64) (bool, error) {
 }
 
 // 根据IDS获取菜单信息
-func (a *MenuRepository) GetByIds(ids []int64) (result []*domain.Menu) {
+func (a *MenuRepository) GetByIds(ids []string) (result []*domain.Menu) {
 	sql := `
 			SELECT 
 				a.id, a.fid, a.title, a.name, TRIM(a.icon) as icon, a.path, a.level, a.component, a.out_page,
@@ -221,7 +221,7 @@ func (a *MenuRepository) GetByIds(ids []int64) (result []*domain.Menu) {
 }
 
 // 菜单主表数据删除，菜单关联的业务数据表同步删除
-func (a *MenuRepository) DeleteDataHook(menuId int64) {
+func (a *MenuRepository) DeleteDataHook(menuId string) {
 	//4. 删除菜单关联的待分配按钮子表
 	sql := `DELETE FROM auth_button WHERE fid  = ? `
 	if res := a.Exec(sql, menuId); res.Error != nil {

@@ -38,7 +38,7 @@ func (s *MenuService) UpdateMenu(data *domain.Menu) (bool, error) {
 	}
 }
 
-func (s *MenuService) DeleteMenu(id int64) (bool, error) {
+func (s *MenuService) DeleteMenu(id string) (bool, error) {
 	if b, err := s.MenuRepository.DeleteData(id); b {
 		return true, nil
 	} else {
@@ -46,42 +46,42 @@ func (s *MenuService) DeleteMenu(id int64) (bool, error) {
 	}
 }
 
-func (s *MenuService) GetById(id int64) (*domain.Menu, error) {
+func (s *MenuService) GetById(id string) (*domain.Menu, error) {
 	result, err := s.MenuRepository.GetById(id)
 	return result, err
 }
 
-func (s *MenuService) GetByFid(fid int64) ([]*domain.Menu, error) {
+func (s *MenuService) GetByFid(fid string) ([]*domain.Menu, error) {
 	result, err := s.MenuRepository.GetByFid(fid)
 	return result, err
 }
 
-func (s *MenuService) List(fid int64, title string, pageable query.Pageable) (int64, []*domain.Menu) {
+func (s *MenuService) List(fid string, title string, pageable query.Pageable) (int64, []*domain.Menu) {
 	return s.MenuRepository.List(fid, title, pageable)
 }
 
-func (s *MenuService) ListWithButtons(fid int64, title string, pageable query.Pageable) (int64, []*domain.Menu) {
+func (s *MenuService) ListWithButtons(fid string, title string, pageable query.Pageable) (int64, []*domain.Menu) {
 	return s.MenuRepository.ListWithButtons(fid, title, pageable)
 }
 
 func (s *MenuService) MakeTree(result []*domain.Menu) []*domain.Menu {
-	var menuMap = make(map[int64]*domain.Menu)
+	var menuMap = make(map[string]*domain.Menu)
 	for _, menu := range result {
 		menu.Children = make([]*domain.Menu, 0)
 		menuMap[menu.Id] = menu
 	}
 	for _, menu := range result {
-		if menu.Fid != 0 {
+		if menu.Fid != "" {
 			var parent = menuMap[menu.Fid]
 			if parent != nil {
 				parent.Children = append(parent.Children, menu)
 			} else {
-				menu.Fid = 0
+				menu.Fid = ""
 			}
 		}
 	}
 	result, _ = array.Filter[*domain.Menu](result, func(m *domain.Menu) bool {
-		return m.Fid != 0
+		return m.Fid != ""
 	})
 	return result
 }

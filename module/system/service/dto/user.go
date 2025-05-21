@@ -19,7 +19,7 @@ type User struct {
 	LoginTimes       *int       `json:"loginTimes"`
 	LastLoginTime    *time.Time `json:"lastLoginTime,omitempty"`
 	LastLoginIp      *string    `json:"lastLoginIp,omitempty"`
-	Roles            []Role     `json:"roles,omitempty"`
+	Roles            []*Role    `json:"roles,omitempty"`
 }
 
 func (u *User) AsDomain() *domain.User {
