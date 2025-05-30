@@ -40,7 +40,7 @@ func (r *OrganizationRepository) GetById(id string) (*domain.Organization, error
 
 func (r *OrganizationRepository) GetParentById(id string) (*domain.Organization, error) {
 	if org, err := r.GetById(id); err == nil && org != nil {
-		if org.Fid != "" {
+		if org.Fid != "" && org.Fid != "0" {
 			return r.GetById(org.Fid)
 		} else {
 			return nil, nil
@@ -52,7 +52,7 @@ func (r *OrganizationRepository) GetParentById(id string) (*domain.Organization,
 
 func (r *OrganizationRepository) GetAllParentsById(id string) ([]*domain.Organization, error) {
 	if parent, err := r.GetParentById(id); err == nil && parent != nil {
-		if parent.Fid != "" {
+		if parent.Fid != "" && parent.Fid != "0" {
 			if parents, err := r.GetAllParentsById(parent.Fid); err == nil && len(parents) > 0 {
 				return append([]*domain.Organization{parent}, parents...), nil
 			} else {

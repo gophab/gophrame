@@ -355,7 +355,7 @@ func (a *AuthorityRepository) makeTree(src []*OperationModel.Operation, dest *[]
 		srcMap[item.Id] = item
 	}
 	for _, item := range src {
-		if item.Fid != "" {
+		if item.Fid != "" && item.Fid != "0" {
 			var parent = srcMap[item.Fid]
 			if parent != nil {
 				if parent.Children == nil {
