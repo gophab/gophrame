@@ -24,6 +24,14 @@ func StringValue(s *string) string {
 	}
 }
 
+func DefaultStringValue(s *string, defaultValue string) string {
+	if s == nil {
+		return defaultValue
+	} else {
+		return *s
+	}
+}
+
 func DefaultString(s string, defaultValue string) string {
 	if s == "" {
 		return defaultValue
