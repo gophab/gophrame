@@ -1,5 +1,10 @@
 package config
 
+import (
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
+)
+
 type QcloudSetting struct {
 	Enabled   bool   `json:"enabled" yaml:"enabled"`
 	AppId     string `json:"appId" yaml:"appId"`
@@ -12,4 +17,9 @@ type QcloudSetting struct {
 
 var Setting *QcloudSetting = &QcloudSetting{
 	Enabled: false,
+}
+
+func init() {
+	logger.Debug("Register Oss Config - qcloud")
+	config.RegisterConfig("oss.qcloud", Setting, "QCloud Settings")
 }

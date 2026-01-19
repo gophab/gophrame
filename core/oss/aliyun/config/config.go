@@ -1,5 +1,10 @@
 package config
 
+import (
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
+)
+
 type AliyunSetting struct {
 	Enabled         bool   `json:"enabled" yaml:"enabled"`
 	AccessKeyId     string `json:"accessKeyId" yaml:"accessKeyId"`
@@ -16,4 +21,9 @@ var Setting *AliyunSetting = &AliyunSetting{
 	Enabled:  false,
 	UseCname: false,
 	Path:     "",
+}
+
+func init() {
+	logger.Debug("Register Oss Config - Aliyun")
+	config.RegisterConfig("oss.aliyun", Setting, "Aliyun Settings")
 }

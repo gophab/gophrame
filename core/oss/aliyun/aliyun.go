@@ -8,7 +8,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/oss/aliyun/config"
+	"github.com/gophab/gophrame/core/starter"
 	"github.com/gophab/gophrame/core/util"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
@@ -115,5 +118,18 @@ func (s *AliyunOSS) UploadLocal(fileName string, prefix string) (string, string,
 		return re_.ReplaceAllString(config.Setting.Endpoint, "") + "/" + yunFileTmpPath, yunFileTmpPath, nil
 	} else {
 		return re_.ReplaceAllString(config.Setting.BucketUrl, "") + "/" + yunFileTmpPath, yunFileTmpPath, nil
+	}
+}
+
+func init() {
+	starter.RegisterStarter(Start)
+}
+
+func Start() {
+	if config.Setting.Enabled {
+		logger.Info("Start Aliyun OSS...")
+		if oss, err := CreateAliyunOSS(); err == nil && oss != nil {
+			inject.InjectValue("oss", oss)
+		}
 	}
 }

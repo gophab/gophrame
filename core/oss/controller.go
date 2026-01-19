@@ -42,10 +42,8 @@ func (c *OssController) UploadImage(context *gin.Context) {
 }
 
 func (c *OssController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
-	// 创建一个验证码路由
 	oss := g.Group("openapi/oss")
 	{
-		// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
 		oss.POST("/file", c.UploadFile)   //  获取验证码ID
 		oss.POST("/image", c.UploadImage) //  获取验证码ID
 	}

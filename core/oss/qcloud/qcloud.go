@@ -10,7 +10,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/gophab/gophrame/core/inject"
+	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/oss/qcloud/config"
+	"github.com/gophab/gophrame/core/starter"
 	"github.com/gophab/gophrame/core/util"
 
 	"github.com/tencentyun/cos-go-sdk-v5"
@@ -86,4 +89,17 @@ func (s *QcloudOSS) UploadLocal(fileName string, prefix string) (string, string,
 	}
 
 	return re_.ReplaceAllString(config.Setting.BucketUrl, "") + "/" + yunFileTmpPath, yunFileTmpPath, nil
+}
+
+func init() {
+	starter.RegisterStarter(Start)
+}
+
+func Start() {
+	if config.Setting.Enabled {
+		logger.Info("Start Qcloud OSS...")
+		if oss, err := CreateQcloudOSS(); err == nil && oss != nil {
+			inject.InjectValue("oss", oss)
+		}
+	}
 }
