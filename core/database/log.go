@@ -64,7 +64,7 @@ func createCustomGormLog(options ...Options) gormLog.Interface {
 
 type logOutPut struct{}
 
-func (l logOutPut) Printf(strFormat string, args ...interface{}) {
+func (l logOutPut) Printf(strFormat string, args ...any) {
 	logRes := fmt.Sprintf(strFormat, args...)
 	logFlag := "gorm_v2 日志:"
 	detailFlag := "详情："
@@ -139,23 +139,23 @@ func (l *LoggerWrapper) LogMode(level gormLog.LogLevel) gormLog.Interface {
 }
 
 // Info print info
-func (l *LoggerWrapper) Info(_ context.Context, msg string, data ...interface{}) {
+func (l *LoggerWrapper) Info(_ context.Context, msg string, data ...any) {
 	if l.LogLevel >= gormLog.Info {
-		l.Printf(l.infoStr+msg, append([]interface{}{utils.FileWithLineNum()}, data...)...)
+		l.Printf(l.infoStr+msg, append([]any{utils.FileWithLineNum()}, data...)...)
 	}
 }
 
 // Warn print warn messages
-func (l *LoggerWrapper) Warn(_ context.Context, msg string, data ...interface{}) {
+func (l *LoggerWrapper) Warn(_ context.Context, msg string, data ...any) {
 	if l.LogLevel >= gormLog.Warn {
-		l.Printf(l.warnStr+msg, append([]interface{}{utils.FileWithLineNum()}, data...)...)
+		l.Printf(l.warnStr+msg, append([]any{utils.FileWithLineNum()}, data...)...)
 	}
 }
 
 // Error print error messages
-func (l *LoggerWrapper) Error(_ context.Context, msg string, data ...interface{}) {
+func (l *LoggerWrapper) Error(_ context.Context, msg string, data ...any) {
 	if l.LogLevel >= gormLog.Error {
-		l.Printf(l.errStr+msg, append([]interface{}{utils.FileWithLineNum()}, data...)...)
+		l.Printf(l.errStr+msg, append([]any{utils.FileWithLineNum()}, data...)...)
 	}
 }
 

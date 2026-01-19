@@ -1,44 +1,27 @@
 package config
 
-import "time"
+import (
+	"github.com/gophab/gophrame/core/config"
+	"github.com/gophab/gophrame/core/logger"
+)
 
 type MysqlSetting struct {
-	Default    *MysqlDatabase `json:"default"`
-	EnableRead bool           `json:"enableRead" yaml:"enableRead"`
-	Read       *MysqlDatabase `json:"read,omitempty" yaml:"read,omitempty"`
+	MysqlDatabase
+	Read *MysqlDatabase `json:"read,omitempty" yaml:"read,omitempty"`
 }
 
 type MysqlDatabase struct {
-	Host                  string        `json:"host"`
-	Port                  int           `json:"port"`
-	User                  string        `json:"user"`
-	Password              string        `json:"password"`
-	Database              string        `json:"database"`
-	Charset               string        `json:"charset"`
-	MaxIdleConnections    int           `json:"maxIdleConnections" yaml:"maxIdleConnections"`
-	ConnectionMaxIdleTime time.Duration `json:"connectionMaxIdleTime" yaml:"connectionMaxIdleTime"`
-	MaxOpenConnections    int           `json:"maxOpenConnections" yaml:"maxOpenConnections"`
-	ConnectionMaxLifeTime time.Duration `json:"connectionMaxLifeTime" yaml:"connectionMaxLifeTime"`
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	Database string `json:"database"`
+	Charset  string `json:"charset"`
 }
 
-var Setting *MysqlSetting = &MysqlSetting{
-	Default: &MysqlDatabase{
-		// 数据库连接闲置时间 = 30s
-		ConnectionMaxIdleTime: time.Second * 30,
-		MaxIdleConnections:    10,
+var Setting *MysqlSetting = &MysqlSetting{}
 
-		// 数据库连接存在时间 = 180s
-		ConnectionMaxLifeTime: time.Second * 180,
-		MaxOpenConnections:    128,
-	},
-	EnableRead: false,
-	Read: &MysqlDatabase{
-		// 数据库连接闲置时间 = 30s
-		ConnectionMaxIdleTime: time.Second * 30,
-		MaxIdleConnections:    10,
-
-		// 数据库连接存在时间 = 180s
-		ConnectionMaxLifeTime: time.Second * 180,
-		MaxOpenConnections:    128,
-	},
+func init() {
+	logger.Debug("Register Database Config - Mysql")
+	config.RegisterConfig("database.mysql", Setting, "Mysql Settings")
 }

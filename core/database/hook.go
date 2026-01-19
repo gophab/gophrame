@@ -97,13 +97,13 @@ func UpdateIdHook(db *gorm.DB) {
 	idFieldsToInit := []string{"Id"}
 	for _, field := range idFieldsToInit {
 		if timeField := db.Statement.Schema.LookUpField(field); timeField != nil {
-			idGenerator := func() (result interface{}) { return }
+			idGenerator := func() (result any) { return }
 			tags := timeField.Tag.Get("gorm")
 			if strings.Contains(tags, "default:uuid") {
-				idGenerator = func() interface{} { return uuid.NewString() }
+				idGenerator = func() any { return uuid.NewString() }
 			}
 			if strings.Contains(tags, "default:snowflake") {
-				idGenerator = func() interface{} { return snowflake.SnowflakeIdGenerator().GetId() }
+				idGenerator = func() any { return snowflake.SnowflakeIdGenerator().GetId() }
 			}
 
 			switch db.Statement.ReflectValue.Kind() {
@@ -222,7 +222,7 @@ func UpdateBeforeHook(gormDB *gorm.DB) {
 }
 
 // structHasSpecialField  检查结构体是否有特定字段
-func structHasSpecialField(fieldName string, anyStructPtr interface{}) (bool, string) {
+func structHasSpecialField(fieldName string, anyStructPtr any) (bool, string) {
 	var tmp reflect.Type
 	if reflect.TypeOf(anyStructPtr).Kind() == reflect.Ptr && reflect.ValueOf(anyStructPtr).Elem().Kind() == reflect.Map {
 		destValueOf := reflect.ValueOf(anyStructPtr).Elem()
