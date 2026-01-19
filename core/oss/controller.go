@@ -30,7 +30,7 @@ func (c *OssController) UploadFile(context *gin.Context) {
 func (c *OssController) UploadImage(context *gin.Context) {
 	_, header, err := context.Request.FormFile("file")
 	if err != nil {
-		response.FailMessage(context, 400, "接收文件失败")
+		response.FailMessage(context, 400, "接收图片文件失败")
 		return
 	}
 
@@ -44,8 +44,8 @@ func (c *OssController) UploadImage(context *gin.Context) {
 func (c *OssController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
 	oss := g.Group("openapi/oss")
 	{
-		oss.POST("/file", c.UploadFile)   //  获取验证码ID
-		oss.POST("/image", c.UploadImage) //  获取验证码ID
+		oss.POST("/file", c.UploadFile)   //  上传文件
+		oss.POST("/image", c.UploadImage) //  上传图片
 	}
 	return oss
 }
