@@ -7,9 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gophab/gophrame/core/global"
 	"github.com/gophab/gophrame/core/inject"
-	"github.com/gophab/gophrame/core/starter"
 	"github.com/gophab/gophrame/domain"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -44,15 +42,6 @@ var i18nFactory = &I18nFactory{}
 
 func init() {
 	inject.InjectValue("i18nFactory", i18nFactory)
-	starter.RegisterStarter(Start)
-}
-
-func Start() {
-	if global.DB != nil {
-		global.DB.Callback().Create().After("gorm:create").Register("LocaleUpdateHook", LocaleUpdateHook)
-		global.DB.Callback().Update().After("gorm:update").Register("LocaleUpdateHook", LocaleUpdateHook)
-		global.DB.Callback().Query().After("gorm:query").Register("LocaleLoadHook", LocaleLoadHook)
-	}
 }
 
 func getTagSection(tag, key string) string {
@@ -199,7 +188,7 @@ func getPropertyFields(str string) (results map[string][]string) {
 }
 
 // data[field] = value
-func setSchemaLocaleField(ctx context.Context, data reflect.Value, field *schema.Field, value interface{}) {
+func setSchemaLocaleField(ctx context.Context, data reflect.Value, field *schema.Field, value any) {
 	if field.DataType == "json" {
 		// 属性字段：type == domain.Properties
 		var properties []string
@@ -211,8 +200,8 @@ func setSchemaLocaleField(ctx context.Context, data reflect.Value, field *schema
 
 		if len(properties) > 0 {
 			// 1. 获取原始数据
-			var oldJsonValue = make(map[string]interface{})
-			var jsonValue = make(map[string]interface{})
+			var oldJsonValue = make(map[string]any)
+			var jsonValue = make(map[string]any)
 			var err error = nil
 			if ov, b := field.ValueOf(ctx, data); !b && ov != nil {
 				oldJsonValue = *ov.(*domain.Properties)
@@ -251,7 +240,7 @@ func setSchemaLocaleField(ctx context.Context, data reflect.Value, field *schema
 }
 
 // field = value
-func setLocaleField(data reflect.Value, fieldName string, value interface{}) {
+func setLocaleField(data reflect.Value, fieldName string, value any) {
 	if dataField := data.FieldByName(fieldName); dataField.IsValid() && !dataField.IsZero() {
 		if dataField.Type().Name() == "json" {
 			var properties []string
@@ -267,8 +256,8 @@ func setLocaleField(data reflect.Value, fieldName string, value interface{}) {
 
 			if len(properties) > 0 {
 				// 1. 获取原始数据
-				var oldJsonValue = make(map[string]interface{})
-				var jsonValue = make(map[string]interface{})
+				var oldJsonValue = make(map[string]any)
+				var jsonValue = make(map[string]any)
 				var err error = nil
 				if ov := dataField.String(); ov != "" {
 					err = json.Unmarshal([]byte(ov), &oldJsonValue)

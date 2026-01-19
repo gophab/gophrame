@@ -25,10 +25,10 @@ const (
 // Manager for i18n contents, it is concurrent safe, supporting hot reload.
 type Manager struct {
 	mu       sync.RWMutex
-	data     map[string]map[string]interface{} // Translating map.
-	pattern  string                            // Pattern for regex parsing.
-	pathType pathType                          // Path type for i18n files.
-	options  Options                           // configuration options.
+	data     map[string]map[string]any // Translating map.
+	pattern  string                    // Pattern for regex parsing.
+	pathType pathType                  // Path type for i18n files.
+	options  Options                   // configuration options.
 }
 
 // Options is used for i18n object configuration.
@@ -133,23 +133,23 @@ func (m *Manager) LT(locale, content string) string {
 }
 
 // Tf is alias of TranslateFormat for convenience.
-func (m *Manager) LTf(locale, format string, values ...interface{}) string {
+func (m *Manager) LTf(locale, format string, values ...any) string {
 	return m.TranslateFormat(format, values...)
 }
 
 // TranslateFormat translates, formats and returns the `format` with configured language
 // and given `values`.
-func (m *Manager) TranslateFormat(format string, values ...interface{}) string {
+func (m *Manager) TranslateFormat(format string, values ...any) string {
 	return fmt.Sprintf(m.Translate(format), values...)
 }
 
 // TranslateFormat translates, formats and returns the `format` with configured language
 // and given `values`.
-func (m *Manager) LocaleTranslateFormat(locale, format string, values ...interface{}) string {
+func (m *Manager) LocaleTranslateFormat(locale, format string, values ...any) string {
 	return fmt.Sprintf(m.LocaleTranslate(locale, format), values...)
 }
 
-func getMapValue(config interface{}, path string) (interface{}, bool) {
+func getMapValue(config any, path string) (any, bool) {
 	if config == nil {
 		return nil, false
 	}
@@ -254,7 +254,7 @@ func (m *Manager) LocaleTranslate(lang, content string) string {
 
 // GetContent retrieves and returns the configured content for given key and specified language.
 // It returns an empty string if not found.
-func (m *Manager) GetContent(key string) interface{} {
+func (m *Manager) GetContent(key string) any {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	transLang := m.options.Language
@@ -297,7 +297,7 @@ func (m *Manager) init() {
 			lang  string
 			array []string
 		)
-		m.data = make(map[string]map[string]interface{})
+		m.data = make(map[string]map[string]any)
 		for _, fileName := range files {
 			array = strings.Split(fileName, file.Separator)
 			if len(array) > 1 {
@@ -306,7 +306,7 @@ func (m *Manager) init() {
 				lang = file.Name(array[0])
 			}
 			if m.data[lang] == nil {
-				m.data[lang] = make(map[string]interface{})
+				m.data[lang] = make(map[string]any)
 			}
 			var ext = m.data[lang]
 			if err := json.Unmarshal(file.GetBytes(fileName), &ext); err != nil {
@@ -320,23 +320,30 @@ func (m *Manager) init() {
 
 var i18nManager *Manager
 
-func init() {
-	i18nManager = New()
-	i18nManager.init()
-}
-
 func T(content string) string {
+	if i18nManager == nil {
+		return content
+	}
 	return i18nManager.Translate(content)
 }
 
-func Tf(format string, values ...interface{}) string {
+func Tf(format string, values ...any) string {
+	if i18nManager == nil {
+		return fmt.Sprintf(format, values...)
+	}
 	return i18nManager.TranslateFormat(format, values...)
 }
 
 func LT(locale, content string) string {
+	if i18nManager == nil {
+		return content
+	}
 	return i18nManager.LocaleTranslate(locale, content)
 }
 
-func LTf(locale, format string, values ...interface{}) string {
+func LTf(locale, format string, values ...any) string {
+	if i18nManager == nil {
+		return fmt.Sprintf(format, values...)
+	}
 	return i18nManager.LocaleTranslateFormat(locale, format, values...)
 }
