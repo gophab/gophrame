@@ -3,6 +3,7 @@ package token
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/gophab/gophrame/core/database"
@@ -86,6 +87,15 @@ func NewDatabaseTokenStore() (oauth2.TokenStore, error) {
 	return result, nil
 }
 
+func reformatSQL(sql string) string {
+	switch database.DB().Dialector.Name() {
+	case "postgres":
+		sql = strings.ReplaceAll(sql, "FROM DUAL", "")
+	}
+
+	return sql
+}
+
 func (s *DatabaseTokenStore) clearExpiredTokens() {
 	now := time.Now()
 	database.DB().Exec(`DELETE FROM oauth_access_token WHERE expiration < ?`, now)
@@ -103,8 +113,8 @@ func (s *DatabaseTokenStore) insertAccessToken(info oauth2.TokenInfo) (int64, er
 		},
 	}
 	result := database.DB().Exec(
-		`INSERT INTO oauth_access_token (access_token, token, authentication_id, authentication, client_id, user_name, refresh_token, expiration) 
-		 SELECT ?, ?, ?, ?, ?, ?, ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oauth_access_token WHERE authentication_id=?)`,
+		reformatSQL(`INSERT INTO oauth_access_token (access_token, token, authentication_id, authentication, client_id, user_name, refresh_token, expiration) 
+		 SELECT ?, ?, ?, ?, ?, ?, ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oauth_access_token WHERE authentication_id=?)`),
 		util.MD5(info.GetAccess()),
 		json.String(info),
 		authentication.GetId(),
@@ -130,8 +140,8 @@ func (s *DatabaseTokenStore) insertRefreshToken(info oauth2.TokenInfo) (int64, e
 		},
 	}
 	result := database.DB().Exec(
-		`INSERT INTO oauth_refresh_token (refresh_token, token, authentication, expiration) 
-		 SELECT ?, ?, ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oauth_refresh_token WHERE refresh_token=?)`,
+		reformatSQL(`INSERT INTO oauth_refresh_token (refresh_token, token, authentication, expiration) 
+		 SELECT ?, ?, ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oauth_refresh_token WHERE refresh_token=?)`),
 		util.MD5(info.GetRefresh()),
 		json.String(info),
 		json.String(authentication),
@@ -153,8 +163,8 @@ func (s *DatabaseTokenStore) insertCode(info oauth2.TokenInfo) (int64, error) {
 		},
 	}
 	result := database.DB().Exec(
-		`INSERT INTO oauth_code (code, authentication, expiration) 
-		 SELECT ?, ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oauth_code WHERE code=?)`,
+		reformatSQL(`INSERT INTO oauth_code (code, authentication, expiration) 
+		 SELECT ?, ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM oauth_code WHERE code=?)`),
 		util.MD5(info.GetCode()),
 		json.String(authentication),
 		info.GetCodeCreateAt().Add(info.GetCodeExpiresIn()),
@@ -174,6 +184,12 @@ func (s *DatabaseTokenStore) Create(ctx context.Context, info oauth2.TokenInfo) 
 			ClientId: info.GetClientID(),
 			Scope:    info.GetScope(),
 		},
+	}
+
+	if code, b := ctx.Value("authorizationCode").(string); b && code != "" {
+		info.SetCode(code)
+		info.SetCodeCreateAt(time.Now())
+		info.SetCodeExpiresIn(time.Minute * 5)
 	}
 
 	if info.GetAccess() != "" {

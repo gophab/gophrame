@@ -51,7 +51,7 @@ var (
 	Engine *gin.Engine
 
 	//websocket
-	WebsocketHub interface{}
+	WebsocketHub any
 
 	//casbin 全局操作指针
 	Enforcer *casbin.SyncedEnforcer

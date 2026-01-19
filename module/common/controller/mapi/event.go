@@ -60,7 +60,7 @@ func (a *EventMController) GetList(context *gin.Context) {
 	search := request.Param(context, "search").DefaultString("")
 	pageable := query.GetPageable(context)
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if source != "" {
 		conds["source"] = source
 	}
@@ -98,7 +98,7 @@ func (a *EventMController) CheckEvents(context *gin.Context) {
 	eventType := request.Param(context, "type").DefaultString("")
 	search := request.Param(context, "search").DefaultString("")
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if source != "" {
 		conds["source"] = source
 	}

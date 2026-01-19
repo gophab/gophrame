@@ -19,6 +19,8 @@ type (
 	ErrorHandleFunc func(*gin.Context, error)
 	// Config defines the config for Session middleware
 	HandlerConfig struct {
+		PostHandlers []gin.HandlerFunc
+
 		// error handling when starting the session
 		ErrorHandleFunc ErrorHandleFunc
 		// keys stored in the context
@@ -32,6 +34,7 @@ type (
 var (
 	// DefaultConfig is the default middleware config.
 	DefaultConfig = HandlerConfig{
+		PostHandlers: make([]gin.HandlerFunc, 0),
 		ErrorHandleFunc: func(ctx *gin.Context, err error) {
 			//ctx.AbortWithError(500, err)
 			if err != nil {
@@ -47,6 +50,10 @@ var (
 	}
 )
 
+func RegisterPostHandlerFunc(f gin.HandlerFunc) {
+	DefaultConfig.PostHandlers = append(DefaultConfig.PostHandlers, f)
+}
+
 func CheckAuthCode(key string) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		if authCode, b := context.Request.Header["X-Auth-Code"]; b && len(authCode) > 0 {
@@ -59,7 +66,6 @@ func CheckAuthCode(key string) gin.HandlerFunc {
 		response.Unauthorized(context, ErrorsNoAuthorization)
 		//终止可能已经被加载的其他回调函数的执行
 		context.Abort()
-		return
 	}
 }
 
@@ -119,6 +125,12 @@ func CheckTokenVerify(conf ...HandlerConfig) gin.HandlerFunc {
 		}
 
 		context.Set(tokenKey, tokenInfo)
+
+		if len(cfg.PostHandlers) > 0 {
+			for _, handler := range cfg.PostHandlers {
+				handler(context)
+			}
+		}
 
 		context.Next()
 	}
@@ -182,6 +194,12 @@ func HandleTokenVerify(conf ...HandlerConfig) gin.HandlerFunc {
 		}
 
 		context.Set(tokenKey, tokenInfo)
+
+		if len(cfg.PostHandlers) > 0 {
+			for _, handler := range cfg.PostHandlers {
+				handler(context)
+			}
+		}
 
 		context.Next()
 	}

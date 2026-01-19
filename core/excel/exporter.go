@@ -81,7 +81,7 @@ func (e *Exporter) PrepareHeader() *Exporter {
 	return e
 }
 
-func (e *Exporter) AppendRow(record interface{}) {
+func (e *Exporter) AppendRow(record any) {
 	// 导出的Column
 	row := util.Struct2Map(record)
 

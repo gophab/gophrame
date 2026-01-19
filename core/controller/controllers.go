@@ -25,9 +25,19 @@ func (s *Controllers) InitRouter(r *gin.RouterGroup) *gin.RouterGroup {
 }
 
 func (s *Controllers) AddController(c ...Controller) {
+	if s.Controllers == nil {
+		s.Controllers = make([]Controller, 0)
+	}
 	s.Controllers = append(s.Controllers, c...)
 }
 
 func (s *Controllers) AddHandler(h ...gin.HandlerFunc) {
+	if s.Handlers == nil {
+		s.Handlers = make([]gin.HandlerFunc, 0)
+	}
 	s.Handlers = append(s.Handlers, h...)
+}
+
+func (s *Controllers) SetHandlers(h ...gin.HandlerFunc) {
+	s.Handlers = append([]gin.HandlerFunc{}, h...)
 }

@@ -103,7 +103,7 @@ func (r *TenantRepository) DeleteById(id string) bool {
 	return false
 }
 
-func (r *TenantRepository) Find(conds map[string]interface{}, pageable query.Pageable) (total int64, list []*domain.Tenant) {
+func (r *TenantRepository) Find(conds map[string]any, pageable query.Pageable) (total int64, list []*domain.Tenant) {
 	var tx = r.DB.Model(&domain.Tenant{}).Where("del_flag = ?", false)
 
 	var search = conds["search"]

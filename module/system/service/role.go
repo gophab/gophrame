@@ -59,7 +59,7 @@ func (s *RoleService) UpdateRole(role *domain.Role) (*domain.Role, error) {
 	return role, nil
 }
 
-func (s *RoleService) PatchRole(role *domain.Role, data map[string]interface{}) (*domain.Role, error) {
+func (s *RoleService) PatchRole(role *domain.Role, data map[string]any) (*domain.Role, error) {
 	if n, b := data["name"]; b {
 		name, _ := s.RoleRepository.CheckRoleNameId(n.(string), role.Id, role.TenantId)
 		if name {
@@ -113,16 +113,16 @@ func (s *RoleService) GetByName(name, tenantId string) (*domain.Role, error) {
 }
 
 func (s *RoleService) GetUserRoles(userId string) ([]*domain.Role, error) {
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	conds["user_id"] = userId
 	return s.RoleRepository.GetRoles(conds)
 }
 
-func (s *RoleService) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Role, error) {
+func (s *RoleService) Find(conds map[string]any, pageable query.Pageable) (int64, []*domain.Role, error) {
 	return s.RoleRepository.FindRoles(conds, pageable)
 }
 
-func (s *RoleService) FindAvailable(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Role, error) {
+func (s *RoleService) FindAvailable(conds map[string]any, pageable query.Pageable) (int64, []*domain.Role, error) {
 	return s.RoleRepository.FindAvailableRoles(conds, pageable)
 }
 
@@ -130,6 +130,6 @@ func (s *RoleService) ExistById(id string) (bool, error) {
 	return s.RoleRepository.ExistById(id)
 }
 
-func (s *RoleService) Count(conds map[string]interface{}) (int64, error) {
+func (s *RoleService) Count(conds map[string]any) (int64, error) {
 	return s.RoleRepository.GetRoleTotal(conds)
 }

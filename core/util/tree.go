@@ -35,7 +35,7 @@ type sqlResFormatTree struct {
 	inSliceLen     int
 }
 
-func (s *sqlResFormatTree) ScanToTreeData(inSlice interface{}, destSlicePtr interface{}) (err error) {
+func (s *sqlResFormatTree) ScanToTreeData(inSlice any, destSlicePtr any) (err error) {
 
 	inTypeOf := reflect.TypeOf(inSlice)
 	if inTypeOf.Kind() != reflect.Slice {
@@ -88,7 +88,7 @@ func (s *sqlResFormatTree) ScanToTreeData(inSlice interface{}, destSlicePtr inte
 	var primaryKeyDataType int
 	var primaryKeyIdInt int64
 	var primaryKeyIdStr string
-	var primaryKeyIdInterf interface{}
+	var primaryKeyIdInterf any
 
 	//遍历sql查询结果集的每一行数据
 	for rowIndex := 0; rowIndex < inLen; rowIndex++ {
@@ -362,7 +362,7 @@ func (s *sqlResFormatTree) analysisChildren(parentRowIndex int64, parentField re
 // subPrimaryKeyName 正在遍历的子级数据主键名
 // subRow 正在遍历的子级数据行
 // newValueOf 正在等待填充的 chilren 切片元素中的结构体的 valueof
-func (s *sqlResFormatTree) getLevelGe2Children(fieldNum int, resChildren reflect.Value, newTypeOf reflect.Type, parentRowIndex int64, subRowIndex int, ParentId interface{}, subFKeyName, subPrimaryKeyName string, subRow, newValueOf reflect.Value) (reflect.Value, error) {
+func (s *sqlResFormatTree) getLevelGe2Children(fieldNum int, resChildren reflect.Value, newTypeOf reflect.Type, parentRowIndex int64, subRowIndex int, ParentId any, subFKeyName, subPrimaryKeyName string, subRow, newValueOf reflect.Value) (reflect.Value, error) {
 	for j := 0; j < fieldNum; j++ {
 		if s.destStructFieldIsExists(subRow.Type(), newTypeOf.Field(j).Name) {
 			newValueOf.Field(j).Set(subRow.FieldByName(newTypeOf.Field(j).Name))
@@ -472,7 +472,7 @@ func (s *sqlResFormatTree) setFieldDefaultValue(fieldType reflect.Type, fieldNam
 // 2.curMainId ：   sql结果集循环的当前结构体的主键ID
 // 3.subFKeyName：  sql结果集循环的当前结构体的主键ID对应的子级外键名称
 
-func (s *sqlResFormatTree) curItemHasSubLists(curIndex int64, curMainId interface{}, subFKeyName string) (res bool) {
+func (s *sqlResFormatTree) curItemHasSubLists(curIndex int64, curMainId any, subFKeyName string) (res bool) {
 	for i := int(curIndex); i <= s.inSliceLen-1; i++ {
 		tmpField := s.inSliceValueOf.Index(i)
 		if pDataType, err := s.curPrimaryKeyDataType(tmpField, subFKeyName); err == nil {

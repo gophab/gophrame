@@ -161,7 +161,7 @@ func (r *HttpRequest) Result() (status int, body []byte, err error) {
 	return
 }
 
-func (r *HttpRequest) ResultTo(result interface{}) (status int, err error) {
+func (r *HttpRequest) ResultTo(result any) (status int, err error) {
 	if !r.executed {
 		return r.Do().ResultTo(result)
 	}
@@ -202,7 +202,7 @@ func (r *HttpRequest) String() (result string, err error) {
 	return
 }
 
-func (r *HttpRequest) Fetch(data interface{}) (status int, err error) {
+func (r *HttpRequest) Fetch(data any) (status int, err error) {
 	if !r.executed {
 		return r.Do().Fetch(data)
 	}

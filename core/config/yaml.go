@@ -23,7 +23,7 @@ import (
 type IYmlConfig interface {
 	ConfigFileChangeListen()
 	Clone(fileName string) IYmlConfig
-	Get(keyName string) interface{}
+	Get(keyName string) any
 	GetString(keyName string) string
 	GetBool(keyName string) bool
 	GetInt(keyName string) int
@@ -43,7 +43,7 @@ func init() {
 	lastChangeTime = time.Now()
 }
 
-func InitYamlConfig(out interface{}) error {
+func InitYamlConfig(out any) error {
 	yamlFile := "application"
 
 	if command.Profile != "" {
@@ -134,7 +134,7 @@ func (y *ymlConfig) keyIsCache(keyName string) bool {
 }
 
 // 对键值进行缓存
-func (y *ymlConfig) cache(keyName string, value interface{}) bool {
+func (y *ymlConfig) cache(keyName string, value any) bool {
 	// 避免瞬间缓存键、值时，程序提示键名已经被注册的日志输出
 	y.mu.Lock()
 	defer y.mu.Unlock()
@@ -145,7 +145,7 @@ func (y *ymlConfig) cache(keyName string, value interface{}) bool {
 }
 
 // 通过键获取缓存的值
-func (y *ymlConfig) getValueFromCache(keyName string) interface{} {
+func (y *ymlConfig) getValueFromCache(keyName string) any {
 	return containerFactory.Get(global.ConfigKeyPrefix + keyName)
 }
 
@@ -169,7 +169,7 @@ func (y *ymlConfig) Clone(fileName string) IYmlConfig {
 }
 
 // Get 一个原始值
-func (y *ymlConfig) Get(keyName string) interface{} {
+func (y *ymlConfig) Get(keyName string) any {
 	if y.keyIsCache(keyName) {
 		return y.getValueFromCache(keyName)
 	} else {

@@ -99,7 +99,7 @@ func (u *UserMController) GetUsers(c *gin.Context) {
 		}
 		response.Page(c, count, list)
 	} else {
-		conds := make(map[string]interface{})
+		conds := make(map[string]any)
 		if search != "" {
 			conds["search"] = search
 		}
@@ -124,7 +124,7 @@ func (u *UserMController) GetUsers(c *gin.Context) {
 
 		count, list := u.UserService.Find(conds, query.GetPageable(c))
 
-		tenantIds := collection.MapToSet(list, func(i interface{}) string {
+		tenantIds := collection.MapToSet(list, func(i any) string {
 			return i.(*domain.User).TenantId
 		})
 
@@ -334,7 +334,7 @@ func (u *UserMController) PatchUser(c *gin.Context) {
 		return
 	}
 
-	var user = make(map[string]interface{})
+	var user = make(map[string]any)
 
 	var params domain.User
 	if err := c.BindJSON(&params); err != nil {

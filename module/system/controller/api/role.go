@@ -48,7 +48,7 @@ func (m *RoleController) AfterInitialize() {
 func (r *RoleController) FindRoles(c *gin.Context) {
 	pageable := query.GetPageable(c)
 
-	count, roles, err := r.RoleService.Find(map[string]interface{}{
+	count, roles, err := r.RoleService.Find(map[string]any{
 		"del_flag": false,
 	}, pageable)
 	if err != nil {

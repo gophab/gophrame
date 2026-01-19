@@ -6,6 +6,7 @@ import (
 
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/core/util"
 
 	"github.com/gophab/gophrame/module/common/domain"
 
@@ -39,9 +40,9 @@ func (r *EventRepository) GetById(id int64) (*domain.Event, error) {
 	}
 }
 
-func (r *EventRepository) PatchEvent(id int64, data map[string]interface{}) (*domain.Event, error) {
+func (r *EventRepository) PatchEvent(id int64, data map[string]any) (*domain.Event, error) {
 	data["id"] = id
-	if res := r.Model(&domain.Event{}).Where("id=?", id).UpdateColumns(data); res.Error == nil {
+	if res := r.Model(&domain.Event{}).Where("id=?", id).UpdateColumns(util.DbFields(data)); res.Error == nil {
 		return r.GetById(id)
 	} else {
 		return nil, res.Error
@@ -56,7 +57,7 @@ func (r *EventRepository) DeleteById(id int64) error {
 	return r.Model(&domain.Event{}).Where("id = ?", id).Update("del_flag", true).Error
 }
 
-func (r *EventRepository) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Event, error) {
+func (r *EventRepository) Find(conds map[string]any, pageable query.Pageable) (int64, []*domain.Event, error) {
 	tx := r.Model(&domain.Event{})
 
 	var userId = conds["user_id"]
@@ -96,7 +97,7 @@ func (r *EventRepository) Find(conds map[string]interface{}, pageable query.Page
 	}
 }
 
-func (r *EventRepository) Check(conds map[string]interface{}) (*domain.Event, error) {
+func (r *EventRepository) Check(conds map[string]any) (*domain.Event, error) {
 	tx := r.Model(&domain.Event{})
 
 	var userId = conds["user_id"]

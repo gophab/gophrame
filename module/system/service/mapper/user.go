@@ -47,7 +47,7 @@ func (*UserMapper) AsDtoArray(src []domain.User) (dst []dto.User) {
 	}
 
 	dst = make([]dto.User, len(src))
-	_ = mapper.MapArrayRender(src, dst, func(s, d interface{}) {
+	_ = mapper.MapArrayRender(src, dst, func(s, d any) {
 		// s.(*domain.User)
 		// d.(*dto.User)
 	})

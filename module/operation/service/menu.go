@@ -71,17 +71,17 @@ func (s *MenuService) MakeTree(result []*domain.Menu) []*domain.Menu {
 		menuMap[menu.Id] = menu
 	}
 	for _, menu := range result {
-		if menu.Fid != "" && menu.Fid != "0" {
-			var parent = menuMap[menu.Fid]
+		if menu.Fid != nil && *menu.Fid != "" {
+			var parent = menuMap[*menu.Fid]
 			if parent != nil {
 				parent.Children = append(parent.Children, menu)
 			} else {
-				menu.Fid = ""
+				menu.Fid = nil
 			}
 		}
 	}
-	result, _ = array.Filter[*domain.Menu](result, func(m *domain.Menu) bool {
-		return m.Fid != "" && m.Fid != "0"
+	result, _ = array.Filter(result, func(m *domain.Menu) bool {
+		return m.Fid != nil && *m.Fid != ""
 	})
 	return result
 }

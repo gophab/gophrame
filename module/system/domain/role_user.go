@@ -14,6 +14,8 @@ type RoleUser struct {
 	UserId string `gorm:"column:user_id;primaryKey" json:"userId"`
 	Status int    `gorm:"column:status;default:1" json:"status"`
 	Remark string `gorm:"column:remark;default:null" json:"remark,omitempty"`
+	Role   *Role  `gorm:"foreignKey:role_id" json:"role,omitempty"`
+	User   *User  `gorm:"foreignKey:user_id" json:"user,omitempty"`
 }
 
 func (m *RoleUser) BeforeCreate(tx *gorm.DB) (err error) {

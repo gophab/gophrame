@@ -27,7 +27,7 @@ func init() {
 	eventbus.RegisterEventListener("SYSTEM_LOG_OPERATION", operationLogService.logOperation)
 }
 
-func (s *OperationLogService) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.OperationLog, error) {
+func (s *OperationLogService) Find(conds map[string]any, pageable query.Pageable) (int64, []*domain.OperationLog, error) {
 	count, list, err := s.OperationLogRepository.Find(util.DbFields(conds), pageable)
 	if err != nil || len(list) == 0 {
 		return count, list, err
@@ -36,13 +36,13 @@ func (s *OperationLogService) Find(conds map[string]interface{}, pageable query.
 	// 组装
 	for _, operationLog := range list {
 		// i18n: template.Content
-		params := make(map[string]interface{})
+		params := make(map[string]any)
 		// 1. user
 		entity := GetEntity("user", operationLog.OperatorId)
 		if entity != nil {
 			params["operator"] = entity
 		} else {
-			params["operator"] = map[string]interface{}{"id": operationLog.OperatorId}
+			params["operator"] = map[string]any{"id": operationLog.OperatorId}
 		}
 
 		// 2. tenant
@@ -51,7 +51,7 @@ func (s *OperationLogService) Find(conds map[string]interface{}, pageable query.
 			if entity != nil {
 				params["tenant"] = entity
 			} else {
-				params["tenant"] = map[string]interface{}{"id": operationLog.TenantId}
+				params["tenant"] = map[string]any{"id": operationLog.TenantId}
 			}
 		}
 
@@ -61,7 +61,7 @@ func (s *OperationLogService) Find(conds map[string]interface{}, pageable query.
 			if entity != nil {
 				params["target"] = entity
 			} else {
-				params["target"] = map[string]interface{}{"id": operationLog.TargetId}
+				params["target"] = map[string]any{"id": operationLog.TargetId}
 			}
 		}
 
@@ -71,7 +71,7 @@ func (s *OperationLogService) Find(conds map[string]interface{}, pageable query.
 			if entity != nil {
 				params["location"] = entity
 			} else {
-				params["location"] = map[string]interface{}{"id": operationLog.LocationId}
+				params["location"] = map[string]any{"id": operationLog.LocationId}
 			}
 		}
 
@@ -121,7 +121,7 @@ func (s *OperationLogService) Append(log *domain.OperationLog) {
 	s.OperationLogRepository.Append(log)
 }
 
-func (s *OperationLogService) logOperation(event string, args ...interface{}) {
+func (s *OperationLogService) logOperation(event string, args ...any) {
 	var operationLog = args[0].(*domain.OperationLog)
 	if operationLog != nil {
 		s.Append(operationLog)

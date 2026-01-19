@@ -44,7 +44,7 @@ func (s *TenantService) Update(tenant *domain.Tenant) (*domain.Tenant, error) {
 	}
 }
 
-func (s *TenantService) Patch(id string, column string, value interface{}) (*domain.Tenant, error) {
+func (s *TenantService) Patch(id string, column string, value any) (*domain.Tenant, error) {
 	if res := s.TenantRepository.Model(&domain.Tenant{}).Where("id=?", id).UpdateColumn(util.DbFieldName(column), value); res.Error != nil {
 		return nil, res.Error
 	} else {
@@ -57,7 +57,7 @@ func (s *TenantService) Patch(id string, column string, value interface{}) (*dom
 	}
 }
 
-func (s *TenantService) PatchAll(id string, kv map[string]interface{}) (*domain.Tenant, error) {
+func (s *TenantService) PatchAll(id string, kv map[string]any) (*domain.Tenant, error) {
 	kv["id"] = id
 
 	if res := s.TenantRepository.Model(&domain.Tenant{}).Where("id=?", id).UpdateColumns(util.DbFields(kv)); res.Error != nil {
@@ -93,7 +93,7 @@ func (s *TenantService) GetByIds(ids []string) ([]*domain.Tenant, error) {
 	return s.TenantRepository.GetByIds(ids)
 }
 
-func (s *TenantService) Find(conds map[string]interface{}, pageable query.Pageable) (total int64, list []*domain.Tenant) {
+func (s *TenantService) Find(conds map[string]any, pageable query.Pageable) (total int64, list []*domain.Tenant) {
 	total, list = s.TenantRepository.Find(util.DbFields(conds), pageable)
 	return
 }

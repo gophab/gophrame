@@ -17,12 +17,12 @@ import (
 type ConfigSetting struct {
 	Name        string
 	Description string
-	Setting     interface{}
+	Setting     any
 }
 
 var configs = make(map[string]ConfigSetting)
 
-func RegisterConfig(name string, setting interface{}, desc string) {
+func RegisterConfig(name string, setting any, desc string) {
 	configs[name] = ConfigSetting{
 		Name:        name,
 		Description: desc,
@@ -75,7 +75,7 @@ func InitConfig() error {
 	return loadConfig()
 }
 
-func UnmarshalFromNode(node any, out interface{}) error {
+func UnmarshalFromNode(node any, out any) error {
 	if data, err := json.Marshal(node); err == nil {
 		// Use json to
 		return json.Unmarshal(data, out)
@@ -85,7 +85,7 @@ func UnmarshalFromNode(node any, out interface{}) error {
 }
 
 func loadConfig() error {
-	var config = make(map[string]interface{})
+	var config = make(map[string]any)
 
 	// First load into map[]
 	var err error
@@ -120,7 +120,7 @@ func loadConfig() error {
 	return err
 }
 
-func getConfigNode(config interface{}, path string) (interface{}, bool) {
+func getConfigNode(config any, path string) (any, bool) {
 	if config == nil {
 		return nil, false
 	}

@@ -17,7 +17,7 @@ type RegistryFeignClientInterceptor struct {
 	Cache          *cache.Cache
 }
 
-func (in *RegistryFeignClientInterceptor) Do(chain *feign.FeignClientInterceptorChain, method string, urlPath string, urlValues url.Values, bodyValue interface{}, options ...*feign.RequestOptions) *feign.FeignClient {
+func (in *RegistryFeignClientInterceptor) Do(chain *feign.FeignClientInterceptorChain, method string, urlPath string, urlValues url.Values, bodyValue any, options ...*feign.RequestOptions) *feign.FeignClient {
 	if in.RegistryClient != nil {
 		url, err := url.Parse(urlPath)
 		if err == nil && url.Host != "" {

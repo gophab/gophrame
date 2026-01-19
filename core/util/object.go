@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 )
 
 // 按名字和类型合并（&a,b）b->a: field值取不为空的
-func MergeFields(dest interface{}, src interface{}, fields ...string) (err error) {
+func MergeFields(dest any, src any, fields ...string) (err error) {
 	at := reflect.TypeOf(dest)
 	av := reflect.ValueOf(dest)
 	bt := reflect.TypeOf(src)
@@ -20,6 +21,11 @@ func MergeFields(dest interface{}, src interface{}, fields ...string) (err error
 		return
 	}
 	av = reflect.ValueOf(av.Interface())
+	if bt.Kind() == reflect.Ptr {
+		bv = bv.Elem()
+		bt = bv.Type()
+	}
+
 	// 要复制哪些字段
 	_fields := make([]string, 0)
 	if len(fields) > 0 {
@@ -49,7 +55,7 @@ func MergeFields(dest interface{}, src interface{}, fields ...string) (err error
 }
 
 // 按名字和类型复制（&a,b）b->a: a.field为空的取b.field
-func FillFields(dest interface{}, src interface{}, fields ...string) (err error) {
+func FillFields(dest any, src any, fields ...string) (err error) {
 	at := reflect.TypeOf(dest)
 	av := reflect.ValueOf(dest)
 	bt := reflect.TypeOf(src)
@@ -60,6 +66,11 @@ func FillFields(dest interface{}, src interface{}, fields ...string) (err error)
 		return
 	}
 	av = reflect.ValueOf(av.Interface())
+	if bt.Kind() == reflect.Ptr {
+		bv = bv.Elem()
+		bt = bv.Type()
+	}
+
 	// 要复制哪些字段
 	_fields := make([]string, 0)
 	if len(fields) > 0 {
@@ -89,7 +100,7 @@ func FillFields(dest interface{}, src interface{}, fields ...string) (err error)
 }
 
 // 按名字和类型复制（&a,b）b->a: a.field为空的取b.field
-func PatchFields(dest interface{}, src interface{}, fields ...string) (err error) {
+func PatchFields(dest any, src any, fields ...string) (err error) {
 	at := reflect.TypeOf(dest)
 	av := reflect.ValueOf(dest)
 	bt := reflect.TypeOf(src)
@@ -100,6 +111,11 @@ func PatchFields(dest interface{}, src interface{}, fields ...string) (err error
 		return
 	}
 	av = reflect.ValueOf(av.Interface())
+	if bt.Kind() == reflect.Ptr {
+		bv = bv.Elem()
+		bt = bv.Type()
+	}
+
 	// 要复制哪些字段
 	_fields := make([]string, 0)
 	if len(fields) > 0 {
@@ -129,7 +145,7 @@ func PatchFields(dest interface{}, src interface{}, fields ...string) (err error
 }
 
 // 按名字和类型复制（&a,b）b->a
-func CopyFields(dest interface{}, src interface{}, fields ...string) (err error) {
+func CopyFields(dest any, src any, fields ...string) (err error) {
 	at := reflect.TypeOf(dest)
 	av := reflect.ValueOf(dest)
 	bt := reflect.TypeOf(src)
@@ -140,6 +156,11 @@ func CopyFields(dest interface{}, src interface{}, fields ...string) (err error)
 		return
 	}
 	av = reflect.ValueOf(av.Interface())
+	if bt.Kind() == reflect.Ptr {
+		bv = bv.Elem()
+		bt = bv.Type()
+	}
+
 	// 要复制哪些字段
 	_fields := make([]string, 0)
 	if len(fields) > 0 {
@@ -166,17 +187,23 @@ func CopyFields(dest interface{}, src interface{}, fields ...string) (err error)
 }
 
 // 按名字和类型复制（&a,b）b->a
-func CopyFieldsExcept(dest interface{}, src interface{}, fields ...string) (err error) {
+func CopyFieldsExcept(dest any, src any, fields ...string) (err error) {
 	at := reflect.TypeOf(dest)
 	av := reflect.ValueOf(dest)
-	bt := reflect.TypeOf(src)
-	bv := reflect.ValueOf(src)
 	// 简单判断下
 	if at.Kind() != reflect.Ptr {
 		err = fmt.Errorf("a must be a struct pointer")
 		return
 	}
 	av = reflect.ValueOf(av.Interface())
+
+	bt := reflect.TypeOf(src)
+	bv := reflect.ValueOf(src)
+	if bt.Kind() == reflect.Ptr {
+		bv = bv.Elem()
+		bt = bv.Type()
+	}
+
 	// 要复制哪些字段
 	_fields := make([]string, 0)
 	for i := 0; i < bv.NumField(); i++ {
@@ -227,7 +254,7 @@ func DeleteElements(src []string, elems []string) []string {
 	return src[:j]
 }
 
-func MapStruct(src map[string]interface{}, dest interface{}) {
+func MapStruct(src map[string]any, dest any) {
 	v := reflect.ValueOf(dest).Elem()
 	for key, val := range src {
 		structField := v.FieldByName(key)
@@ -246,8 +273,8 @@ func BoolAddr(b bool) *bool {
 	return &b
 }
 
-func Struct2Map(src interface{}) map[string]interface{} {
-	var result = make(map[string]interface{})
+func Struct2Map(src any) map[string]any {
+	var result = make(map[string]any)
 	if data, err := json.Marshal(src); err == nil {
 		// Use json to
 		_ = json.Unmarshal(data, &result)
@@ -255,7 +282,7 @@ func Struct2Map(src interface{}) map[string]interface{} {
 	return result
 }
 
-func GetRecordFieldValue[T any](record interface{}, path string, v T) T {
+func GetRecordFieldValue[T any](record any, path string, v T) T {
 	if field, ok := GetRecordField(record, path); ok {
 		if data, err := json.Marshal(field); err == nil {
 			// Use json to
@@ -265,7 +292,7 @@ func GetRecordFieldValue[T any](record interface{}, path string, v T) T {
 	return v
 }
 
-func GetRecordField(record interface{}, path string) (interface{}, bool) {
+func GetRecordField(record any, path string) (any, bool) {
 	if record == nil {
 		return nil, false
 	}
@@ -307,4 +334,32 @@ func GetRecordField(record interface{}, path string) (interface{}, bool) {
 		}
 	}
 	return nil, false
+}
+
+func MakeRecord(path string, value any) map[string]any {
+	var result map[string]any
+	var segs = strings.Split(path, ".")
+	slices.Reverse(segs)
+	for _, seg := range segs {
+		result = make(map[string]any)
+		result[seg] = value
+		value = result
+	}
+	return result
+}
+
+func RemoveRecordField(value map[string]any, path string) {
+	var segs = strings.Split(path, ".")
+	slices.Reverse(segs)
+	for i, seg := range segs {
+		if i == len(segs)-1 {
+			delete(value, seg)
+		} else {
+			if v, b := value[seg].(map[string]any); b {
+				value = v
+			} else {
+				value = make(map[string]any)
+			}
+		}
+	}
 }

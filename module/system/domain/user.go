@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gophab/gophrame/domain"
+	"gorm.io/gorm"
 
 	"github.com/gophab/gophrame/core/util"
 )
@@ -30,8 +31,24 @@ type User struct {
 	Roles            []*Role `gorm:"many2many:sys_role_user;" json:"roles,omitempty"`        /* 角色 */
 	InviteCode       string  `gorm:"-" json:"inviteCode,omitempty"`                          /* 邀请码 */
 	OrganizationId   *int64  `gorm:"column:organization_id" json:"organizationId,omitempty"` /* 所在组织ID */
-	OrganizationName string  `gorm:"->" json:"organizationName,omitempty"`                   /* 所在组织 */
-	Tenant           *Tenant `gorm:"->" json:"tenant,omitempty"`                             /* 所在企业 */
+	OrganizationName string  `gorm:"-" json:"organizationName,omitempty"`                    /* 所在组织 */
+	Tenant           *Tenant `gorm:"-" json:"tenant,omitempty"`                              /* 所在企业 */
+}
+
+func (e *User) BeforeCreate(tx *gorm.DB) (err error) {
+	if e.Mobile != nil {
+		e.Mobile = util.StringAddr(util.FullPhoneNumber(util.NotNullString(e.Mobile)))
+	}
+	// e.DeleteEnabled.BeforeCreate(tx)
+	return e.DeletableEntity.BeforeCreate(tx)
+}
+
+func (e *User) BeforeSave(tx *gorm.DB) (err error) {
+	if e.Mobile != nil {
+		e.Mobile = util.StringAddr(util.FullPhoneNumber(util.NotNullString(e.Mobile)))
+	}
+	// e.Entity.BeforeSave(tx)
+	return e.DeletableEntity.BeforeSave(tx)
 }
 
 func (u *User) TableName() string {
@@ -41,4 +58,16 @@ func (u *User) TableName() string {
 func (u *User) SetPassword(value string) *User {
 	u.Password = util.SHA1(value)
 	return u
+}
+
+func (u *User) HasRole(role string) bool {
+	if len(u.Roles) > 0 {
+		for _, r := range u.Roles {
+			if r.Id == role || r.Name == role {
+				return true
+			}
+		}
+	}
+
+	return false
 }

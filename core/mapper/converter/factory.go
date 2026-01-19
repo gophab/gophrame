@@ -11,7 +11,7 @@ var (
 	createdConverters   = make(map[convertType]*Converter)
 )
 
-func NewConverter(src, dst interface{}) (*Converter, error) {
+func NewConverter(src, dst any) (*Converter, error) {
 	dstTyp := reflect.TypeOf(dst)
 	srcTyp := reflect.TypeOf(src)
 
@@ -22,7 +22,7 @@ func NewConverter(src, dst interface{}) (*Converter, error) {
 	}
 }
 
-func NewConverterOption(src, dst interface{}, option *StructOption) (*Converter, error) {
+func NewConverterOption(src, dst any, option *StructOption) (*Converter, error) {
 	dstTyp := reflect.TypeOf(dst)
 	srcTyp := reflect.TypeOf(src)
 

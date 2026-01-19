@@ -1,7 +1,5 @@
 package errors
 
-import "errors"
-
 const (
 	SUCCESS        = 200 //
 	ERROR          = 500
@@ -35,7 +33,3 @@ const (
 	ERROR_CONFIG_INIT_FAIL             = 50001
 	ERROR_CONTAINER_KEY_ALREADY_EXISTS = 50002
 )
-
-func New(message string) error {
-	return errors.New(message)
-}

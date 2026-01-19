@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type EntityGetter func(id interface{}) interface{}
+type EntityGetter func(id any) any
 
 type EntityHelper struct {
 	mutex   sync.RWMutex
@@ -24,7 +24,7 @@ func (h *EntityHelper) RegisterEntity(entity string, getter EntityGetter) {
 	h.Getters[strings.ToLower(entity)] = getter
 }
 
-func (h *EntityHelper) GetEntity(entity string, id interface{}) interface{} {
+func (h *EntityHelper) GetEntity(entity string, id any) any {
 	h.mutex.RLock()
 	defer h.mutex.RUnlock()
 
@@ -38,10 +38,10 @@ func RegisterEntity(entity string, getter EntityGetter) {
 	entityHelper.RegisterEntity(entity, getter)
 }
 
-func GetEntity(entity string, id interface{}) interface{} {
+func GetEntity(entity string, id any) any {
 	return entityHelper.GetEntity(entity, id)
 }
 
-func GetEntityAs[T any](entity string, id interface{}) *T {
+func GetEntityAs[T any](entity string, id any) *T {
 	return entityHelper.GetEntity(entity, id).(*T)
 }

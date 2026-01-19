@@ -4,19 +4,19 @@ import (
 	"time"
 )
 
-var global_values = make(map[string]interface{})
+var global_values = make(map[string]any)
 
-func Set(name string, value interface{}) {
+func Set(name string, value any) {
 	global_values[name] = value
 }
 
-func Sets(vars map[string]interface{}) {
+func Sets(vars map[string]any) {
 	for key, value := range vars {
 		global_values[key] = value
 	}
 }
 
-func Var(name string) interface{} {
+func Var(name string) any {
 	if v, b := global_values[name]; b {
 		return v
 	} else {
@@ -55,14 +55,14 @@ func DurationVar(name string) time.Duration {
 	return time.Duration(0)
 }
 
-func DurationVarDefault(name string, v interface{}) time.Duration {
+func DurationVarDefault(name string, v any) time.Duration {
 	if value := Var(name); value != nil {
 		return parserDuration(value)
 	}
 	return parserDuration(v)
 }
 
-func parserDuration(v interface{}) time.Duration {
+func parserDuration(v any) time.Duration {
 	switch v := v.(type) {
 	case int:
 		return time.Second * time.Duration(v)

@@ -21,7 +21,7 @@ func Application() naming_client.INamingClient {
 }
 
 func Service(configs []constant.ServerConfig, serverName, group string, serverPort uint64) {
-	client, _ := clients.CreateNamingClient(map[string]interface{}{
+	client, _ := clients.CreateNamingClient(map[string]any{
 		"serverConfigs": configs,
 		"clientConfig": constant.ClientConfig{
 			NamespaceId:  "phsc",

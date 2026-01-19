@@ -53,7 +53,7 @@ func initRedisClientPool(databaseIndex int) *redis.Pool {
 	}
 
 	// 将redis的关闭事件，注册在全局事件统一管理器，由程序退出时统一销毁
-	eventbus.RegisterEventListener(global.EventDestroyPrefix+"Redis"+strconv.Itoa(databaseIndex), func(event string, args ...interface{}) {
+	eventbus.RegisterEventListener(global.EventDestroyPrefix+"Redis"+strconv.Itoa(databaseIndex), func(event string, args ...any) {
 		_ = result.Close()
 	})
 
@@ -100,7 +100,7 @@ type RedisClient struct {
 }
 
 // 为redis-go 客户端封装统一操作函数入口
-func (r *RedisClient) Execute(cmd string, args ...interface{}) (interface{}, error) {
+func (r *RedisClient) Execute(cmd string, args ...any) (any, error) {
 	return r.client.Do(cmd, args...)
 }
 
@@ -110,53 +110,53 @@ func (r *RedisClient) ReleaseOneRedisClient() {
 }
 
 // bool 类型转换
-func (r *RedisClient) Bool(reply interface{}, err error) (bool, error) {
+func (r *RedisClient) Bool(reply any, err error) (bool, error) {
 	return redis.Bool(reply, err)
 }
 
 // string 类型转换
-func (r *RedisClient) String(reply interface{}, err error) (string, error) {
+func (r *RedisClient) String(reply any, err error) (string, error) {
 	return redis.String(reply, err)
 }
 
 // strings 类型转换
-func (r *RedisClient) Strings(reply interface{}, err error) ([]string, error) {
+func (r *RedisClient) Strings(reply any, err error) ([]string, error) {
 	return redis.Strings(reply, err)
 }
 
 // Float64 类型转换
-func (r *RedisClient) Float64(reply interface{}, err error) (float64, error) {
+func (r *RedisClient) Float64(reply any, err error) (float64, error) {
 	return redis.Float64(reply, err)
 }
 
 // int 类型转换
-func (r *RedisClient) Int(reply interface{}, err error) (int, error) {
+func (r *RedisClient) Int(reply any, err error) (int, error) {
 	return redis.Int(reply, err)
 }
 
 // int64 类型转换
-func (r *RedisClient) Int64(reply interface{}, err error) (int64, error) {
+func (r *RedisClient) Int64(reply any, err error) (int64, error) {
 	return redis.Int64(reply, err)
 }
 
 // uint64 类型转换
-func (r *RedisClient) Uint64(reply interface{}, err error) (uint64, error) {
+func (r *RedisClient) Uint64(reply any, err error) (uint64, error) {
 	return redis.Uint64(reply, err)
 }
 
 // Bytes 类型转换
-func (r *RedisClient) Bytes(reply interface{}, err error) ([]byte, error) {
+func (r *RedisClient) Bytes(reply any, err error) ([]byte, error) {
 	return redis.Bytes(reply, err)
 }
 
 type RedisResult struct {
 	key   string
-	reply interface{}
+	reply any
 	err   error
 }
 
 // 封装几个数据类型转换的函数
-func (r *RedisClient) Result(key string, reply interface{}, err error) *RedisResult {
+func (r *RedisClient) Result(key string, reply any, err error) *RedisResult {
 	return &RedisResult{
 		key,
 		reply,
@@ -165,7 +165,7 @@ func (r *RedisClient) Result(key string, reply interface{}, err error) *RedisRes
 }
 
 // 封装几个数据类型转换的函数
-func (r *RedisClient) Results(keys []string, reply interface{}, err error) *RedisResults {
+func (r *RedisClient) Results(keys []string, reply any, err error) *RedisResults {
 	results := make([]*RedisResult, 0)
 	if values, err := redis.Values(reply, err); err == nil {
 		for i := 0; i < len(values); i++ {
@@ -224,7 +224,7 @@ func (r *RedisResult) Bytes() ([]byte, error) {
 	return redis.Bytes(r.reply, r.err)
 }
 
-func (r *RedisResult) As(data interface{}) error {
+func (r *RedisResult) As(data any) error {
 	if rep, err := r.String(); err == nil {
 		return json.Unmarshal([]byte(rep), data)
 	} else {
@@ -234,7 +234,7 @@ func (r *RedisResult) As(data interface{}) error {
 
 type RedisResults struct {
 	keys    []string
-	reply   interface{}
+	reply   any
 	err     error
 	results []*RedisResult
 }

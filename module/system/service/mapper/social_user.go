@@ -4,6 +4,7 @@ import (
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/mapper"
 	"github.com/gophab/gophrame/core/mapper/converter"
+	"github.com/gophab/gophrame/core/util"
 
 	"github.com/gophab/gophrame/module/system/domain"
 	"github.com/gophab/gophrame/module/system/service/dto"
@@ -42,7 +43,8 @@ func (*SocialUserMapper) AsDomainArray(src []dto.User) (dst []domain.SocialUser)
 
 func (*SocialUserMapper) AsDto(src *domain.SocialUser) (dst *dto.User) {
 	dst = &dto.User{}
-	_ = mapper.MapOptionRender(src, dst, socialUserMapperOption, func(s, d interface{}) {
+	dst.Admin = util.BoolAddr(false)
+	_ = mapper.MapOptionRender(src, dst, socialUserMapperOption, func(s, d any) {
 		// s.(*domain.User)
 		// d.(*dto.User)
 	})
@@ -55,7 +57,7 @@ func (*SocialUserMapper) AsDtoArray(src []domain.SocialUser) (dst []dto.User) {
 	}
 
 	dst = make([]dto.User, len(src))
-	_ = mapper.MapArrayOptionRender(src, dst, socialUserMapperOption, func(s, d interface{}) {
+	_ = mapper.MapArrayOptionRender(src, dst, socialUserMapperOption, func(s, d any) {
 		// s.(*domain.User)
 		// d.(*dto.User)
 	})

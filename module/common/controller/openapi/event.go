@@ -52,7 +52,7 @@ func (a *EventOpenController) GetList(context *gin.Context) {
 	search := request.Param(context, "search").DefaultString("")
 	pageable := query.GetPageable(context)
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if source != "" {
 		conds["source"] = source
 	}
@@ -132,7 +132,7 @@ func (a *AdminEventOpenController) GetList(context *gin.Context) {
 	search := request.Param(context, "search").DefaultString("")
 	pageable := query.GetPageable(context)
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if source != "" {
 		conds["source"] = source
 	}
@@ -202,7 +202,7 @@ func (a *AdminEventOpenController) CheckEvents(context *gin.Context) {
 	eventType := request.Param(context, "type").DefaultString("")
 	search := request.Param(context, "search").DefaultString("")
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if source != "" {
 		conds["source"] = source
 	}

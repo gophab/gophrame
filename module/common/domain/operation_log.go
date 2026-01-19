@@ -24,13 +24,13 @@ type OperationLog struct {
 	Text         string             `gorm:"-" json:"text"` /* 组合文本 */
 }
 
-func (o *OperationLog) WithTarget(target string, targetId interface{}) *OperationLog {
+func (o *OperationLog) WithTarget(target string, targetId any) *OperationLog {
 	o.Target = target
 	o.TargetId = fmt.Sprint(targetId)
 	return o
 }
 
-func (o *OperationLog) WithTargetEx(target interface{}) *OperationLog {
+func (o *OperationLog) WithTargetEx(target any) *OperationLog {
 	if target != nil {
 		v := reflect.Indirect(reflect.ValueOf(target))
 		o.Target = v.Type().Name()
@@ -42,13 +42,13 @@ func (o *OperationLog) WithTargetEx(target interface{}) *OperationLog {
 	return o
 }
 
-func (o *OperationLog) WithLocation(location string, locationId interface{}) *OperationLog {
+func (o *OperationLog) WithLocation(location string, locationId any) *OperationLog {
 	o.Location = location
 	o.LocationId = fmt.Sprint(locationId)
 	return o
 }
 
-func (o *OperationLog) WithLocationEx(location interface{}) *OperationLog {
+func (o *OperationLog) WithLocationEx(location any) *OperationLog {
 	if location != nil {
 		v := reflect.Indirect(reflect.ValueOf(location))
 		o.Location = v.Type().Name()

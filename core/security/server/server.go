@@ -2,15 +2,13 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"sync"
 
-	"github.com/gophab/gophrame/core/inject"
-	SecurityModel "github.com/gophab/gophrame/core/security/model"
 	"github.com/gophab/gophrame/core/security/token"
 	TokenConfig "github.com/gophab/gophrame/core/security/token/config"
-	"github.com/gophab/gophrame/core/util"
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
@@ -20,33 +18,37 @@ import (
 )
 
 type OAuth2Server struct {
-	server  *server.Server
-	manager *manage.Manager
-	once    sync.Once
+	*server.Server
+	once sync.Once
 
-	ClientStore    oauth2.ClientStore    `inject:"clientStore"`
-	TokenStore     oauth2.TokenStore     `inject:"tokenStore"`
 	AccessGenerate oauth2.AccessGenerate `inject:"accessGenerate"`
+	TokenStore     oauth2.TokenStore     `inject:"tokenStore"`
+
 	// AuthorizeGenerate oauth2.AuthorizeGenerate `inject:"authorizeGenerate"`
 	UserHandler       IUserHandler       `inject:"userHandler"`
 	MobileUserHandler IMobileUserHandler `inject:"userHandler"`
 	EmailUserHandler  IEmailUserHandler  `inject:"userHandler"`
 	SocialUserHandler ISocialUserHandler `inject:"userHandler"`
+
+	clientAuthorizedHandlers      []server.ClientAuthorizedHandler
+	clientScopeHandlers           []server.ClientScopeHandler
+	passwordAuthorizationHandlers []server.PasswordAuthorizationHandler
+	userAuthorizationHandlers     []server.UserAuthorizationHandler
 }
 
 var theServer *OAuth2Server
 
 func (s *OAuth2Server) init() {
 	s.once.Do(func() {
-		s.initServer(s.initManager())
+		s.initServer()
 	})
 }
 
-func (s *OAuth2Server) initManager() oauth2.Manager {
+func (s *OAuth2Server) manager() oauth2.Manager {
 	// s.manager
-	s.manager = manage.NewDefaultManager()
+	manager := manage.NewDefaultManager()
 
-	s.manager.SetRefreshTokenCfg(&manage.RefreshingConfig{
+	manager.SetRefreshTokenCfg(&manage.RefreshingConfig{
 		AccessTokenExp:     TokenConfig.Setting.AccessTokenExpireTime,
 		RefreshTokenExp:    TokenConfig.Setting.RefreshTokenExpireTime,
 		IsGenerateRefresh:  false,
@@ -61,73 +63,169 @@ func (s *OAuth2Server) initManager() oauth2.Manager {
 		IsGenerateRefresh: true,
 	}
 
-	s.manager.SetAuthorizeCodeTokenCfg(tokenConfig)
-	s.manager.SetImplicitTokenCfg(tokenConfig)
-	s.manager.SetPasswordTokenCfg(tokenConfig)
-	s.manager.SetClientTokenCfg(tokenConfig)
+	manager.SetAuthorizeCodeTokenCfg(tokenConfig)
+	manager.SetImplicitTokenCfg(tokenConfig)
+	manager.SetPasswordTokenCfg(tokenConfig)
+	manager.SetClientTokenCfg(tokenConfig)
 
 	// client存储方式 <= DB
-	s.manager.MapClientStorage(ClientStore())
+	manager.MapClientStorage(ClientStore())
 
 	// token存储方式
 	// manager.MustTokenStorage(store.NewMemoryTokenStore())
-	s.manager.MapTokenStorage(token.TokenStore())
+	manager.MapTokenStorage(token.TokenStore())
 
 	// generate jwt access token
 	// manager.MapAccessGenerate(generates.NewJWTAccessGenerate("", []byte("00000000"), jwt.SigningMethodHS512))
 	// manager.MapAccessGenerate(generates.NewAccessGenerate())
-	s.manager.MapAccessGenerate(token.AccessGenerate())
+	manager.MapAccessGenerate(token.AccessGenerate())
 
-	inject.InjectValue("oauth2.Manager", s.manager)
-	return s.manager
+	return manager
 }
 
 // 初始化服务
-func (s *OAuth2Server) initServer(manager oauth2.Manager) *server.Server {
+func (s *OAuth2Server) initServer() *server.Server {
 	// oauth2Server = server.NewServer(server.NewConfig(), manager)
-	s.server = server.NewDefaultServer(s.manager)
+	s.Server = server.NewDefaultServer(s.manager())
 
-	s.server.SetAllowedGrantType(oauth2.AuthorizationCode, oauth2.ClientCredentials, oauth2.PasswordCredentials, oauth2.Implicit, oauth2.Refreshing)
-	s.server.SetAllowGetAccessRequest(true)
+	s.SetAllowedGrantType(oauth2.AuthorizationCode, oauth2.ClientCredentials, oauth2.PasswordCredentials, oauth2.Implicit, oauth2.Refreshing)
+	s.SetAllowGetAccessRequest(true)
 
-	s.server.SetAuthorizeScopeHandler(s.authorizeScopeHandler)
+	// 对scope的授权，过滤非授权scope
+	s.SetAuthorizeScopeHandler(s.AuthorizeScopeHandler)
+
+	s.SetClientInfoHandler(s.ClientInfoHandler)
+	s.SetClientScopeHandler(s.ClientScopeHandler)
+
+	s.SetClientAuthorizedHandler(s.ClientAuthorizedHandler)
 
 	// 密码授权模式才需要用到这个配置, 这个模式不需要分配授权码,而是直接分配token,通常用于无后端的应用
-	s.server.SetPasswordAuthorizationHandler(s.passwordAuthorizationHandler)
+	s.SetPasswordAuthorizationHandler(s.PasswordAuthorizationHandler)
 
 	// 这一行很关键,这个方法让oauth框架识别当前用户身份标识(并且可以人为处理登陆状态检验等等)
 	// 具体看userAuthorizeHandler方法实现
-	s.server.SetUserAuthorizationHandler(s.userAuthorizeHandler)
+	s.SetUserAuthorizationHandler(s.UserAuthorizationHandler)
 
-	s.server.SetInternalErrorHandler(s.internalErrorHandler)
-	s.server.SetResponseErrorHandler(s.responseErrorHandler)
+	s.SetInternalErrorHandler(s.internalErrorHandler)
+	s.SetResponseErrorHandler(s.responseErrorHandler)
 
-	return s.server
+	s.SetExtensionFieldsHandler(s.ExtensionFieldsHandler)
+
+	// Test User
+	s.RegisterPasswordAuthorizationHandler(s.TestPasswordAuthorizationHandler)
+
+	// Session User
+	s.RegisterUserAuthorizationHandler(s.SessionUserAuthorizationHandler)
+
+	return s.Server
 }
 
 func (s *OAuth2Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
-	return s.server.HandleAuthorizeRequest(w, r.WithContext(context.WithValue(r.Context(), AppIdContextKey, r.Header.Get("X-App-Id"))))
+	return s.Server.HandleAuthorizeRequest(w, r.WithContext(
+		context.WithValue(
+			context.WithValue(
+				r.Context(),
+				AppIdContextKey,
+				r.Header.Get("X-App-Id"),
+			),
+			AuthorizationCodeKey,
+			r.Header.Get("X-Authorization-Code"),
+		)))
 }
 
 func (s *OAuth2Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) error {
-	return s.server.HandleTokenRequest(w, r.WithContext(context.WithValue(r.Context(), AppIdContextKey, r.Header.Get("X-App-Id"))))
+	return s.Server.HandleTokenRequest(w, r.WithContext(
+		context.WithValue(
+			context.WithValue(
+				r.Context(),
+				AppIdContextKey,
+				r.Header.Get("X-App-Id"),
+			),
+			AuthorizationCodeKey,
+			r.Header.Get("X-Authorization-Code"),
+		)))
 }
 
-func (s *OAuth2Server) ClientInfoHandler(r *http.Request) (string, string, error) {
-	return s.server.ClientInfoHandler(r)
+func (s *OAuth2Server) RegisterClientScopeHandler(handler server.ClientScopeHandler) {
+	if s.clientScopeHandlers == nil {
+		s.clientScopeHandlers = []server.ClientScopeHandler{}
+	}
+
+	s.clientScopeHandlers = append(s.clientScopeHandlers, handler)
 }
 
-func (s *OAuth2Server) GetTokenData(ti oauth2.TokenInfo) map[string]interface{} {
-	return s.server.GetTokenData(ti)
+func (s *OAuth2Server) RegisterClientAuthorizedHandler(handler server.ClientAuthorizedHandler) {
+	if s.clientAuthorizedHandlers == nil {
+		s.clientAuthorizedHandlers = []server.ClientAuthorizedHandler{}
+	}
+
+	s.clientAuthorizedHandlers = append(s.clientAuthorizedHandlers, handler)
 }
 
-func (s *OAuth2Server) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
-	return s.server.ValidationBearerToken(r)
+func (s *OAuth2Server) RegisterPasswordAuthorizationHandler(handler server.PasswordAuthorizationHandler) {
+	if s.passwordAuthorizationHandlers == nil {
+		s.passwordAuthorizationHandlers = []server.PasswordAuthorizationHandler{}
+	}
+
+	s.passwordAuthorizationHandlers = append(s.passwordAuthorizationHandlers, handler)
+}
+
+func (s *OAuth2Server) RegisterUserAuthorizationHandler(handler server.UserAuthorizationHandler) {
+	if s.userAuthorizationHandlers == nil {
+		s.userAuthorizationHandlers = []server.UserAuthorizationHandler{}
+	}
+
+	s.userAuthorizationHandlers = append(s.userAuthorizationHandlers, handler)
+}
+
+func (s *OAuth2Server) ClientScopeHandler(tgr *oauth2.TokenGenerateRequest) (allowed bool, err error) {
+	if len(s.clientScopeHandlers) > 0 {
+		for _, handler := range s.clientScopeHandlers {
+			if allowed, err := handler(tgr); err != nil {
+				return false, err
+			} else if allowed {
+				return allowed, nil
+			}
+		}
+		return false, nil
+	}
+	return true, nil
+}
+
+func (s *OAuth2Server) ClientAuthorizedHandler(clientID string, grant oauth2.GrantType) (bool, error) {
+	if len(s.clientAuthorizedHandlers) > 0 {
+		for _, handler := range s.clientAuthorizedHandlers {
+			if allowed, err := handler(clientID, grant); err != nil {
+				return false, err
+			} else if allowed {
+				return allowed, nil
+			}
+		}
+		return false, nil
+	}
+	return true, nil
 }
 
 // oauth框架通过本方法识别用户身份信息,并且可以人为进行登录状态校验
 // 本方法正常执行后,则会为客户端分配授权码(authorization_code)
-func (*OAuth2Server) userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+func (s *OAuth2Server) UserAuthorizationHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+	if len(s.userAuthorizationHandlers) > 0 {
+		for _, handler := range s.userAuthorizationHandlers {
+			if userId, err := handler(w, r); err != nil {
+				return "", err
+			} else {
+				return userId, nil
+			}
+		}
+	}
+	return "", nil
+}
+
+func (s *OAuth2Server) ExtensionFieldsHandler(ti oauth2.TokenInfo) map[string]any {
+	return nil
+}
+
+func (s *OAuth2Server) SessionUserAuthorizationHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 	store, err := session.Start(r.Context(), w, r)
 	if err != nil {
 		return
@@ -153,53 +251,43 @@ func (*OAuth2Server) userAuthorizeHandler(w http.ResponseWriter, r *http.Request
 	return
 }
 
-func (s *OAuth2Server) passwordAuthorizationHandler(ctx context.Context, clientID, username, password string) (userID string, err error) {
+func (s *OAuth2Server) TestPasswordAuthorizationHandler(ctx context.Context, clientID, username, password string) (userID string, err error) {
 	if username == "test" && password == "test" {
 		userID = "test"
 		return userID, nil
 	}
 
-	var userDetails *SecurityModel.UserDetails
-	if mobile, b := strings.CutPrefix(username, "mobile:"); b {
-		if s.MobileUserHandler != nil {
-			userDetails, err = s.MobileUserHandler.GetMobileUserDetails(ctx, mobile, password)
-		} else {
-			err = errors.New("不支持手机验证码登录")
-		}
-	} else if email, b := strings.CutPrefix(username, "email:"); b {
-		if s.EmailUserHandler != nil {
-			userDetails, err = s.EmailUserHandler.GetEmailUserDetails(ctx, email, password)
-		} else {
-			err = errors.New("不支持邮箱登录")
-		}
-	} else if social, b := strings.CutPrefix(username, "social:"); b {
-		if s.SocialUserHandler != nil {
-			userDetails, err = s.SocialUserHandler.GetSocialUserDetails(ctx, social, password)
-		} else {
-			err = errors.New("不支持社交账号登录")
-		}
-	} else {
-		if s.UserHandler != nil {
-			userDetails, err = s.UserHandler.GetUserDetails(ctx, username, password)
-		} else {
-			err = errors.New("不支持用户名登录")
-		}
-	}
-
-	if err != nil {
-		return "", err
-	}
-
-	if userDetails != nil {
-		return util.StringValue(userDetails.UserId), err
-	}
-
-	return "", errors.New("not found")
+	return "", nil
 }
 
-// 根据client注册的scope
-// 过滤非法scope
-func (*OAuth2Server) authorizeScopeHandler(w http.ResponseWriter, r *http.Request) (scope string, err error) {
+func (s *OAuth2Server) PasswordAuthorizationHandler(ctx context.Context, clientID, username, password string) (userID string, err error) {
+	if username == "test" && password == "test" {
+		userID = "test"
+		return userID, nil
+	}
+
+	if len(s.passwordAuthorizationHandlers) > 0 {
+		for _, handler := range s.passwordAuthorizationHandlers {
+			if user, err := handler(ctx, clientID, username, password); err != nil {
+				return "", err
+			} else if user != "" {
+				return user, nil
+			}
+		}
+	}
+	return "", nil
+}
+
+func (s *OAuth2Server) WriteToken(w http.ResponseWriter, info oauth2.TokenInfo) error {
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Pragma", "no-cache")
+	w.WriteHeader(http.StatusOK)
+	return json.NewEncoder(w).Encode(s.GetTokenData(info))
+}
+
+// 根据client注册的scope过滤非法scope
+func (*OAuth2Server) AuthorizeScopeHandler(w http.ResponseWriter, r *http.Request) (scope string, err error) {
 	if r.Form == nil {
 		r.ParseForm()
 	}

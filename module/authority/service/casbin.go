@@ -71,27 +71,23 @@ func (s *CasbinService) refreshUserPolicy(user *domain.User) {
 
 }
 
-func (s *CasbinService) onUserEvent(event string, args ...interface{}) {
+func (s *CasbinService) onUserEvent(event string, args ...any) {
 	var user = args[0].(*domain.User)
 
 	switch event {
 	case "USER_CREATED":
 		s.refreshUserPolicy(user)
-		break
 	}
 }
 
-func (s *CasbinService) onRoleEvent(event string, args ...interface{}) {
+func (s *CasbinService) onRoleEvent(event string, args ...any) {
 	role := args[0].(*domain.Role)
 	switch event {
 	case "ROLE_CREATED":
-		break
 	case "ROLE_UPDATED":
-		break
 	case "ROLE_DELETED":
 		if s.Enforcer != nil {
 			s.Enforcer.DeletePermissionsForUser(role.Name)
 		}
-		break
 	}
 }

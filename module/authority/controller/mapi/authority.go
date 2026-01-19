@@ -35,6 +35,7 @@ func (m *AuthorityMController) AfterInitialize() {
 		{HttpMethod: "PUT", ResourcePath: "/role/:id/operations", Handler: m.SetRoleOperations},
 		{HttpMethod: "PUT", ResourcePath: "/user/:id/operations", Handler: m.SetUserOperations},
 
+		{HttpMethod: "GET", ResourcePath: "/authorities", Handler: m.GetSystemOperations},
 		{HttpMethod: "GET", ResourcePath: "/role/:id/authorities", Handler: m.GetRoleAuthorities},
 		{HttpMethod: "GET", ResourcePath: "/user/:id/authorities", Handler: m.GetUserAuthorities},
 		{HttpMethod: "PUT", ResourcePath: "/role/:id/authorities", Handler: m.SetRoleAuthorities},
@@ -125,11 +126,8 @@ func (c *AuthorityMController) GetRoleAuthorities(context *gin.Context) {
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
 	}
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
+	authType := request.Param(context, "auth_type").DefaultString("menu")
+
 	list, _ := c.AuthorityService.GetRoleAuthorities(roleId, authType)
 	response.Page(context, int64(len(list)), list)
 }
@@ -142,11 +140,7 @@ func (c *AuthorityMController) SetRoleAuthorities(context *gin.Context) {
 		return
 	}
 
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
+	authType := request.Param(context, "auth_type").DefaultString("menu")
 
 	var request []string
 	if err := context.ShouldBind(&request); err != nil {
@@ -169,11 +163,7 @@ func (c *AuthorityMController) SetUserAuthorities(context *gin.Context) {
 		return
 	}
 
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
+	authType := request.Param(context, "auth_type").DefaultString("menu")
 
 	var request []string
 	if err := context.ShouldBind(&request); err != nil {
@@ -196,11 +186,7 @@ func (c *AuthorityMController) GetUserAuthorities(context *gin.Context) {
 		return
 	}
 
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
+	authType := request.Param(context, "auth_type").DefaultString("menu")
 
 	if data := c.AuthorityService.GetUserAuthorities(id, authType); data != nil {
 		response.Success(context, data)

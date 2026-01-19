@@ -25,7 +25,7 @@ func NewClient() *FeignClient {
 }
 
 type FeignClientInterceptor interface {
-	Do(chain *FeignClientInterceptorChain, method string, url string, urlValues url.Values, bodyValue interface{}, options ...*RequestOptions) *FeignClient
+	Do(chain *FeignClientInterceptorChain, method string, url string, urlValues url.Values, bodyValue any, options ...*RequestOptions) *FeignClient
 }
 
 type FeignClientInterceptorChain struct {
@@ -33,7 +33,7 @@ type FeignClientInterceptorChain struct {
 	p int
 }
 
-func (f *FeignClientInterceptorChain) Next(method string, url string, urlValues url.Values, bodyValue interface{}, options ...*RequestOptions) *FeignClient {
+func (f *FeignClientInterceptorChain) Next(method string, url string, urlValues url.Values, bodyValue any, options ...*RequestOptions) *FeignClient {
 	if f.p < len(f.Interceptors) {
 		f.p++
 		return f.Interceptors[f.p-1].Do(f, method, url, urlValues, bodyValue, options...)
@@ -79,7 +79,7 @@ func (m *FeignClient) clone() *FeignClient {
 	}
 }
 
-func (m *FeignClient) Fetch(data interface{}) error {
+func (m *FeignClient) Fetch(data any) error {
 	if !m.cloned {
 		return errors.New("invalid client")
 	}
@@ -127,15 +127,15 @@ func (m *FeignClient) Get(url string, urlValues url.Values, options ...*RequestO
 	return m.Do("GET", url, urlValues, nil, options...)
 }
 
-func (m *FeignClient) Post(url string, urlValues url.Values, bodyValue interface{}, options ...*RequestOptions) *FeignClient {
+func (m *FeignClient) Post(url string, urlValues url.Values, bodyValue any, options ...*RequestOptions) *FeignClient {
 	return m.Do("POST", url, nil, bodyValue, options...)
 }
 
-func (m *FeignClient) Put(url string, urlValues url.Values, bodyValue interface{}, options ...*RequestOptions) *FeignClient {
+func (m *FeignClient) Put(url string, urlValues url.Values, bodyValue any, options ...*RequestOptions) *FeignClient {
 	return m.Do("PUT", url, urlValues, bodyValue, options...)
 }
 
-func (m *FeignClient) Patch(url string, urlValues url.Values, bodyValue interface{}, options ...*RequestOptions) *FeignClient {
+func (m *FeignClient) Patch(url string, urlValues url.Values, bodyValue any, options ...*RequestOptions) *FeignClient {
 	return m.Do("PATCH", url, urlValues, bodyValue, options...)
 }
 
@@ -143,7 +143,7 @@ func (m *FeignClient) Delete(url string, urlValues url.Values, options ...*Reque
 	return m.Do("DELETE", url, urlValues, nil, options...)
 }
 
-func (m *FeignClient) Do(method string, url string, urlValues url.Values, bodyValue interface{}, options ...*RequestOptions) *FeignClient {
+func (m *FeignClient) Do(method string, url string, urlValues url.Values, bodyValue any, options ...*RequestOptions) *FeignClient {
 	if !m.cloned {
 		return m.clone().Do(method, url, urlValues, bodyValue, options...)
 	}
@@ -153,7 +153,7 @@ func (m *FeignClient) Do(method string, url string, urlValues url.Values, bodyVa
 	}).Next(method, url, urlValues, bodyValue, options...)
 }
 
-func (m *FeignClient) do(method string, url string, urlValues url.Values, bodyValue interface{}, options ...*RequestOptions) *FeignClient {
+func (m *FeignClient) do(method string, url string, urlValues url.Values, bodyValue any, options ...*RequestOptions) *FeignClient {
 	if m.Error != nil {
 		return m
 	}

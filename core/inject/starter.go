@@ -8,7 +8,7 @@ type AfterInitialize interface {
 	AfterInitialize()
 }
 
-var values = make(map[string]interface{})
+var values = make(map[string]any)
 var graph Graph
 
 // 初始化依赖注入
@@ -36,6 +36,6 @@ func InjectValue_(key string, value any) {
 	values[key] = value
 }
 
-func GetValue(key string) interface{} {
+func GetValue(key string) any {
 	return values[key]
 }

@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-var StandardSysOption = map[string]interface{}{
+var StandardSysOption = map[string]any{
 	"": "",
 }
 

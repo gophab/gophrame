@@ -355,8 +355,8 @@ func (a *AuthorityRepository) makeTree(src []*OperationModel.Operation, dest *[]
 		srcMap[item.Id] = item
 	}
 	for _, item := range src {
-		if item.Fid != "" && item.Fid != "0" {
-			var parent = srcMap[item.Fid]
+		if item.Fid != nil && *item.Fid != "0" {
+			var parent = srcMap[*item.Fid]
 			if parent != nil {
 				if parent.Children == nil {
 					parent.Children = make([]*OperationModel.Operation, 0)
@@ -1114,9 +1114,11 @@ func (a *AuthorityRepository) makeChildren(fnodes, cnodes []*OperationModel.Oper
 		fMap[n.Id] = n
 	}
 	for _, n := range cnodes {
-		fnode := fMap[n.Fid]
-		if fnode != nil {
-			fnode.Children = append(fnode.Children, n)
+		if n.Fid != nil {
+			fnode := fMap[*n.Fid]
+			if fnode != nil {
+				fnode.Children = append(fnode.Children, n)
+			}
 		}
 	}
 }

@@ -44,7 +44,7 @@ func (c *ContentTemplateMController) GetContentTemplates(ctx *gin.Context) {
 	typeName := request.Param(ctx, "type").DefaultString("")
 	scene := request.Param(ctx, "scene").DefaultString("")
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if search != "" {
 		conds["search"] = search
 	}
@@ -169,7 +169,7 @@ func (c *ContentTemplateMController) PatchContentTemplate(ctx *gin.Context) {
 		return
 	}
 
-	var request map[string]interface{}
+	var request map[string]any
 	if err := ctx.ShouldBind(&request); err != nil {
 		response.FailCode(ctx, errors.INVALID_PARAMS)
 		return

@@ -24,11 +24,11 @@ type Gin struct {
 	C *gin.Context
 }
 
-func (g *Gin) Response(httpCode, errCode int, data interface{}) *gin.Context {
+func (g *Gin) Response(httpCode, errCode int, data any) *gin.Context {
 	return Response(g.C, httpCode, errCode, data)
 }
 
-func Response(c *gin.Context, httpCode, errCode int, data interface{}) *gin.Context {
+func Response(c *gin.Context, httpCode, errCode int, data any) *gin.Context {
 	if errCode != 0 {
 		c.JSON(httpCode, gin.H{
 			"code":    errCode,
@@ -75,7 +75,7 @@ func ErrorMessage(c *gin.Context, httpCode int, dataCode int, msg string) {
 
 // 语法糖函数封装
 // 仅提交对象数据，不Abort()
-func OK(c *gin.Context, data interface{}) *gin.Context {
+func OK(c *gin.Context, data any) *gin.Context {
 	return Response(c, http.StatusOK, 0, data)
 }
 
@@ -105,12 +105,12 @@ func NotAllowed(c *gin.Context, msg string) {
 }
 
 // 返回成功: OK() + Abort()
-func Success(c *gin.Context, data interface{}) {
+func Success(c *gin.Context, data any) {
 	OK(c, data)
 	c.Abort()
 }
 
-func SuccessWithHeader(c *gin.Context, data interface{}, headers map[string]string) {
+func SuccessWithHeader(c *gin.Context, data any, headers map[string]string) {
 	for k, v := range headers {
 		c.Header(k, v)
 	}
@@ -122,8 +122,11 @@ func Fail(c *gin.Context) {
 	Bad(c, BusinessOccurredErrorCode, BusinessOccurredErrorMsg)
 }
 
-func FailError(c *gin.Context, err *errors.Error) {
-	Bad(c, err.Code, err.Message)
+func FailError(c *gin.Context, err error) {
+	if e, b := err.(errors.Error); b {
+		Exception(c, e.Code, e.Message, e.Error())
+		return
+	}
 }
 
 func FailCode(c *gin.Context, errCode int) {
@@ -160,10 +163,20 @@ func Exception(c *gin.Context, errCode int, errMessage string, msg string) {
 
 // 系统执行代码错误
 func SystemError(c *gin.Context, err error) {
+	if e, b := err.(errors.Error); b {
+		Exception(c, e.Code, e.Message, e.Error())
+		return
+	}
+
 	Exception(c, ServerOccurredErrorCode, ServerOccurredErrorMsg, err.Error())
 }
 
 func SystemFail(c *gin.Context, err error) {
+	if e, b := err.(errors.Error); b {
+		Exception(c, e.Code, e.Message, e.Error())
+		return
+	}
+
 	Exception(c, ServerOccurredErrorCode, ServerOccurredErrorMsg, err.Error())
 }
 
@@ -187,7 +200,7 @@ func SystemErrorMessage(c *gin.Context, errCode int, msg string) {
 	Exception(c, errCode, errMessage, msg)
 }
 
-func Page(context *gin.Context, total int64, list interface{}) {
+func Page(context *gin.Context, total int64, list any) {
 	if total > 0 && list != nil {
 		context.Header("X-Total-Count", strconv.FormatInt(total, 10))
 		Success(context, list)

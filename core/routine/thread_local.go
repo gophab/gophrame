@@ -21,7 +21,7 @@ func (ls *LocalStorage[T]) Get() (r T) {
 	defer ls.RUnlock()
 
 	var vmap map[string]T = ls.m
-	if value, b := vmap[strconv.FormatInt(gid, 10)]; b {
+	if value, b := vmap[strconv.FormatUint(gid, 10)]; b {
 		return value
 	}
 	return r
@@ -34,7 +34,7 @@ func (ls *LocalStorage[T]) Set(value T) {
 	defer ls.Unlock()
 
 	var vmap map[string]T = ls.m
-	vmap[strconv.FormatInt(gid, 10)] = value
+	vmap[strconv.FormatUint(gid, 10)] = value
 }
 
 func (ls *LocalStorage[T]) Remove() {
@@ -44,7 +44,7 @@ func (ls *LocalStorage[T]) Remove() {
 	defer ls.Unlock()
 
 	var vmap map[string]T = ls.m
-	delete(vmap, strconv.FormatInt(gid, 10))
+	delete(vmap, strconv.FormatUint(gid, 10))
 }
 
 func (ls *LocalStorage[T]) Clear() {

@@ -108,6 +108,10 @@ func (p *Pagination) NoCount() bool {
 	return true
 }
 
+func (p *Pagination) NeedCount() bool {
+	return !p.NoCount()
+}
+
 func GetPageable(c *gin.Context) Pageable {
 	// 1. From Query
 	result := &Pagination{
@@ -189,14 +193,17 @@ func GetSort(c *gin.Context) []Sort {
 	result := []Sort{}
 	if len(sorts) > 0 {
 		for _, v := range sorts {
-			seg := strings.Split(v, ",")
 			sort := &Sort{
-				By:        seg[0],
+				By:        v,
 				Direction: "ASC",
 			}
 
-			if len(seg) > 1 {
-				sort.Direction = seg[1]
+			if segs := strings.Split(v, ","); len(segs) > 1 {
+				var dir = strings.ToLower(strings.TrimSpace(segs[len(segs)-1]))
+				if dir == "asc" || dir == "desc" {
+					sort.Direction = dir
+					sort.By = strings.Join(segs[0:len(segs)-1], ",")
+				}
 			}
 
 			result = append(result, *sort)

@@ -21,7 +21,7 @@ func init() {
 	inject.InjectValue("operationLogRepository", operationLogRepository)
 }
 
-func (r *OperationLogRepository) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.OperationLog, error) {
+func (r *OperationLogRepository) Find(conds map[string]any, pageable query.Pageable) (int64, []*domain.OperationLog, error) {
 	tx := r.Model(&domain.OperationLog{})
 
 	for k, v := range conds {

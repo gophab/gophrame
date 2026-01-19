@@ -47,7 +47,7 @@ func (r *ContentTemplateRepository) GetByTypeAndSceneAndTenantId(typeName, scene
 	}
 }
 
-func (r *ContentTemplateRepository) GetAll(conds map[string]interface{}) (result []*domain.ContentTemplate, err error) {
+func (r *ContentTemplateRepository) GetAll(conds map[string]any) (result []*domain.ContentTemplate, err error) {
 	q := transaction.Session().Model(&domain.ContentTemplate{})
 	for k, v := range conds {
 		q = q.Where(k+"=?", v)
@@ -60,7 +60,7 @@ func (r *ContentTemplateRepository) GetAll(conds map[string]interface{}) (result
 	}
 }
 
-func (r *ContentTemplateRepository) FindAll(conds map[string]interface{}, pageable query.Pageable) (count int64, result []*domain.ContentTemplate, err error) {
+func (r *ContentTemplateRepository) FindAll(conds map[string]any, pageable query.Pageable) (count int64, result []*domain.ContentTemplate, err error) {
 	q := transaction.Session().Model(&domain.ContentTemplate{})
 	for k, v := range conds {
 		if k == "search" {
@@ -72,7 +72,15 @@ func (r *ContentTemplateRepository) FindAll(conds map[string]interface{}, pageab
 
 	q.Count(&count)
 
-	if res := query.Page(q, pageable).Order("convert(name using gbk)").Find(&result); res.Error == nil && res.RowsAffected > 0 {
+	order := "name"
+	switch r.Dialector.Name() {
+	case "mysql":
+		order = "convert(name using gbk)"
+	case "postgres":
+		order = "conver(name, 'utf-8', 'gbk')"
+	}
+
+	if res := query.Page(q, pageable).Order(order).Find(&result); res.Error == nil && res.RowsAffected > 0 {
 		return count, result, nil
 	} else {
 		return 0, []*domain.ContentTemplate{}, res.Error
@@ -95,7 +103,7 @@ func (r *ContentTemplateRepository) UpdateContentTemplate(template *domain.Conte
 	}
 }
 
-func (r *ContentTemplateRepository) PatchContentTemplate(id string, data map[string]interface{}) (result *domain.ContentTemplate, err error) {
+func (r *ContentTemplateRepository) PatchContentTemplate(id string, data map[string]any) (result *domain.ContentTemplate, err error) {
 	if result, err = r.GetById(id); err != nil || result == nil {
 		return
 	}

@@ -88,19 +88,31 @@ func (u *UserOpenController) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	if strings.HasPrefix(userId, "sns_") {
+	if strings.HasPrefix(userId, "sns:") {
 		// 社交账户登录
-		if user, err := u.SocialUserService.GetById(userId); err == nil {
-			response.Success(c, u.SocialUserMapper.AsDto(user))
-		} else {
-			response.SystemErrorMessage(c, errors.ERROR_GET_S_FAIL, err.Error())
+		user, err := u.SocialUserService.GetById(userId)
+		if err != nil {
+			response.SystemError(c, err)
+			return
 		}
+		if user == nil {
+			response.NotFound(c, "Not Found")
+			return
+		}
+
+		response.Success(c, u.SocialUserMapper.AsDto(user))
 	} else {
-		if user, err := u.UserService.GetById(userId); err == nil {
-			response.Success(c, u.UserMapper.AsDto(user))
-		} else {
-			response.SystemErrorMessage(c, errors.ERROR_GET_S_FAIL, err.Error())
+		user, err := u.UserService.GetById(userId)
+		if err != nil {
+			response.SystemError(c, err)
+			return
 		}
+		if user == nil {
+			response.NotFound(c, "Not Found")
+			return
+		}
+
+		response.Success(c, u.UserMapper.AsDto(user))
 	}
 }
 
@@ -187,7 +199,7 @@ func (u *UserOpenController) UpdateUser(c *gin.Context) {
 // @Failure 400 {string} json
 // @Router /api/v1/users/:id  [PUT]
 func (u *UserOpenController) PatchUser(c *gin.Context) {
-	var params map[string]interface{}
+	var params map[string]any
 	if err := c.BindJSON(&params); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -357,7 +369,7 @@ func (u *AdminUserOpenController) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	if strings.HasPrefix(userId, "sns_") {
+	if strings.HasPrefix(userId, "sns:") {
 		// 社交账户登录
 		if user, err := u.SocialUserService.GetById(userId); err == nil {
 			response.Success(c, u.SocialUserMapper.AsDto(user))
@@ -390,7 +402,7 @@ func (u *AdminUserOpenController) GetUsers(c *gin.Context) {
 	organization := request.Param(c, "organization").DefaultBool(false)
 	tenantId := SecurityUtil.GetCurrentTenantId(c)
 
-	conds := make(map[string]interface{})
+	conds := make(map[string]any)
 	if search != "" {
 		conds["search"] = search
 	}
@@ -789,7 +801,7 @@ func (u *AdminUserOpenController) PatchUser(c *gin.Context) {
 		return
 	}
 
-	var user = make(map[string]interface{})
+	var user = make(map[string]any)
 
 	var params domain.User
 	if err := c.BindJSON(&params); err != nil {

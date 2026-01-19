@@ -59,9 +59,9 @@ func (r *MessageRepository) UpdateMessage(message *domain.Message) (*domain.Mess
 	}
 }
 
-func (r *MessageRepository) PatchMessage(id int64, data map[string]interface{}) (*domain.Message, error) {
+func (r *MessageRepository) PatchMessage(id int64, data map[string]any) (*domain.Message, error) {
 	data["id"] = id
-	if res := r.Model(&domain.Message{}).Where("id=?", id).UpdateColumns(data); res.Error == nil {
+	if res := r.Model(&domain.Message{}).Where("id=?", id).UpdateColumns(util.DbFields(data)); res.Error == nil {
 		return r.GetById(id)
 	} else {
 		return nil, res.Error
@@ -76,15 +76,16 @@ func (r *MessageRepository) DeleteById(id int64) error {
 	return r.Model(&domain.Message{}).Where("id = ?", id).Update("del_flag", true).Error
 }
 
-func (r *MessageRepository) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Message, error) {
+func (r *MessageRepository) Find(conds map[string]any, pageable query.Pageable) (int64, []*domain.Message, error) {
 	tx := r.Model(&domain.Message{})
 	for k, v := range conds {
-		if k == "user_id" {
+		switch k {
+		case "user_id":
 			// managed by user_id
 			tx.Where("(`from` = ? and scope = 'PRIVATE') or (scope <> 'PRIVATE')", v)
-		} else if k == "search" {
+		case "search":
 			tx.Where("title like ? or content like ?", "%"+v.(string)+"%", "%"+v.(string)+"%")
-		} else {
+		default:
 			tx.Where(fmt.Sprintf("`%s` = ?", k), v)
 		}
 	}
@@ -103,7 +104,7 @@ func (r *MessageRepository) Find(conds map[string]interface{}, pageable query.Pa
 	}
 }
 
-func (r *MessageRepository) FindAvailable(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Message, error) {
+func (r *MessageRepository) FindAvailable(conds map[string]any, pageable query.Pageable) (int64, []*domain.Message, error) {
 	var userId = conds["user_id"]
 	var tenantId = conds["tenant_id"]
 	delete(conds, "user_id")
@@ -162,15 +163,16 @@ func (r *MessageRepository) FindAvailable(conds map[string]interface{}, pageable
 	}
 }
 
-func (r *MessageRepository) FindSimples(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.SimpleMessage, error) {
+func (r *MessageRepository) FindSimples(conds map[string]any, pageable query.Pageable) (int64, []*domain.SimpleMessage, error) {
 	tx := r.Model(&domain.Message{})
 	for k, v := range conds {
-		if k == "user_id" {
+		switch k {
+		case "user_id":
 			// managed by user_id
 			tx.Where("(`from` = ? and scope = 'PRIVATE') or (scope <> 'PRIVATE')", v)
-		} else if k == "search" {
+		case "search":
 			tx.Where("title like ? or content like ?", "%"+v.(string)+"%", "%"+v.(string)+"%")
-		} else {
+		default:
 			tx.Where(fmt.Sprintf("`%s` = ?", k), v)
 		}
 	}
@@ -190,7 +192,7 @@ func (r *MessageRepository) FindSimples(conds map[string]interface{}, pageable q
 	}
 }
 
-func (r *MessageRepository) FindSimplesAvailable(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.SimpleMessage, error) {
+func (r *MessageRepository) FindSimplesAvailable(conds map[string]any, pageable query.Pageable) (int64, []*domain.SimpleMessage, error) {
 	tx := r.Model(&domain.Message{})
 
 	var userId = conds["user_id"]

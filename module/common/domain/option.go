@@ -9,8 +9,8 @@ type Option struct {
 	Description string `gorm:"column:description;default:null" json:"description"`
 }
 
-func OptionsToMap(sysEnvs []Option) map[string]interface{} {
-	var result = make(map[string]interface{})
+func OptionsToMap(sysEnvs []Option) map[string]any {
+	var result = make(map[string]any)
 	for _, se := range sysEnvs {
 		var pos = strings.LastIndex(se.Name, ".")
 		if pos >= 0 {
@@ -24,20 +24,20 @@ func OptionsToMap(sysEnvs []Option) map[string]interface{} {
 	return result
 }
 
-func getMapObject(m *map[string]interface{}, key string) *map[string]interface{} {
+func getMapObject(m *map[string]any, key string) *map[string]any {
 	var segs = strings.Split(key, ".")
-	var result *map[string]interface{} = m
+	var result *map[string]any = m
 	for _, s := range segs {
 		if v, ok := (*result)[s]; ok {
-			if vm, ok := v.(map[string]interface{}); ok {
+			if vm, ok := v.(map[string]any); ok {
 				result = &vm
 			} else {
-				var r = make(map[string]interface{})
+				var r = make(map[string]any)
 				(*result)[s] = r
 				result = &r
 			}
 		} else {
-			var r = make(map[string]interface{})
+			var r = make(map[string]any)
 			(*result)[s] = r
 			result = &r
 		}

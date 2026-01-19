@@ -45,6 +45,7 @@ func (m *AdminAuthorityOpenController) AfterInitialize() {
 		{HttpMethod: "PUT", ResourcePath: "/role/:id/operations", Handler: m.SetRoleOperations},
 		{HttpMethod: "PUT", ResourcePath: "/user/:id/operations", Handler: m.SetUserOperations},
 
+		{HttpMethod: "GET", ResourcePath: "/authorities", Handler: m.GetConsoleOperations},
 		{HttpMethod: "GET", ResourcePath: "/role/:id/authorities", Handler: m.GetRoleAuthorities},
 		{HttpMethod: "GET", ResourcePath: "/user/:id/authorities", Handler: m.GetUserAuthorities},
 		{HttpMethod: "PUT", ResourcePath: "/role/:id/authorities", Handler: m.SetRoleAuthorities},
@@ -161,11 +162,7 @@ func (c *AdminAuthorityOpenController) GetRoleAuthorities(context *gin.Context) 
 		return
 	}
 
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
+	authType := request.Param(context, "auth_type").DefaultString("menu")
 
 	list, _ := c.AuthorityService.GetRoleAuthorities(roleId, authType)
 	response.Page(context, int64(len(list)), list)
@@ -179,11 +176,7 @@ func (c *AdminAuthorityOpenController) GetUserAuthorities(context *gin.Context) 
 		return
 	}
 
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
+	authType := request.Param(context, "auth_type").DefaultString("menu")
 
 	//根据用户ID,查询隶属哪些组织机构
 	if data := c.AuthorityService.GetUserAuthorities(userId, authType); data != nil {
@@ -202,11 +195,7 @@ func (c *AdminAuthorityOpenController) SetRoleAuthorities(context *gin.Context) 
 		return
 	}
 
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
+	authType := request.Param(context, "auth_type").DefaultString("menu")
 
 	var request []string
 	if err := context.ShouldBind(&request); err != nil {
@@ -229,11 +218,7 @@ func (c *AdminAuthorityOpenController) SetUserAuthorities(context *gin.Context) 
 		return
 	}
 
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
+	authType := request.Param(context, "auth_type").DefaultString("menu")
 
 	var request []string
 	if err := context.ShouldBind(&request); err != nil {
@@ -269,18 +254,23 @@ func (c *AuthorityOpenController) GetUserOperations(context *gin.Context) {
 }
 
 func (c *AuthorityOpenController) GetUserAuthorities(context *gin.Context) {
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
+	authType := request.Param(context, "auth_type").DefaultString("")
 
 	currentUserId := SecurityUtils.GetCurrentUserId(context)
-	authorities := c.AuthorityService.GetUserAvailableAuthorities(currentUserId, authType)
-	if len(authorities) > 0 {
-		response.OK(context, authorities)
+	if authType == "" {
+		operations := c.AuthorityService.GetUserAvailableOperations(currentUserId)
+		if len(operations) > 0 {
+			response.OK(context, operations)
+		} else {
+			response.OK(context, []any{})
+		}
 	} else {
-		response.OK(context, []any{})
+		authorities := c.AuthorityService.GetUserAvailableAuthorities(currentUserId, authType)
+		if len(authorities) > 0 {
+			response.OK(context, authorities)
+		} else {
+			response.OK(context, []any{})
+		}
 	}
 }
 

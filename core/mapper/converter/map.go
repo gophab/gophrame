@@ -62,7 +62,7 @@ func (m *mapConverter) convert(sPtr, dPtr unsafe.Pointer) {
 
 }
 
-// emptyInterface is the header for an interface{} value.
+// emptyInterface is the header for an any value.
 type emptyInterface struct {
 	typ  unsafe.Pointer
 	word unsafe.Pointer
@@ -70,7 +70,7 @@ type emptyInterface struct {
 
 func ptrToMapValue(emptyMapInterface *emptyInterface, ptr unsafe.Pointer) reflect.Value {
 	emptyMapInterface.word = ptr
-	realInterface := *(*interface{})(unsafe.Pointer(emptyMapInterface))
+	realInterface := *(*any)(unsafe.Pointer(emptyMapInterface))
 	return reflect.ValueOf(realInterface).Elem()
 }
 

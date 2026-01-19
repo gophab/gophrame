@@ -155,7 +155,7 @@ func (s *RedisStorage) Restore(key string) *RedisResult {
 }
 
 func (s *RedisStorage) RestoreKeys(keys []string) *RedisResults {
-	var args []interface{}
+	var args []any
 	for _, v := range keys {
 		args = append(args, v)
 	}
@@ -163,12 +163,12 @@ func (s *RedisStorage) RestoreKeys(keys []string) *RedisResults {
 	return s.Results(keys, res, err)
 }
 
-func (s *RedisStorage) Store(key string, value interface{}) error {
+func (s *RedisStorage) Store(key string, value any) error {
 	_, err := s.client.Do("SET", key, value)
 	return err
 }
 
-func (s *RedisStorage) StoreDuration(key string, value interface{}, duration time.Duration) error {
+func (s *RedisStorage) StoreDuration(key string, value any, duration time.Duration) error {
 	_, err := s.client.Do("PSETEX", key, duration.Milliseconds(), value)
 	if err != nil {
 		_, err = s.client.Do("SETEX", key, duration.Seconds(), value)
@@ -176,7 +176,7 @@ func (s *RedisStorage) StoreDuration(key string, value interface{}, duration tim
 	return err
 }
 
-func (s *RedisStorage) StoreExpire(key string, value interface{}, expireTime time.Time) error {
+func (s *RedisStorage) StoreExpire(key string, value any, expireTime time.Time) error {
 	_, err := s.client.Do("PSETEX", key, time.Until(expireTime).Microseconds(), value)
 	if err != nil {
 		s.client.Do("SETEX", key, time.Until(expireTime).Seconds(), value)
@@ -184,12 +184,12 @@ func (s *RedisStorage) StoreExpire(key string, value interface{}, expireTime tim
 	return err
 }
 
-func (s *RedisStorage) StoreIfAbsent(key string, value interface{}) (string, error) {
+func (s *RedisStorage) StoreIfAbsent(key string, value any) (string, error) {
 	res, err := s.client.Do("SETNX", key, value)
 	return s.String(res, err)
 }
 
-func (s *RedisStorage) StoreDurationIfAbsent(key string, value interface{}, duration time.Duration) (string, error) {
+func (s *RedisStorage) StoreDurationIfAbsent(key string, value any, duration time.Duration) (string, error) {
 	defer func() {
 		s.client.Do("PEXPIRE", key, duration.Milliseconds())
 	}()
@@ -197,12 +197,12 @@ func (s *RedisStorage) StoreDurationIfAbsent(key string, value interface{}, dura
 	return s.String(res, err)
 }
 
-func (s *RedisStorage) StoreAsString(key string, value interface{}) error {
+func (s *RedisStorage) StoreAsString(key string, value any) error {
 	_, err := s.client.Do("SET", key, json.String(value))
 	return err
 }
 
-func (s *RedisStorage) StoreAsStringDuration(key string, value interface{}, duration time.Duration) error {
+func (s *RedisStorage) StoreAsStringDuration(key string, value any, duration time.Duration) error {
 	_, err := s.client.Do("PSETEX", key, duration.Milliseconds(), json.String(value))
 	if err != nil {
 		_, err = s.client.Do("SETEX", key, duration.Seconds(), json.String(value))
@@ -210,7 +210,7 @@ func (s *RedisStorage) StoreAsStringDuration(key string, value interface{}, dura
 	return err
 }
 
-func (s *RedisStorage) StoreAsStringExpire(key string, value interface{}, expireTime time.Time) error {
+func (s *RedisStorage) StoreAsStringExpire(key string, value any, expireTime time.Time) error {
 	_, err := s.client.Do("PSETEX", key, time.Until(expireTime).Microseconds(), json.String(value))
 	if err != nil {
 		s.client.Do("SETEX", key, time.Until(expireTime).Seconds(), json.String(value))
@@ -218,12 +218,12 @@ func (s *RedisStorage) StoreAsStringExpire(key string, value interface{}, expire
 	return err
 }
 
-func (s *RedisStorage) StoreAsStringIfAbsent(key string, value interface{}) (string, error) {
+func (s *RedisStorage) StoreAsStringIfAbsent(key string, value any) (string, error) {
 	res, err := s.client.Do("SETNX", key, json.String(value))
 	return s.String(res, err)
 }
 
-func (s *RedisStorage) StoreAsStringDurationIfAbsent(key string, value interface{}, duration time.Duration) (string, error) {
+func (s *RedisStorage) StoreAsStringDurationIfAbsent(key string, value any, duration time.Duration) (string, error) {
 	defer func() {
 		s.client.Do("PEXPIRE", key, duration.Milliseconds())
 	}()
@@ -231,24 +231,24 @@ func (s *RedisStorage) StoreAsStringDurationIfAbsent(key string, value interface
 	return s.String(res, err)
 }
 
-func (s *RedisStorage) StoreSetValue(key string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreSetValue(key string, value any) (int, error) {
 	res, err := s.client.Do("SADD", key, value)
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreSetValueAsString(key string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreSetValueAsString(key string, value any) (int, error) {
 	res, err := s.client.Do("SADD", key, json.String(value))
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreSetValues(key string, values []interface{}) (int, error) {
-	p := []interface{}{key, values[0:]}
+func (s *RedisStorage) StoreSetValues(key string, values []any) (int, error) {
+	p := []any{key, values[0:]}
 	resp, err := s.client.Do("SADD", p)
 	return s.Int(resp, err)
 }
 
-func (s *RedisStorage) StoreSetValuesAsString(key string, values []interface{}) (int, error) {
-	p := []interface{}{key}
+func (s *RedisStorage) StoreSetValuesAsString(key string, values []any) (int, error) {
+	p := []any{key}
 	for _, v := range values {
 		p = append(p, json.String(v))
 	}
@@ -262,17 +262,17 @@ func (s *RedisStorage) RestoreSet(key string) *RedisResult {
 }
 
 func (s *RedisStorage) RestoreSets(keys []string) *RedisResult {
-	p := []interface{}{keys[0:]}
+	p := []any{keys[0:]}
 	res, err := s.client.Do("SUNION", p)
 	return s.Result(strings.Join(keys, ","), res, err)
 }
 
-func (s *RedisStorage) StoreZSetValue(key string, score int, value interface{}) (int, error) {
+func (s *RedisStorage) StoreZSetValue(key string, score int, value any) (int, error) {
 	res, err := s.client.Do("ZADD", key, score, value)
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreZSetValueAsString(key string, score int, value interface{}) (int, error) {
+func (s *RedisStorage) StoreZSetValueAsString(key string, score int, value any) (int, error) {
 	res, err := s.client.Do("ZADD", key, score, json.String(value))
 	return s.Int(res, err)
 }
@@ -282,44 +282,44 @@ func (s *RedisStorage) RestoreZSet(key string) *RedisResult {
 	return s.Result(key, res, err)
 }
 
-func (s *RedisStorage) StoreListValue(key string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreListValue(key string, value any) (int, error) {
 	res, err := s.client.Do("LPUSH", key, value)
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreListValueTail(key string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreListValueTail(key string, value any) (int, error) {
 	res, err := s.client.Do("LPUSH", key, value)
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreListValueHead(key string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreListValueHead(key string, value any) (int, error) {
 	res, err := s.client.Do("RPUSH", key, value)
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreListValueAsString(key string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreListValueAsString(key string, value any) (int, error) {
 	res, err := s.client.Do("LPUSH", key, json.String(value))
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreListValueTailAsString(key string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreListValueTailAsString(key string, value any) (int, error) {
 	res, err := s.client.Do("LPUSH", key, json.String(value))
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreListValueHeadAsString(key string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreListValueHeadAsString(key string, value any) (int, error) {
 	res, err := s.client.Do("RPUSH", key, json.String(value))
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreListValues(key string, values []interface{}) (int, error) {
-	p := []interface{}{key, values[0:]}
+func (s *RedisStorage) StoreListValues(key string, values []any) (int, error) {
+	p := []any{key, values[0:]}
 	resp, err := s.client.Do("LPUSH", p)
 	return s.Int(resp, err)
 }
 
-func (s *RedisStorage) StoreListValuesAsString(key string, values []interface{}) (int, error) {
-	p := []interface{}{key}
+func (s *RedisStorage) StoreListValuesAsString(key string, values []any) (int, error) {
+	p := []any{key}
 	for _, v := range values {
 		p = append(p, json.String(v))
 	}
@@ -342,18 +342,18 @@ func (s *RedisStorage) RestoreListTail(key string) *RedisResult {
 	return s.Result(key, res, err)
 }
 
-func (s *RedisStorage) StoreHashValue(key string, hashKey string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreHashValue(key string, hashKey string, value any) (int, error) {
 	res, err := s.client.Do("HSET", key, hashKey, value)
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreHashValueAsString(key string, value interface{}) (int, error) {
+func (s *RedisStorage) StoreHashValueAsString(key string, value any) (int, error) {
 	res, err := s.client.Do("HSET", key, json.String(value))
 	return s.Int(res, err)
 }
 
-func (s *RedisStorage) StoreHashValues(key string, values map[string]interface{}) (int, error) {
-	p := []interface{}{key}
+func (s *RedisStorage) StoreHashValues(key string, values map[string]any) (int, error) {
+	p := []any{key}
 	for k, v := range values {
 		p = append(p, k, v)
 	}
@@ -361,8 +361,8 @@ func (s *RedisStorage) StoreHashValues(key string, values map[string]interface{}
 	return s.Int(resp, err)
 }
 
-func (s *RedisStorage) StoreHashValuesAsString(key string, values map[string]interface{}) (int, error) {
-	p := []interface{}{key}
+func (s *RedisStorage) StoreHashValuesAsString(key string, values map[string]any) (int, error) {
+	p := []any{key}
 	for k, v := range values {
 		p = append(p, k, json.String(v))
 	}
@@ -380,7 +380,7 @@ func (s *RedisStorage) RestoreHash(key string) *RedisResult {
 		return s.Result(key, nil, err)
 	}
 
-	res := make(map[string]interface{})
+	res := make(map[string]any)
 	for i := 0; i < len(keys); i++ {
 		res[keys[i]] = values[i]
 	}

@@ -12,20 +12,25 @@ import (
 	"github.com/gophab/gophrame/core/command"
 
 	_ "github.com/gophab/gophrame/core/casbin"
-	_ "github.com/gophab/gophrame/core/database"
 	_ "github.com/gophab/gophrame/core/email"
 	_ "github.com/gophab/gophrame/core/email/code"
 	_ "github.com/gophab/gophrame/core/i18n"
 	_ "github.com/gophab/gophrame/core/microservice"
-	_ "github.com/gophab/gophrame/core/oss"
+	_ "github.com/gophab/gophrame/core/mongo"
+
 	_ "github.com/gophab/gophrame/core/rabbitmq"
 	_ "github.com/gophab/gophrame/core/redis"
+	_ "github.com/gophab/gophrame/core/sensitive"
 	_ "github.com/gophab/gophrame/core/server"
 	_ "github.com/gophab/gophrame/core/sms"
 	_ "github.com/gophab/gophrame/core/sms/code"
 	_ "github.com/gophab/gophrame/core/websocket"
 
 	// starter
+	_ "github.com/gophab/gophrame/core/database/starter"
+	_ "github.com/gophab/gophrame/core/identify/starter"
+	_ "github.com/gophab/gophrame/core/oss/starter"
+	_ "github.com/gophab/gophrame/core/payment/starter"
 	_ "github.com/gophab/gophrame/core/social/starter"
 
 	// system core

@@ -27,7 +27,7 @@ type Converter struct {
 	converter
 }
 
-func (d *Converter) Convert(src, dst interface{}) error {
+func (d *Converter) Convert(src, dst any) error {
 	if dst == nil || src == nil || reflect.ValueOf(dst).IsNil() || reflect.ValueOf(src).IsNil() {
 		return nil
 	}

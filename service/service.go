@@ -10,8 +10,8 @@ type EntityService[T any] interface {
 	GetAll(entity *T, pageable query.Pageable) (int64, []T)
 	Create(entity *T) (*T, error)
 	Update(entity *T) (*T, error)
-	Patch(id string, column string, value interface{}) (*T, error)
-	PatchAll(id string, kv map[string]interface{}) (*T, error)
+	Patch(id string, column string, value any) (*T, error)
+	PatchAll(id string, kv map[string]any) (*T, error)
 	Delete(entity *T) error
 	DeleteById(id string) error
 }

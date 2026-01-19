@@ -28,8 +28,8 @@ type ServiceInfo struct {
 }
 
 type PortInfo struct {
-	Port    int         `json:"$,omitempty"`
-	Enabled interface{} `json:"@enabled,omitempty"`
+	Port    int `json:"$,omitempty"`
+	Enabled any `json:"@enabled,omitempty"`
 }
 
 type DataCenterInfo struct {

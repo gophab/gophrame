@@ -95,7 +95,7 @@ func (c *AdminTenantOptionOpenController) AddTenantOptions(ctx *gin.Context) {
 	}
 
 	if body, err := ctx.GetRawData(); err == nil {
-		var data = make(map[string]interface{})
+		var data = make(map[string]any)
 		_ = json.Json(string(body), &data)
 		for k, v := range data {
 			if _, err := c.TenantOptionService.AddSysOption(&domain.SysOption{
@@ -129,7 +129,7 @@ func (c *AdminTenantOptionOpenController) SetTenantOptions(ctx *gin.Context) {
 			Options:  make(map[string]*domain.SysOption),
 		}
 
-		var data = make(map[string]interface{})
+		var data = make(map[string]any)
 		_ = json.Json(string(body), &data)
 		for k, v := range data {
 			tenantOptions.Options[k] = &domain.SysOption{
@@ -165,7 +165,7 @@ func (c *AdminTenantOptionOpenController) UpdateTenantOptions(ctx *gin.Context) 
 			Options:  make(map[string]*domain.SysOption),
 		}
 
-		var data = make(map[string]interface{})
+		var data = make(map[string]any)
 		_ = json.Json(string(body), &data)
 		for k, v := range data {
 			tenantOptions.Options[k] = &domain.SysOption{

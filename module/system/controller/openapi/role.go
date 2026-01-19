@@ -58,7 +58,7 @@ func (m *AdminRoleOpenController) AfterInitialize() {
 func (r *AdminRoleOpenController) GetRoles(c *gin.Context) {
 	pageable := query.GetPageable(c)
 
-	count, roles, err := r.RoleService.FindAvailable(map[string]interface{}{
+	count, roles, err := r.RoleService.FindAvailable(map[string]any{
 		"del_flag":  false,
 		"tenant_id": SecurityUtil.GetCurrentTenantId(c),
 	}, pageable)

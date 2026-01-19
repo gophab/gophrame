@@ -18,14 +18,14 @@ import (
 )
 
 type Property struct {
-	Name         string      `json:"name"`
-	Description  string      `json:"description"`
-	Scope        string      `json:"scope"` /* 作用范围：USER、ADMIN、ALL */
-	Value        interface{} `json:"value"`
-	DefaultValue interface{} `json:"defaultValue"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Scope        string `json:"scope"` /* 作用范围：USER、ADMIN、ALL */
+	Value        any    `json:"value"`
+	DefaultValue any    `json:"defaultValue"`
 }
 
-func (p *Property) GetValue() interface{} {
+func (p *Property) GetValue() any {
 	if p.Value != "" {
 		return p.Value
 	}
@@ -33,7 +33,7 @@ func (p *Property) GetValue() interface{} {
 	return p.DefaultValue
 }
 
-func (p *Property) Default(v interface{}) *Property {
+func (p *Property) Default(v any) *Property {
 	p.DefaultValue = v
 	return p
 }
@@ -50,7 +50,7 @@ func (p *Property) AsString() string {
 	return asString(p.GetValue())
 }
 
-func asBool(v interface{}) bool {
+func asBool(v any) bool {
 	if v == nil {
 		return false
 	}
@@ -73,19 +73,19 @@ func asBool(v interface{}) bool {
 	}
 }
 
-func asInt(v interface{}) int {
+func asInt(v any) int {
 	if v == nil {
 		return 0
 	}
 
-	switch v.(type) {
+	switch v := v.(type) {
 	case int:
-		return v.(int)
+		return v
 	case string:
-		r, _ := strconv.Atoi(v.(string))
+		r, _ := strconv.Atoi(v)
 		return r
 	case bool:
-		if v.(bool) {
+		if v {
 			return 1
 		} else {
 			return 0
@@ -97,18 +97,18 @@ func asInt(v interface{}) int {
 	}
 }
 
-func asString(v interface{}) string {
+func asString(v any) string {
 	if v == nil {
 		return ""
 	}
 
-	switch v.(type) {
+	switch v := v.(type) {
 	case int:
-		return strconv.Itoa((v.(int)))
+		return strconv.Itoa(v)
 	case string:
-		return v.(string)
+		return v
 	case bool:
-		if v.(bool) {
+		if v {
 			return "true"
 		} else {
 			return "false"
@@ -126,7 +126,7 @@ func asString(v interface{}) string {
 }
 
 // Properties
-type Properties map[string]interface{}
+type Properties map[string]any
 
 // Value return json value, implement driver.Valuer interface
 func (j Properties) Value() (driver.Value, error) {
@@ -138,7 +138,7 @@ func (j Properties) Value() (driver.Value, error) {
 }
 
 // Scan scan value into Jsonb, implements sql.Scanner interface
-func (j *Properties) Scan(value interface{}) error {
+func (j *Properties) Scan(value any) error {
 	if value == nil {
 		*j = Properties(nil)
 		return nil
@@ -156,7 +156,7 @@ func (j *Properties) Scan(value interface{}) error {
 		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
 	}
 
-	var result = make(map[string]interface{})
+	var result = make(map[string]any)
 	err := json.Unmarshal(bytes, &result)
 	*j = result
 	return err
@@ -164,20 +164,20 @@ func (j *Properties) Scan(value interface{}) error {
 
 // MarshalJSON to output non base64 encoded []byte
 func (j Properties) MarshalJSON() ([]byte, error) {
-	var v map[string]interface{} = j
+	var v map[string]any = j
 	return json.Marshal(v)
 }
 
 // UnmarshalJSON to deserialize []byte
 func (j *Properties) UnmarshalJSON(b []byte) error {
-	var v = make(map[string]interface{})
+	var v = make(map[string]any)
 	err := json.Unmarshal(b, &v)
 	*j = v
 	return err
 }
 
 func (j Properties) String() string {
-	var v map[string]interface{} = j
+	var v map[string]any = j
 	if bytes, err := json.Marshal(v); err == nil {
 		return string(bytes)
 	} else {
@@ -244,10 +244,10 @@ func (p *PropertiesEnabled) Property(name string) *Property {
 	return p.Properties.Property(name)
 }
 
-func (p *PropertiesEnabled) SetProperty(name string, value interface{}) {
-	var properties map[string]interface{}
+func (p *PropertiesEnabled) SetProperty(name string, value any) {
+	var properties map[string]any
 	if p.Properties == nil {
-		properties = make(map[string]interface{})
+		properties = make(map[string]any)
 		p.Properties = &Properties{}
 		*p.Properties = properties
 	} else {

@@ -49,6 +49,10 @@ func (s *OrganizationService) GetById(id string) (*domain.Organization, error) {
 	return s.OrganizationRepository.GetById(id)
 }
 
+func (s *OrganizationService) GetByIds(ids []string) ([]*domain.Organization, error) {
+	return s.OrganizationRepository.GetByIds(ids)
+}
+
 func (s *OrganizationService) List(fid string, name string, pageable query.Pageable) (total int64, list []*domain.Organization) {
 	total, list = s.OrganizationRepository.List(fid, name, pageable)
 

@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
@@ -17,7 +18,11 @@ func Init() {
 		logger.Info("Initializing OAuth2 Server")
 
 		theServer = &OAuth2Server{
-			once: sync.Once{},
+			once:                          sync.Once{},
+			clientAuthorizedHandlers:      []server.ClientAuthorizedHandler{},
+			clientScopeHandlers:           []server.ClientScopeHandler{},
+			passwordAuthorizationHandlers: []server.PasswordAuthorizationHandler{},
+			userAuthorizationHandlers:     []server.UserAuthorizationHandler{},
 		}
 		inject.InjectValue("oauth2Server", theServer)
 

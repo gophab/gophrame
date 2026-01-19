@@ -74,7 +74,7 @@ func CreateMemoryCodeStore(config *config.CodeStoreSetting) (*MemoryCodeStore, e
 	// 清除过期的验证码
 	go func() {
 		for {
-			result.data.Range(func(key, value interface{}) bool {
+			result.data.Range(func(key, value any) bool {
 				if value.(ExpireCode).Expiration.Before(time.Now()) {
 					result.data.Delete(key)
 				}

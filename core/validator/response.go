@@ -30,7 +30,7 @@ const (
 )
 
 // 参数校验错误
-func ErrorParam(c *gin.Context, wrongParam interface{}) {
+func ErrorParam(c *gin.Context, wrongParam any) {
 	response.FailMessage(c, ValidatorParamsCheckFailCode, ValidatorParamsCheckFailMsg)
 	c.Abort()
 }

@@ -29,26 +29,20 @@ func init() {
 
 func (r *RoleRepository) ExistById(id string) (bool, error) {
 	var role domain.Role
-	err := r.Select("id").Where("id = ? AND del_flag = false ", id).First(&role).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, err
-	}
-
-	if role.Id != "" {
+	if res := r.Select("id").Where("id = ? AND del_flag = false ", id).First(&role); res.Error == nil && res.RowsAffected > 0 {
 		return true, nil
+	} else {
+		return false, res.Error
 	}
-
-	return false, nil
 }
 
 func (r *RoleRepository) GetById(id string) (*domain.Role, error) {
 	var role domain.Role
-	err := r.Model(&domain.Role{}).Where("id = ? AND del_flag = false ", id).First(&role).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, err
+	if res := r.Model(&domain.Role{}).Where("id = ? AND del_flag = false ", id).First(&role); res.Error == nil && res.RowsAffected > 0 {
+		return &role, nil
+	} else {
+		return nil, res.Error
 	}
-
-	return &role, nil
 }
 
 func (r *RoleRepository) GetByIds(ids []string) (result []domain.Role) {
@@ -58,19 +52,20 @@ func (r *RoleRepository) GetByIds(ids []string) (result []domain.Role) {
 
 func (r *RoleRepository) GetByName(name string, tenantId string) (*domain.Role, error) {
 	var role domain.Role
-	err := r.Model(&domain.Role{}).Where("name = ? AND tenant_id = ? and del_flag = false ", name, tenantId).First(&role).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		if tenantId != "SYSTEM" {
+	if res := r.Model(&domain.Role{}).Where("name = ? AND tenant_id = ? and del_flag = false ", name, tenantId).First(&role); res.Error == nil {
+		if res.RowsAffected > 0 {
+			return &role, nil
+		} else if tenantId != "SYSTEM" {
 			return r.GetByName(name, "SYSTEM")
+		} else {
+			return nil, nil
 		}
-
-		return nil, err
+	} else {
+		return nil, res.Error
 	}
-
-	return &role, nil
 }
 
-func (r *RoleRepository) GetRoleTotal(maps interface{}) (int64, error) {
+func (r *RoleRepository) GetRoleTotal(maps any) (int64, error) {
 	var count int64
 	if err := r.Model(&domain.Role{}).Where(maps).Count(&count).Error; err != nil {
 		return 0, err
@@ -89,7 +84,7 @@ func (r *RoleRepository) GetRolesAll() ([]*domain.Role, error) {
 	return roles, nil
 }
 
-func (r *RoleRepository) FindRoles(maps map[string]interface{}, pageable query.Pageable) (int64, []*domain.Role, error) {
+func (r *RoleRepository) FindRoles(maps map[string]any, pageable query.Pageable) (int64, []*domain.Role, error) {
 	var role []*domain.Role
 	tx := r.Model(&domain.Role{}).Where(maps)
 
@@ -107,7 +102,7 @@ func (r *RoleRepository) FindRoles(maps map[string]interface{}, pageable query.P
 	return count, role, nil
 }
 
-func (r *RoleRepository) FindAvailableRoles(maps map[string]interface{}, pageable query.Pageable) (int64, []*domain.Role, error) {
+func (r *RoleRepository) FindAvailableRoles(maps map[string]any, pageable query.Pageable) (int64, []*domain.Role, error) {
 	var role []*domain.Role
 
 	tenantId := maps["tenant_id"]
@@ -134,21 +129,28 @@ func (r *RoleRepository) FindAvailableRoles(maps map[string]interface{}, pageabl
 	return count, role, nil
 }
 
-func (r *RoleRepository) GetRoles(maps map[string]interface{}) ([]*domain.Role, error) {
+func (r *RoleRepository) GetRoles(maps map[string]any) ([]*domain.Role, error) {
 	var roles []*domain.Role
 	tx := r.Model(&domain.Role{})
 
 	for k, v := range maps {
-		if k == "user_id" {
+		switch k {
+		case "user_id":
 			query := r.Model(&domain.RoleUser{}).Select("role_id").Where("user_id", v)
 			tx.Where("id in (?)", query)
-		} else if k == "ids" {
+		case "ids":
 			if ids, b := v.([]string); b {
 				tx.Where("id in (?)", ids)
 			} else if ids, b := v.(string); b {
 				tx.Where("id in (?)", strings.Split(ids, ","))
 			}
-		} else {
+		case "names":
+			if ids, b := v.([]string); b {
+				tx.Where("name in (?)", ids)
+			} else if ids, b := v.(string); b {
+				tx.Where("name in (?)", strings.Split(ids, ","))
+			}
+		default:
 			tx.Where(k+"=?", v)
 		}
 	}
@@ -187,7 +189,7 @@ func (r *RoleRepository) CheckRoleNameId(name string, id string, tenantId string
 	return false, nil
 }
 
-func (r *RoleRepository) PatchRole(id string, data map[string]interface{}) (*domain.Role, error) {
+func (r *RoleRepository) PatchRole(id string, data map[string]any) (*domain.Role, error) {
 	data["id"] = id
 	if err := r.Model(&domain.Role{}).Where("id = ? AND del_flag = false", id).UpdateColumns(util.DbFields(data)).Error; err != nil {
 		return nil, err

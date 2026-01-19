@@ -8,14 +8,14 @@ import (
 
 type GlobalContext struct {
 	sync.RWMutex
-	ContextVariables map[string]*routine.ThreadLocal[interface{}]
+	ContextVariables map[string]*routine.ThreadLocal[any]
 }
 
 var globalContext = &GlobalContext{
-	ContextVariables: make(map[string]*routine.ThreadLocal[interface{}]),
+	ContextVariables: make(map[string]*routine.ThreadLocal[any]),
 }
 
-func (gc *GlobalContext) SetVariable(name string, v interface{}) {
+func (gc *GlobalContext) SetVariable(name string, v any) {
 	gc.Lock()
 	defer gc.Unlock()
 
@@ -29,7 +29,7 @@ func (gc *GlobalContext) SetVariable(name string, v interface{}) {
 	variable.Set(v)
 }
 
-func (gc *GlobalContext) GetVariable(name string) interface{} {
+func (gc *GlobalContext) GetVariable(name string) any {
 	gc.RLock()
 	defer gc.RUnlock()
 
@@ -50,11 +50,11 @@ func (gc *GlobalContext) RemoveVariable(name string) {
 	}
 }
 
-func GetContextValue(name string) interface{} {
+func GetContextValue(name string) any {
 	return globalContext.GetVariable(name)
 }
 
-func SetContextValue(name string, v interface{}) {
+func SetContextValue(name string, v any) {
 	globalContext.SetVariable(name, v)
 }
 

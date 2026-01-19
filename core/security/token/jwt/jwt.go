@@ -51,7 +51,7 @@ func GenerateToken(claims *Claims) (string, error) {
 }
 
 func ParseToken(token string) (*Claims, error) {
-	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (any, error) {
 		return []byte(Setting.Secret), nil
 	})
 
@@ -90,8 +90,8 @@ func signingMethod() jwt.SigningMethod {
 	return method
 }
 
-func signingKey(key []byte) (interface{}, error) {
-	var result interface{}
+func signingKey(key []byte) (any, error) {
+	var result any
 	method := signingMethod()
 	if isEs(method) {
 		v, err := jwt.ParseECPrivateKeyFromPEM(key)

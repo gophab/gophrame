@@ -38,10 +38,10 @@ func (u *OrganizationUserService) GetUserOrganizationIds(userId string) []string
 	}
 
 	//根据岗位ID获取所有的岗位ID,父子级(需要去重)
-	organization := u.OrganizationRepository.GetByIds(organizationIds)
+	organizations, _ := u.OrganizationRepository.GetByIds(organizationIds)
 	organizationIdArr := []string{}
-	for _, v := range organization {
-		idArr := strings.Split(v.PathInfo, ",")
+	for _, organization := range organizations {
+		idArr := strings.Split(organization.PathInfo, ",")
 		for _, vv := range idArr {
 			if vv != "" {
 				organizationIdArr = append(organizationIdArr, vv)

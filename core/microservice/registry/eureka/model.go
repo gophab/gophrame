@@ -67,13 +67,13 @@ type WrapperInstanceInfo struct {
 }
 
 type WrapperPort struct {
-	Port    int         `json:"$,omitempty"`
-	Enabled interface{} `json:"@enabled,omitempty"`
+	Port    int `json:"$,omitempty"`
+	Enabled any `json:"@enabled,omitempty"`
 }
 
 type WrapperSecurePort struct {
-	Port   int         `json:"$,omitempty"`
-	Enable interface{} `json:"@enabled"`
+	Port   int `json:"$,omitempty"`
+	Enable any `json:"@enabled"`
 }
 
 type WrapperDataCenterInfo struct {

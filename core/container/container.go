@@ -21,7 +21,7 @@ type container struct {
 }
 
 // Set  1.以键值对的形式将代码注册到容器
-func (c *container) Set(key string, value interface{}) (res bool) {
+func (c *container) Set(key string, value any) (res bool) {
 	if _, exists := c.KeyIsExists(key); !exists {
 		sMap.Store(key, value)
 		res = true
@@ -37,7 +37,7 @@ func (c *container) Delete(key string) {
 }
 
 // Get 3.传递键，从容器获取值
-func (c *container) Get(key string) interface{} {
+func (c *container) Get(key string) any {
 	if value, exists := c.KeyIsExists(key); exists {
 		return value
 	}
@@ -45,13 +45,13 @@ func (c *container) Get(key string) interface{} {
 }
 
 // KeyIsExists 4. 判断键是否被注册
-func (c *container) KeyIsExists(key string) (interface{}, bool) {
+func (c *container) KeyIsExists(key string) (any, bool) {
 	return sMap.Load(key)
 }
 
 // FuzzyDelete 按照键的前缀模糊删除容器中注册的内容
 func (c *container) FuzzyDelete(keyPre string) {
-	sMap.Range(func(key, value interface{}) bool {
+	sMap.Range(func(key, value any) bool {
 		if keyname, ok := key.(string); ok {
 			if strings.HasPrefix(keyname, keyPre) {
 				sMap.Delete(keyname)

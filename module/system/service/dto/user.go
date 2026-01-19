@@ -30,8 +30,8 @@ func (u *User) AsDomain() *domain.User {
 	return &result
 }
 
-func (a *User) GetMaps() map[string]interface{} {
-	maps := make(map[string]interface{})
+func (a *User) GetMaps() map[string]any {
+	maps := make(map[string]any)
 	maps["del_flag"] = false
 	return maps
 }

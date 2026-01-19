@@ -35,7 +35,7 @@ func (j Parameters) Value() (driver.Value, error) {
 }
 
 // Scan scan value into Jsonb, implements sql.Scanner interface
-func (j *Parameters) Scan(value interface{}) error {
+func (j *Parameters) Scan(value any) error {
 	if value == nil {
 		*j = Parameters(nil)
 		return nil
@@ -53,10 +53,7 @@ func (j *Parameters) Scan(value interface{}) error {
 		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
 	}
 
-	var result = make([]*Parameter, 0)
-	err := json.Unmarshal(bytes, &result)
-	*j = result
-	return err
+	return j.UnmarshalJSON(bytes)
 }
 
 // MarshalJSON to output non base64 encoded []byte

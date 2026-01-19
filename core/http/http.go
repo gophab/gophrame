@@ -3,10 +3,16 @@ package http
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"net/url"
+	"reflect"
 	"strings"
+
+	"github.com/gophab/gophrame/core/logger"
+
+	"github.com/google/go-querystring/query"
 )
 
 type HttpRequest struct {
@@ -14,8 +20,9 @@ type HttpRequest struct {
 	URL                string
 	Method             string
 	Headers            map[string]string
-	Body               interface{}
+	Body               any
 	Username, Password string
+	Proxy              string
 	ContentType        string
 	Response           *http.Response
 	StatusCode         int
@@ -28,9 +35,14 @@ type RequestParameters map[string]string
 
 func NewHttpRequest(base ...string) *HttpRequest {
 	if len(base) > 0 {
-		return &HttpRequest{Base: base[0]}
+		return &HttpRequest{
+			Base:    base[0],
+			Headers: make(map[string]string),
+		}
 	}
-	return &HttpRequest{}
+	return &HttpRequest{
+		Headers: make(map[string]string),
+	}
 }
 
 func (r *HttpRequest) GET(url string, params ...RequestParameters) *HttpRequest {
@@ -72,12 +84,21 @@ func (r *HttpRequest) urlParams(url string, params ...RequestParameters) string 
 	return url
 }
 
-func (r *HttpRequest) BODY(body interface{}) *HttpRequest {
+func (r *HttpRequest) PROXY(proxy string) *HttpRequest {
+	r.Proxy = proxy
+	return r
+}
+
+func (r *HttpRequest) BODY(body any) *HttpRequest {
 	r.Body = body
 	return r
 }
 
 func (r *HttpRequest) HEADER(head string, value string) *HttpRequest {
+	if nil == r.Headers {
+		r.Headers = make(map[string]string)
+	}
+
 	r.Headers[head] = value
 	return r
 }
@@ -138,10 +159,25 @@ func (r *HttpRequest) Do() *HttpRequest {
 		req.Header.Set(k, v)
 	}
 
+	var transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+	}
+	if r.Proxy != "" {
+		if proxyURL, err := url.Parse(r.Proxy); err == nil {
+			transport = &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			}
+		}
+	}
 	var resp *http.Response
-	resp, err = http.DefaultClient.Do(req)
+	client := &http.Client{
+		Transport: transport,
+	}
+
+	resp, err = client.Do(req)
 	if err != nil {
 		r.Error = err
+		logger.Error("Http client error: ", err.Error())
 		return r
 	}
 	defer resp.Body.Close()
@@ -150,7 +186,87 @@ func (r *HttpRequest) Do() *HttpRequest {
 	r.StatusCode = resp.StatusCode
 	r.executed = true
 
-	if bytes, err := ioutil.ReadAll(resp.Body); err == nil {
+	if bytes, err := io.ReadAll(resp.Body); err == nil {
+		r.bytes = bytes
+	} else {
+		r.Error = err
+	}
+
+	return r
+}
+
+func (r *HttpRequest) DoForm() *HttpRequest {
+	if r.executed || r.Error != nil {
+		return r
+	}
+	r.executed = true
+
+	var (
+		body io.Reader
+		req  *http.Request
+		err  error
+	)
+	if r.Body != nil {
+		switch t := r.Body.(type) {
+		case string:
+			body = strings.NewReader(t)
+		case []byte:
+			body = strings.NewReader(string(t))
+		default:
+			if v := reflect.ValueOf(r.Body); v.Kind() == reflect.Map {
+				iter := v.MapRange()
+				var s = make([]string, 0)
+				for iter.Next() {
+					s = append(s, fmt.Sprintf("%v=%v", iter.Key().Interface(), iter.Value().Interface()))
+				}
+				body = strings.NewReader(strings.Join(s, "&"))
+			} else {
+				if data, err := query.Values(r.Body); err == nil {
+					body = strings.NewReader(data.Encode())
+				} else {
+					logger.Error("Encode form data error: ", err.Error())
+				}
+			}
+		}
+	}
+	req, err = http.NewRequest(r.Method, r.fullURL(), body)
+	if err != nil {
+		r.Error = err
+		return r
+	}
+
+	for k, v := range r.Headers {
+		req.Header.Set(k, v)
+	}
+
+	var transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+	}
+	if r.Proxy != "" {
+		if proxyURL, err := url.Parse(r.Proxy); err == nil {
+			transport = &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			}
+		}
+	}
+	var resp *http.Response
+	client := &http.Client{
+		Transport: transport,
+	}
+
+	resp, err = client.Do(req)
+	if err != nil {
+		r.Error = err
+		logger.Error("Http client error: ", err.Error())
+		return r
+	}
+	defer resp.Body.Close()
+
+	r.Response = resp
+	r.StatusCode = resp.StatusCode
+	r.executed = true
+
+	if bytes, err := io.ReadAll(resp.Body); err == nil {
 		r.bytes = bytes
 	} else {
 		r.Error = err
@@ -177,7 +293,7 @@ func (r *HttpRequest) Result() (status int, body []byte, err error) {
 	return
 }
 
-func (r *HttpRequest) ResultTo(result interface{}) (status int, err error) {
+func (r *HttpRequest) ResultTo(result any) (status int, err error) {
 	if !r.executed {
 		return r.Do().ResultTo(result)
 	}
@@ -218,7 +334,7 @@ func (r *HttpRequest) String() (result string, err error) {
 	return
 }
 
-func (r *HttpRequest) Fetch(data interface{}) (status int, err error) {
+func (r *HttpRequest) Fetch(data any) (status int, err error) {
 	if !r.executed {
 		return r.Do().Fetch(data)
 	}

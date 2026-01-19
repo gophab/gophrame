@@ -8,7 +8,7 @@ import (
 	"github.com/gophab/gophrame/core/mapper/converter"
 )
 
-type Render func(interface{}, interface{})
+type Render func(any, any)
 
 var (
 	mutex      sync.Mutex
@@ -16,7 +16,7 @@ var (
 	renders    = make(map[string]Render)
 )
 
-func getConverter(src, dst interface{}) (*converter.Converter, error) {
+func getConverter(src, dst any) (*converter.Converter, error) {
 	key := fmt.Sprintf("%v_%v", reflect.TypeOf(src).String(), reflect.TypeOf(dst).String())
 	if _, ok := converters[key]; !ok {
 		mutex.Lock()
@@ -33,7 +33,7 @@ func getConverter(src, dst interface{}) (*converter.Converter, error) {
 	return nil, fmt.Errorf("[MAPPER] can't convert source type %s to destination type %s", reflect.TypeOf(src).String(), reflect.TypeOf(dst).String())
 }
 
-func getRender(src, dst interface{}) Render {
+func getRender(src, dst any) Render {
 	key := fmt.Sprintf("%v_%v", reflect.TypeOf(src).String(), reflect.TypeOf(dst).String())
 	if render, ok := renders[key]; ok {
 		return render
@@ -41,12 +41,12 @@ func getRender(src, dst interface{}) Render {
 	return nil
 }
 
-func RegisterRender[S, D any](src S, dst D, render func(interface{}, interface{})) {
+func RegisterRender[S, D any](src S, dst D, render func(any, any)) {
 	key := fmt.Sprintf("%v_%v", reflect.TypeOf(src).String(), reflect.TypeOf(dst).String())
 	renders[key] = render
 }
 
-func Map(src, dst interface{}) error {
+func Map(src, dst any) error {
 	converter, err := getConverter(src, dst)
 	if err != nil {
 		return err
@@ -63,7 +63,7 @@ func Map(src, dst interface{}) error {
 	return nil
 }
 
-func MapAsWithError[T any](src interface{}, dst T) (result T, err error) {
+func MapAsWithError[T any](src any, dst T) (result T, err error) {
 	converter, err := getConverter(src, dst)
 	if err != nil {
 		return dst, err
@@ -80,7 +80,7 @@ func MapAsWithError[T any](src interface{}, dst T) (result T, err error) {
 	return dst, nil
 }
 
-func MapAs[T any](src interface{}, dst T) (result T) {
+func MapAs[T any](src any, dst T) (result T) {
 	converter, err := getConverter(src, dst)
 	if err != nil {
 		return dst
@@ -96,7 +96,7 @@ func MapAs[T any](src interface{}, dst T) (result T) {
 	return dst
 }
 
-func MapOption(src, dst interface{}, option *converter.StructOption) (err error) {
+func MapOption(src, dst any, option *converter.StructOption) (err error) {
 	converter, err := getConverter(src, dst)
 	if err != nil {
 		return
@@ -114,7 +114,7 @@ func MapOption(src, dst interface{}, option *converter.StructOption) (err error)
 	return
 }
 
-func MapRender(src, dst interface{}, render func(interface{}, interface{})) (err error) {
+func MapRender(src, dst any, render func(any, any)) (err error) {
 	converter, err := getConverter(src, dst)
 	if err != nil {
 		return err
@@ -131,13 +131,13 @@ func MapRender(src, dst interface{}, render func(interface{}, interface{})) (err
 	return
 }
 
-func MapOptionRender(src, dst interface{}, option *converter.StructOption, render func(interface{}, interface{})) (err error) {
+func MapOptionRender(src, dst any, option *converter.StructOption, render func(any, any)) (err error) {
 	converter, err := getConverter(src, dst)
 	if err != nil {
 		return err
 	}
 
-	if err = converter.Convert(dst, src); err != nil {
+	if err = converter.Convert(src, dst); err != nil {
 		return
 	}
 
@@ -220,7 +220,7 @@ func MapArrayOption[S, D any](src []S, dst []D, option *converter.StructOption) 
 	return
 }
 
-func MapArrayRender[S, D any](src []S, dst []D, render func(interface{}, interface{})) (err error) {
+func MapArrayRender[S, D any](src []S, dst []D, render func(any, any)) (err error) {
 	if len(src) == 0 {
 		return
 	}
@@ -243,7 +243,7 @@ func MapArrayRender[S, D any](src []S, dst []D, render func(interface{}, interfa
 	return
 }
 
-func MapArrayOptionRender[S, D any](src []S, dst []D, option *converter.StructOption, render func(interface{}, interface{})) (err error) {
+func MapArrayOptionRender[S, D any](src []S, dst []D, option *converter.StructOption, render func(any, any)) (err error) {
 	if len(src) == 0 {
 		return
 	}

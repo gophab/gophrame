@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func Contains(container interface{}, obj interface{}) (bool, error) {
+func Contains(container any, obj any) (bool, error) {
 	containerValue := reflect.ValueOf(container)
 	switch reflect.TypeOf(container).Kind() {
 	case reflect.Slice, reflect.Array:
@@ -22,7 +22,7 @@ func Contains(container interface{}, obj interface{}) (bool, error) {
 	return false, errors.New("not in container")
 }
 
-func ContainsAny(container interface{}, objs []interface{}) (bool, error) {
+func ContainsAny(container any, objs []any) (bool, error) {
 	containerValue := reflect.ValueOf(container)
 	switch reflect.TypeOf(container).Kind() {
 	case reflect.Slice, reflect.Array:
@@ -41,7 +41,7 @@ func ContainsAny(container interface{}, objs []interface{}) (bool, error) {
 	return false, errors.New("not in container")
 }
 
-func ContainsAll(container interface{}, objs []interface{}) (bool, error) {
+func ContainsAll(container any, objs []any) (bool, error) {
 	for _, obj := range objs {
 		if b, _ := Contains(container, obj); !b {
 			return false, errors.New("not in container")
@@ -50,7 +50,7 @@ func ContainsAll(container interface{}, objs []interface{}) (bool, error) {
 	return true, nil
 }
 
-func Filter(container interface{}, objs []interface{}) (interface{}, error) {
+func Filter(container any, objs []any) (any, error) {
 	containerValue := reflect.ValueOf(container)
 	switch reflect.TypeOf(container).Kind() {
 	case reflect.Slice, reflect.Array:

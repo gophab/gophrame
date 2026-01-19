@@ -29,12 +29,23 @@ func (r *OrganizationRepository) GetCount(fid string, name string) (count int64)
 
 func (r *OrganizationRepository) GetById(id string) (*domain.Organization, error) {
 	var result domain.Organization
-	if err := r.Model(&domain.Organization{}).Where("id = ?", id).Find(&result); err.Error != nil {
+	if err := r.Model(&domain.Organization{}).Where("id = ?", id).Where("del_flag = ?", false).First(&result); err.Error != nil {
 		return nil, err.Error
 	} else if err.RowsAffected == 0 {
 		return nil, nil
 	} else {
 		return &result, nil
+	}
+}
+
+func (r *OrganizationRepository) GetByIds(ids []string) ([]*domain.Organization, error) {
+	var results = make([]*domain.Organization, 0)
+	if err := r.Model(&domain.Organization{}).Where("id in ?", ids).Where("del_flag = ?", false).Find(&results); err.Error != nil {
+		return nil, err.Error
+	} else if err.RowsAffected == 0 {
+		return []*domain.Organization{}, nil
+	} else {
+		return results, nil
 	}
 }
 
@@ -171,7 +182,7 @@ func (r *OrganizationRepository) updatePathInfoNodeLevel(curItemid string) bool 
 	sql := `
 		UPDATE sys_organization a  LEFT JOIN sys_organization  b
 		ON  a.fid=b.id
-		SET  a.node_level=b.node_level+1,  a.path_info=CONCAT(b.path_info,',',a.id)
+		SET  a.node_level=b.node_level+1, a.path_info=CONCAT(IFNULL(b.path_info,'',CONCAT(b.path_info, ',')),a.id)
 		WHERE  a.id=?
 		`
 	if res := r.Exec(sql, curItemid); res.Error == nil && res.RowsAffected >= 0 {
@@ -180,9 +191,4 @@ func (r *OrganizationRepository) updatePathInfoNodeLevel(curItemid string) bool 
 		logger.Error("Organization 更新 node_level , path_info 失败", res.Error.Error())
 	}
 	return false
-}
-
-func (a *OrganizationRepository) GetByIds(ids []string) (result []*domain.Organization) {
-	a.Where("id IN ?", ids).Find(&result)
-	return
 }

@@ -101,6 +101,25 @@ func (a *RoleUserRepository) List(roleId, search, tenantId string, pageable quer
 	return
 }
 
+func (a *RoleUserRepository) GetRoleUsers(roleId, tenantId string) (data []*domain.User) {
+	sql := `
+		SELECT  
+			b.*
+		FROM  
+			sys_role_user a, sys_user b
+		WHERE  
+			a.user_id=b.id 
+			AND a.role_id=?
+	`
+
+	if tenantId != "" {
+		sql += ` AND b.tenant_id = ?`
+	}
+
+	a.Raw(sql, roleId, tenantId).Find(&data)
+	return
+}
+
 func (a *RoleUserRepository) ListUsers(roleId, search, tenantId string, pageable query.Pageable) (count int64, data []*domain.User) {
 	count = a.GetCount(roleId, search, tenantId)
 
@@ -126,6 +145,20 @@ func (a *RoleUserRepository) ListUsers(roleId, search, tenantId string, pageable
 		LIMIT ?,?
 	`
 	a.Raw(sql, roleId, "%"+search+"%", "%"+search+"%", "%"+search+"%", "%"+search+"%", tenantId, pageable.GetOffset(), pageable.GetLimit()).Find(&data)
+	return
+}
+
+func (a *RoleUserRepository) GetUserRoles(userId string) (data []*domain.Role) {
+	sql := `
+		SELECT  
+			c.*
+		FROM  
+			sys_role_user a, sys_role c
+		WHERE  
+			c.id=a.role_id
+			AND a.user_id=?
+	`
+	a.Raw(sql, userId).Find(&data)
 	return
 }
 
@@ -213,15 +246,23 @@ func (a *RoleUserRepository) DeleteRoleUserWithTenantId(roleId, userId, tenantId
 }
 
 // 修改
+func (a *RoleUserRepository) GetByUserIdAndRoleId(userId, roleId string) *domain.RoleUser {
+	var result domain.RoleUser
+	if res := a.Where("user_id = ?", userId).Where("role_id = ?", roleId).First(&result); res.Error == nil && res.RowsAffected > 0 {
+		return &result
+	}
+	return nil
+}
+
+// 修改
 func (a *RoleUserRepository) GetByUserId(userId string) (result []*domain.RoleUser) {
 	a.Where("user_id = ?", userId).Find(&result)
 	return
 }
 
 // 修改
-func (a *RoleUserRepository) DeleteByUserId(userId string) {
-	a.Delete(&domain.RoleUser{}, "user_id = ?", userId)
-	return
+func (a *RoleUserRepository) DeleteByUserId(userId string) error {
+	return a.Delete(&domain.RoleUser{}, "user_id = ?", userId).Error
 }
 
 // 修改
@@ -231,7 +272,6 @@ func (a *RoleUserRepository) GetByRoleId(roleId string) (result []*domain.RoleUs
 }
 
 // 修改
-func (a *RoleUserRepository) DeleteByRoleId(roleId string) {
-	a.Delete(&domain.RoleUser{}, "role_id = ?", roleId)
-	return
+func (a *RoleUserRepository) DeleteByRoleId(roleId string) error {
+	return a.Delete(&domain.RoleUser{}, "role_id = ?", roleId).Error
 }

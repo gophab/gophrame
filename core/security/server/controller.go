@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -14,7 +13,6 @@ import (
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/redis"
-	SecurityModel "github.com/gophab/gophrame/core/security/model"
 	"github.com/gophab/gophrame/core/security/token"
 	"github.com/gophab/gophrame/core/util"
 	"github.com/gophab/gophrame/core/webservice/request"
@@ -27,9 +25,11 @@ import (
 )
 
 type LoginForm struct {
-	Mode     string `form:"mode" json:"mode"`
-	Username string `form:"username" json:"username"`
-	Password string `form:"password" json:"password"`
+	Mode        string `form:"mode" json:"mode"`
+	Username    string `form:"username" json:"username"`
+	Password    string `form:"password" json:"password"`
+	Scope       string `form:"scope" json:"scope,omitempty"`
+	RedirectURI string `form:"redirect_uri" json:"redirect_uri,omitempty"`
 }
 
 type OAuth2Controller struct {
@@ -58,94 +58,121 @@ func (c *OAuth2Controller) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
  * POST /login
  */
 func (o *OAuth2Controller) Login(c *gin.Context) {
+	var loginForm = LoginForm{Mode: "password"}
+	if err := c.ShouldBind(&loginForm); err != nil {
+		response.SystemError(c, err)
+		return
+	}
+
+	if loginForm.Mode == "password" && !c.GetBool("captcha") {
+		response.FailMessage(c, captcha.CaptchaCheckFailCode, captcha.CaptchaCheckFailMsg)
+		return
+	}
+
+	// json post -> form post
+	// c.Request.Form = url.Values{}
+	// c.Request.Form.Set("grant_type", "password")
+	// c.Request.Form.Set("username", loginForm.Username)
+	// c.Request.Form.Set("password", loginForm.Password)
+
+	// err := o.OAuth2Server.HandleTokenRequest(c.Writer, c.Request)
+	// if err != nil {
+	// 	http.Error(c.Writer, err.Error(), http.StatusNonAuthoritativeInfo)
+	// 	return
+	// }
+
 	clientID, clientSecret, err := o.OAuth2Server.ClientInfoHandler(c.Request)
 	if err != nil {
 		response.FailMessage(c, http.StatusInternalServerError, "未知应用")
 		return
 	}
 
-	var loginForm = LoginForm{Mode: "password"}
-	if err := c.ShouldBind(&loginForm); err == nil {
-		store, err := session.Start(c.Request.Context(), c.Writer, c.Request)
-		if err != nil {
-			response.FailMessage(c, http.StatusInternalServerError, "会话错误")
-			return
-		}
-
-		var userDetails *SecurityModel.UserDetails
-		switch loginForm.Mode {
-		case "password": // 使用用户名/密码登录
-			if b := c.GetBool("captcha"); b {
-				if o.OAuth2Server.UserHandler != nil {
-					userDetails, err = o.OAuth2Server.UserHandler.GetUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
-				}
-			} else {
-				response.FailMessage(c, captcha.CaptchaCheckFailCode, captcha.CaptchaCheckFailMsg)
-				return
-			}
-		case "mobile": // 使用手机/验证码登录
-			if o.OAuth2Server.MobileUserHandler != nil {
-				userDetails, err = o.OAuth2Server.MobileUserHandler.GetMobileUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
-			}
-		case "email": // 使用邮箱登录
-			if o.OAuth2Server.EmailUserHandler != nil {
-				userDetails, err = o.OAuth2Server.EmailUserHandler.GetEmailUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
-			}
-		case "social": // 使用社交账号登录
-			if o.OAuth2Server.SocialUserHandler != nil {
-				var appId = c.Request.Header.Get("X-App-Id")
-				userDetails, err = o.OAuth2Server.SocialUserHandler.GetSocialUserDetails(
-					context.WithValue(c.Request.Context(), AppIdContextKey, appId),
-					loginForm.Username,
-					loginForm.Password)
-			}
-		}
-
-		if userDetails == nil || err != nil {
-			response.Unauthorized(c, "账号密码错误")
-			return
-		}
-
-		var info oauth2.TokenInfo
-		info, err = o.OAuth2Server.manager.GenerateAccessToken(c.Request.Context(), oauth2.PasswordCredentials, &oauth2.TokenGenerateRequest{
-			ClientID:     clientID,
-			ClientSecret: clientSecret,
-			UserID:       util.StringValue(userDetails.UserId) + "@" + util.StringValue(userDetails.TenantId),
-			RedirectURI:  "",
-			Scope:        "app",
-		})
-		if info == nil || err != nil {
-			response.FailMessage(c, http.StatusInternalServerError, "应用未授权")
-			return
-		}
-
-		code := c.Request.Header.Get("X-Authorization-Code")
-		if code != "" {
-			// 绑定authorization_code
-			info.SetCode(code)
-			info.SetCodeCreateAt(time.Now())
-			info.SetCodeExpiresIn(time.Minute * 5)
-			o.OAuth2Server.TokenStore.Create(c.Request.Context(), info)
-		}
-
-		// Session
-		store.Set("LoggedInUserId", info.GetUserID())
-		store.Save()
-
-		// 回写Token
-		c.Writer.Header().Set("Content-Type", "application/json;charset=UTF-8")
-		c.Writer.Header().Set("Cache-Control", "no-store")
-		c.Writer.Header().Set("Pragma", "no-cache")
-		c.Writer.WriteHeader(http.StatusOK)
-		json.NewEncoder(c.Writer).Encode(o.OAuth2Server.GetTokenData(info))
-
-		// 发送用户登录事件
-		eventbus.PublishEvent("USER_LOGIN", *userDetails.UserId, map[string]string{"IP": strings.Split(c.Request.RemoteAddr, ":")[0]})
-	} else {
-		http.Error(c.Writer, err.Error(), http.StatusNonAuthoritativeInfo)
+	// var loginForm = LoginForm{Mode: "password"}
+	// if err := c.ShouldBind(&loginForm); err == nil {
+	store, err := session.Start(c.Request.Context(), c.Writer, c.Request)
+	if err != nil {
+		response.FailMessage(c, http.StatusInternalServerError, "会话错误")
 		return
 	}
 
+	// 	// var userDetails *SecurityModel.UserDetails
+	// 	// switch loginForm.Mode {
+	// 	// case "password": // 使用用户名/密码登录
+	// 	// 	if o.OAuth2Server.UserHandler != nil {
+	// 	// 		userDetails, err = o.OAuth2Server.UserHandler.GetUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
+	// 	// 	}
+	// 	// case "mobile": // 使用手机/验证码登录
+	// 	// 	if o.OAuth2Server.MobileUserHandler != nil {
+	// 	// 		userDetails, err = o.OAuth2Server.MobileUserHandler.GetMobileUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
+	// 	// 	}
+	// 	// case "email": // 使用邮箱登录
+	// 	// 	if o.OAuth2Server.EmailUserHandler != nil {
+	// 	// 		userDetails, err = o.OAuth2Server.EmailUserHandler.GetEmailUserDetails(c.Request.Context(), loginForm.Username, loginForm.Password)
+	// 	// 	}
+	// 	// case "social": // 使用社交账号登录
+	// 	// 	if o.OAuth2Server.SocialUserHandler != nil {
+	// 	// 		var appId = c.Request.Header.Get("X-App-Id")
+	// 	// 		userDetails, err = o.OAuth2Server.SocialUserHandler.GetSocialUserDetails(
+	// 	// 			context.WithValue(c.Request.Context(), AppIdContextKey, appId),
+	// 	// 			loginForm.Username,
+	// 	// 			loginForm.Password)
+	// 	// 	}
+	// 	// }
+
+	// 	// if userDetails == nil || err != nil {
+	// 	// 	response.Unauthorized(c, "账号密码错误")
+	// 	// 	return
+	// 	// }
+	// 	// userId := util.StringValue(userDetails.UserId) + "@" + util.StringValue(userDetails.TenantId)
+
+	userId, err := o.OAuth2Server.PasswordAuthorizationHandler(
+		context.WithValue(c.Request.Context(), "mode", loginForm.Mode),
+		clientID,
+		loginForm.Username,
+		loginForm.Password)
+	if err != nil {
+		response.Unauthorized(c, "账号密码错误")
+		return
+	}
+
+	tgr := &oauth2.TokenGenerateRequest{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Request:      c.Request,
+		UserID:       userId,
+		RedirectURI:  loginForm.RedirectURI,
+		Scope:        util.If(loginForm.Scope == "", "app", loginForm.Scope),
+	}
+
+	ti, err := o.OAuth2Server.GetAccessToken(c.Request.Context(), oauth2.PasswordCredentials, tgr)
+	if err != nil {
+		response.SystemFail(c, err)
+		return
+	}
+
+	code := c.Request.Header.Get("X-Authorization-Code")
+	if code != "" {
+		// 绑定authorization_code
+		ti.SetCode(code)
+		ti.SetCodeCreateAt(time.Now())
+		ti.SetCodeExpiresIn(time.Minute * 5)
+		o.TokenStore.Create(c.Request.Context(), ti)
+	}
+
+	// Session
+	store.Set("LoggedInUserId", ti.GetUserID())
+	store.Save()
+
+	// 回写Token
+	o.OAuth2Server.WriteToken(c.Writer, ti)
+
+	// 发送用户登录事件
+	eventbus.PublishEvent(
+		"USER_LOGIN",
+		strings.Split(userId, "@")[0],
+		map[string]string{
+			"IP": util.GetRemoteHost(c.Request.RemoteAddr),
+		})
 }
 
 /**

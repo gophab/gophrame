@@ -10,7 +10,7 @@ import (
 	"github.com/gophab/gophrame/errors"
 )
 
-type EventListener func(event string, args ...interface{})
+type EventListener func(event string, args ...any)
 
 // 公共消息总线
 var theEventbus *eventbus = CreateEventbus()
@@ -30,28 +30,28 @@ func RemoveEventListener(event string, listener EventListener) {
 /**
  * 同步分发消息
  */
-func PublishEvent(event string, args ...interface{}) {
+func PublishEvent(event string, args ...any) {
 	theEventbus.PublishEvent(event, args...)
 }
 
 /**
  *	异步分发消息
  */
-func DispatchEvent(event string, args ...interface{}) {
+func DispatchEvent(event string, args ...any) {
 	theEventbus.DispatchEvent(event, args...)
 }
 
 /**
  * 模糊匹配分发消息
  */
-func FuzzyPublishEvent(eventPre string, args ...interface{}) {
+func FuzzyPublishEvent(eventPre string, args ...any) {
 	theEventbus.FuzzyPublishEvent(eventPre, args...)
 }
 
 /**
  * 模糊匹配分发消息
  */
-func FuzzyDispatchEvent(eventPre string, args ...interface{}) {
+func FuzzyDispatchEvent(eventPre string, args ...any) {
 	theEventbus.FuzzyDispatchEvent(eventPre, args...)
 }
 
@@ -87,7 +87,7 @@ func (e *eventbus) GetEventListeners(event string) ([]EventListener, bool) {
 }
 
 // 3.执行事件
-func (e *eventbus) PublishEvent(event string, args ...interface{}) {
+func (e *eventbus) PublishEvent(event string, args ...any) {
 	if queue, exists := e.GetEventListeners(event); exists {
 		for _, fn := range queue {
 			fn(event, args...)
@@ -98,7 +98,7 @@ func (e *eventbus) PublishEvent(event string, args ...interface{}) {
 }
 
 // 3.执行事件
-func (e *eventbus) DispatchEvent(event string, args ...interface{}) {
+func (e *eventbus) DispatchEvent(event string, args ...any) {
 	if queue, exists := e.GetEventListeners(event); exists {
 		locale := i18n.GetEnableLanguage()
 		for _, fn := range queue {
@@ -132,8 +132,8 @@ func (e *eventbus) RemoveEventListener(event string, listener EventListener) {
 }
 
 // 5.根据键的前缀，模糊调用. 使用请谨慎.
-func (e *eventbus) FuzzyPublishEvent(eventPre string, args ...interface{}) {
-	e.eventListeners.Range(func(eventKey, value interface{}) bool {
+func (e *eventbus) FuzzyPublishEvent(eventPre string, args ...any) {
+	e.eventListeners.Range(func(eventKey, value any) bool {
 		if event, ok := eventKey.(string); ok {
 			if strings.HasPrefix(event, eventPre) {
 				e.PublishEvent(event, args...)
@@ -144,8 +144,8 @@ func (e *eventbus) FuzzyPublishEvent(eventPre string, args ...interface{}) {
 }
 
 // 6.根据键的前缀，模糊调用. 使用请谨慎.
-func (e *eventbus) FuzzyDispatchEvent(eventPre string, args ...interface{}) {
-	e.eventListeners.Range(func(eventKey, value interface{}) bool {
+func (e *eventbus) FuzzyDispatchEvent(eventPre string, args ...any) {
+	e.eventListeners.Range(func(eventKey, value any) bool {
 		if event, ok := eventKey.(string); ok {
 			if strings.HasPrefix(event, eventPre) {
 				e.DispatchEvent(event, args...)

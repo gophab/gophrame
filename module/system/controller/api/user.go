@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/gophab/gophrame/core"
 	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
@@ -95,10 +96,7 @@ func (u *UserController) GetUsers(c *gin.Context) {
 		}
 		response.Page(c, count, list)
 	} else {
-		example := dto.User{}
-		example.Login = &name
-
-		count, list := u.UserService.GetAll(&example, query.GetPageable(c))
+		count, list := u.UserService.Find(core.M{"login": name}, query.GetPageable(c))
 		for _, v := range list {
 			v.Password = ""
 		}

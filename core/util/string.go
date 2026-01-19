@@ -53,7 +53,7 @@ func Nullable(s *string) *string {
 	return s
 }
 
-func ConditionString(condition bool, f1 interface{}, f2 interface{}) string {
+func ConditionString(condition bool, f1 any, f2 any) string {
 	if condition {
 		if f, ok := f1.(func() string); ok {
 			return f()
@@ -158,8 +158,8 @@ func DbFieldName(s string) string {
 	return Camel2C(VariableName(s))
 }
 
-func DbFields(kv map[string]interface{}) map[string]interface{} {
-	var tkv = make(map[string]interface{})
+func DbFields(kv map[string]any) map[string]any {
+	var tkv = make(map[string]any)
 	for k, v := range kv {
 		tkv[Camel2C(VariableName(k))] = v
 	}
@@ -191,7 +191,7 @@ func FormatParamterContent(content string, params map[string]string) string {
 	})
 }
 
-func FormatParamterContentEx(content string, params map[string]interface{}) string {
+func FormatParamterContentEx(content string, params map[string]any) string {
 	reg, err := regexp.Compile("\\$\\{([\u4E00-\u9FA5A-Za-z0-9_]+.)*\\}")
 	if err != nil {
 		return content
@@ -239,7 +239,7 @@ func GenerateRandomNumeric(length int) string {
 
 	// 生成字符串
 	result := make([]byte, length)
-	for i := 0; i < length; i++ {
+	for i := range length {
 		result[i] = charset[rand.Intn(len(charset))]
 	}
 
@@ -278,4 +278,23 @@ func RemoveHTMLTags(htmlStr string) string {
 	htmlStr = strings.Trim(htmlStr, " \t\r\n")
 
 	return htmlStr
+}
+
+func HasAreaCode(phone string) bool {
+	if strings.HasPrefix(phone, "+") {
+		return true
+	}
+
+	if !strings.Contains(phone, "-") {
+		return false
+	}
+
+	return true
+}
+
+func FullPhoneNumber(phone string) string {
+	if !HasAreaCode(phone) {
+		return "+86-" + phone
+	}
+	return phone
 }

@@ -11,8 +11,8 @@ type Menu struct {
 	ModifiedBy string
 }
 
-func (a *Menu) GetMaps() map[string]interface{} {
-	maps := make(map[string]interface{})
+func (a *Menu) GetMaps() map[string]any {
+	maps := make(map[string]any)
 	maps["del_flag"] = false
 	return maps
 }

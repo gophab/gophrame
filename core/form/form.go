@@ -15,7 +15,7 @@ const (
 // mode 结构体支持匿名嵌套
 // 数据绑定原则： model 定义的结构体字段和表单验证器结构体设置的json标签名称、数据类型一致，才可以绑定
 
-func ShouldBind(c *gin.Context, modelStrcut interface{}) error {
+func ShouldBind(c *gin.Context, modelStrcut any) error {
 	mTypeOf := reflect.TypeOf(modelStrcut)
 	if mTypeOf.Kind() != reflect.Ptr {
 		return errors.New(modelStructMustPtr)

@@ -86,14 +86,14 @@ func (a *AdminTenantOpenController) UpdateTenant(c *gin.Context) {
 
 // 修改
 func (a *AdminTenantOpenController) PatchTenant(c *gin.Context) {
-	var data = make(map[string]interface{})
+	var data = make(map[string]any)
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
 	}
 
 	var availableFields = []string{"name", "description", "telephone", "address", "logo", "status"}
-	var tenant = make(map[string]interface{})
+	var tenant = make(map[string]any)
 	for _, k := range availableFields {
 		if v, b := data[k]; b && v != nil {
 			switch t := v.(type) {

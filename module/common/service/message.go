@@ -34,19 +34,19 @@ func (s *MessageService) GetById(id int64) (*domain.Message, error) {
 	return s.MessageRepository.GetById(id)
 }
 
-func (s *MessageService) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Message, error) {
+func (s *MessageService) Find(conds map[string]any, pageable query.Pageable) (int64, []*domain.Message, error) {
 	return s.MessageRepository.Find(util.DbFields(conds), pageable)
 }
 
-func (s *MessageService) FindAvailable(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Message, error) {
+func (s *MessageService) FindAvailable(conds map[string]any, pageable query.Pageable) (int64, []*domain.Message, error) {
 	return s.MessageRepository.FindAvailable(util.DbFields(conds), pageable)
 }
 
-func (s *MessageService) FindSimples(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.SimpleMessage, error) {
+func (s *MessageService) FindSimples(conds map[string]any, pageable query.Pageable) (int64, []*domain.SimpleMessage, error) {
 	return s.MessageRepository.FindSimples(util.DbFields(conds), pageable)
 }
 
-func (s *MessageService) FindSimplesAvailable(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.SimpleMessage, error) {
+func (s *MessageService) FindSimplesAvailable(conds map[string]any, pageable query.Pageable) (int64, []*domain.SimpleMessage, error) {
 	return s.MessageRepository.FindSimplesAvailable(util.DbFields(conds), pageable)
 }
 
@@ -58,7 +58,7 @@ func (s *MessageService) UpdateMessage(message *domain.Message) (*domain.Message
 	return s.MessageRepository.UpdateMessage(message)
 }
 
-func (s *MessageService) PatchMessage(id int64, data map[string]interface{}) (*domain.Message, error) {
+func (s *MessageService) PatchMessage(id int64, data map[string]any) (*domain.Message, error) {
 	return s.MessageRepository.PatchMessage(id, data)
 }
 
@@ -78,7 +78,7 @@ func (s *MessageService) HistoryMessages() {
 	}
 }
 
-func (s *MessageService) OnMessageViewed(event string, argv ...interface{}) {
+func (s *MessageService) OnMessageViewed(event string, argv ...any) {
 	var message = argv[0].(*domain.Message)
 	var userId = argv[1].(string)
 

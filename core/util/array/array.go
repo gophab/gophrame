@@ -13,6 +13,15 @@ func Map[S, T any](list []S, f func(item S) T) []T {
 	return segs
 }
 
+func CollectToMap[S, T any, K comparable](list []S, f func(item S) (K, T)) map[K]T {
+	results := make(map[K]T, 0)
+	for _, item := range list {
+		key, value := f(item)
+		results[key] = value
+	}
+	return results
+}
+
 func Join[T any](list []T, f func(item T) string, delimeter string) string {
 	segs := Map(list, f)
 	return strings.Join(segs, delimeter)

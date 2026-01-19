@@ -23,7 +23,7 @@ type QcloudClient interface {
 	NewRandom(l int) *QcloudSMS
 	NewSig(m string) *QcloudSMS
 	NewUrl(api string) *QcloudSMS
-	NewRequest(params interface{}) ([]byte, error)
+	NewRequest(params any) ([]byte, error)
 
 	SetAPPID(appid string) *QcloudSMS
 	SetAPPKEY(appkey string) *QcloudSMS
@@ -265,7 +265,7 @@ func (c *QcloudSMS) NewURL(api string) *QcloudSMS {
 }
 
 // NewRequest 执行实例发送请求
-func (c *QcloudSMS) NewRequest(params interface{}) ([]byte, error) {
+func (c *QcloudSMS) NewRequest(params any) ([]byte, error) {
 	j, _ := json.Marshal(params)
 
 	req, _ := http.NewRequest("POST", c.URL, bytes.NewBuffer([]byte(j)))

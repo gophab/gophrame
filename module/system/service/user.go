@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/gophab/gophrame/core"
 	"github.com/gophab/gophrame/core/consts"
 	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
@@ -41,6 +42,7 @@ func init() {
 	inject.InjectValue("commonUserService", commonUserService)
 	_ = (service.UserService)(commonUserService)
 	eventbus.RegisterEventListener("USER_LOGIN", userService.onUserLogin)
+	eventbus.RegisterEventListener("SOCIAL_BIND_MOBILE", userService.OnSocialBindUser)
 	logger.Info("Initialized UserService")
 }
 
@@ -62,15 +64,8 @@ func (s *UserService) GetByIds(ids []string) ([]*domain.User, error) {
 	return users, nil
 }
 
-func (s *UserService) GetAll(user *dto.User, pageable query.Pageable) (int64, []domain.User) {
-	if user.Id != nil {
-		maps := make(map[string]interface{})
-		maps["del_flag"] = false
-		maps["id"] = user.Id
-		return s.UserRepository.GetUsers(maps, pageable)
-	} else {
-		return s.UserRepository.GetUsers(user.GetMaps(), pageable)
-	}
+func (s *UserService) GetAll(conds map[string]any) ([]*domain.User, error) {
+	return s.UserRepository.GetAll(conds)
 }
 
 func (s *UserService) Create(user *dto.User) (*domain.User, error) {
@@ -194,7 +189,7 @@ func (s *UserService) Update(user *dto.User) (*domain.User, error) {
 	return exists, err
 }
 
-func (s *UserService) Patch(id string, column string, value interface{}) (*domain.User, error) {
+func (s *UserService) Patch(id string, column string, value any) (*domain.User, error) {
 	if column == "password" && value != nil {
 		value = util.SHA1(value.(string))
 	}
@@ -210,7 +205,7 @@ func (s *UserService) Patch(id string, column string, value interface{}) (*domai
 	}
 }
 
-func (s *UserService) PatchAll(id string, kv map[string]interface{}) (*domain.User, error) {
+func (s *UserService) PatchAll(id string, kv map[string]any) (*domain.User, error) {
 	if kv["password"] != nil {
 		kv["password"] = util.SHA1(kv["password"].(string))
 	}
@@ -291,7 +286,7 @@ func (s *UserService) GetByEmail(email string) (*domain.User, error) {
 	return user, nil
 }
 
-func (a *UserService) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.User) {
+func (a *UserService) Find(conds map[string]any, pageable query.Pageable) (int64, []*domain.User) {
 	return a.UserRepository.Find(util.DbFields(conds), pageable)
 }
 
@@ -329,6 +324,44 @@ func (s *UserService) ChangeUserPassword(id string, oldpassword, password string
 	return res.RowsAffected > 0, nil
 }
 
+func (s *UserService) BoundSocialUser(userId string, socialUserId string, user *domain.User) (*domain.User, error) {
+	exists, err := s.GetById(userId)
+	if err != nil || exists == nil {
+		return nil, err
+	}
+
+	var updated = false
+	if user != nil {
+		if user.Name != nil && exists.Name == nil {
+			exists.Name = user.Name
+			updated = true
+		}
+		if user.Avatar != nil && exists.Avatar == nil {
+			exists.Avatar = user.Avatar
+			updated = true
+		}
+		if user.Mobile != nil && exists.Mobile == nil {
+			exists.Mobile = user.Mobile
+			updated = true
+		}
+		if user.Email != nil && exists.Email == nil {
+			exists.Email = user.Email
+			updated = true
+		}
+		if user.Remark != nil && exists.Remark == nil {
+			exists.Remark = user.Remark
+			updated = true
+		}
+	}
+
+	if updated {
+		if res := s.UserRepository.Select("id").Omit("login_times", "last_login_time", "last_login_ip", "created_time", "last_modified_time").Save(exists); res.Error != nil {
+			return nil, res.Error
+		}
+	}
+	return exists, nil
+}
+
 func (s *UserService) LoadUserRoles(user *domain.User) (*domain.User, error) {
 	if user.Roles == nil {
 		user.Roles, _ = s.RoleService.GetUserRoles(user.Id)
@@ -347,7 +380,7 @@ func (s *UserService) LoadUsersRoles(users []*domain.User) ([]*domain.User, erro
 	return users, nil
 }
 
-func (s *UserService) onUserLogin(event string, args ...interface{}) {
+func (s *UserService) onUserLogin(event string, args ...any) {
 	userId := ""
 	data := map[string]string{}
 
@@ -366,6 +399,85 @@ func (s *UserService) onUserLogin(event string, args ...interface{}) {
 		s.UserRepository.LogUserLogin(userId, data["IP"])
 	}
 }
+
+func (s *UserService) OnSocialBindUser(event string, args ...any) {
+	var params = args[0].(core.M)
+
+	if params != nil {
+		mobile := params["mobile"]
+		email := params["email"]
+		avatar := params["avatar"]
+		nickName := params["nickName"]
+		if userId, b := params["userId"]; b && userId != nil {
+			var user *domain.User
+			if strings.HasPrefix(userId.(string), "sns:") {
+				// 社交账号登录，与平台用户
+				if mobile != nil {
+					user, _ = s.GetByMobile(mobile.(string))
+				} else if email != nil {
+					user, _ = s.GetByEmail(email.(string))
+				}
+
+				if user == nil {
+					// create user
+					var newUser = &dto.User{}
+					if mobile != nil {
+						newUser.Mobile = util.StringAddr(mobile.(string))
+					}
+					if email != nil {
+						newUser.Email = util.StringAddr(email.(string))
+					}
+					if avatar != nil {
+						newUser.Avatar = util.StringAddr(avatar.(string))
+					}
+					if nickName != nil {
+						newUser.Name = util.StringAddr(nickName.(string))
+					}
+
+					// 由社交账户新建用户，租户设定为PUBLIC
+					newUser.TenantId = util.StringAddr("PUBLIC")
+					user, _ = s.Create(newUser)
+				}
+
+				if user != nil {
+					socialUserService.BoundSocialUser(userId.(string), user.Id, nil)
+				}
+			}
+
+			if !strings.HasPrefix(userId.(string), "sns:") {
+				user, _ = s.GetById(userId.(string))
+
+				if user != nil {
+					var updated = false
+					if mobile != nil && (user.Mobile == nil || *user.Mobile != mobile.(string)) {
+						user.Mobile = util.StringAddr(mobile.(string))
+						updated = true
+					}
+
+					if email != nil && (user.Email == nil || *user.Email != email.(string)) {
+						user.Email = util.StringAddr(email.(string))
+						updated = true
+					}
+
+					if avatar != nil && (user.Avatar == nil || *user.Avatar != avatar.(string)) {
+						user.Avatar = util.StringAddr(avatar.(string))
+						updated = true
+					}
+					if nickName != nil && (user.Name == nil || *user.Name != nickName.(string)) {
+						user.Name = util.StringAddr(nickName.(string))
+						updated = true
+					}
+
+					if updated {
+						s.UserRepository.Save(user)
+					}
+				}
+			}
+		}
+	}
+}
+
+//////////////////////////////////// CommonUserService /////////////////////////////////////
 
 type CommonUserService struct{}
 
@@ -404,7 +516,7 @@ func (s *CommonUserService) GetById(id string) (*CommonDTO.User, error) {
 }
 
 func (s *CommonUserService) GetByIds(ids []string) ([]*CommonDTO.User, error) {
-	_, list := userService.Find(map[string]interface{}{
+	_, list := userService.Find(map[string]any{
 		"ids": ids,
 	}, nil)
 

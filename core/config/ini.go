@@ -16,7 +16,7 @@ func Init() {
 	}
 }
 
-func MapTo(section string, v interface{}) {
+func MapTo(section string, v any) {
 	err := iniConf.Section(section).MapTo(v)
 	if err != nil {
 		log.Fatalf("IniConf.MapTo Setting err: %v", err)

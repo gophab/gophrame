@@ -2,7 +2,11 @@ package json
 
 import "encoding/json"
 
-func String(obj interface{}) string {
+func String(obj any) string {
+	if obj == nil {
+		return ""
+	}
+
 	if bytes, err := json.Marshal(obj); err == nil {
 		return string(bytes)
 	}
@@ -10,6 +14,6 @@ func String(obj interface{}) string {
 	return ""
 }
 
-func Json(str string, obj interface{}) error {
+func Json(str string, obj any) error {
 	return json.Unmarshal([]byte(str), obj)
 }

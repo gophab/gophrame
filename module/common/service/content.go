@@ -29,7 +29,7 @@ func (s *ContentTemplateService) GetByTypeAndSceneAndTenantId(typeName, scene, t
 	return s.ContentTemplateRepository.GetByTypeAndSceneAndTenantId(typeName, scene, tenantId)
 }
 
-func (s *ContentTemplateService) FindAll(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.ContentTemplate, error) {
+func (s *ContentTemplateService) FindAll(conds map[string]any, pageable query.Pageable) (int64, []*domain.ContentTemplate, error) {
 	return s.ContentTemplateRepository.FindAll(conds, pageable)
 }
 
@@ -41,7 +41,7 @@ func (s *ContentTemplateService) UpdateContentTemplate(template *domain.ContentT
 	return s.ContentTemplateRepository.CreateContentTemplate(template)
 }
 
-func (s *ContentTemplateService) PatchContentTemplate(id string, data map[string]interface{}) (result *domain.ContentTemplate, err error) {
+func (s *ContentTemplateService) PatchContentTemplate(id string, data map[string]any) (result *domain.ContentTemplate, err error) {
 	return s.ContentTemplateRepository.PatchContentTemplate(id, data)
 }
 

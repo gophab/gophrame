@@ -57,7 +57,7 @@ func (m *RoleMController) AfterInitialize() {
 func (r *RoleMController) GetRoles(c *gin.Context) {
 	pageable := query.GetPageable(c)
 
-	count, roles, err := r.RoleService.Find(map[string]interface{}{
+	count, roles, err := r.RoleService.Find(map[string]any{
 		"del_flag":  false,
 		"tenant_id": "SYSTEM",
 	}, pageable)
@@ -268,7 +268,7 @@ func (u *RoleMController) GetRoleUsers(c *gin.Context) {
 
 	count, list := u.RoleUserService.ListUsers(id, search, tenantId, pageable)
 
-	tenantIds := collection.MapToSet[string](list, func(i interface{}) string {
+	tenantIds := collection.MapToSet[string](list, func(i any) string {
 		return i.(*domain.User).TenantId
 	})
 

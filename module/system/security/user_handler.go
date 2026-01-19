@@ -6,8 +6,10 @@ import (
 	"strings"
 
 	EmailCode "github.com/gophab/gophrame/core/email/code"
+	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	SecurityModel "github.com/gophab/gophrame/core/security/model"
+	"github.com/gophab/gophrame/core/security/server"
 	SmsCode "github.com/gophab/gophrame/core/sms/code"
 	"github.com/gophab/gophrame/core/social"
 	"github.com/gophab/gophrame/core/starter"
@@ -22,7 +24,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type DefaultUserHandler struct {
+type LoginHandler struct {
 	*gorm.DB          `inject:"database"`
 	MobileValidator   *SmsCode.SmsCodeValidator     `inject:"smsCodeValidator"`
 	EmailValidator    *EmailCode.EmailCodeValidator `inject:"emailCodeValidator"`
@@ -31,13 +33,16 @@ type DefaultUserHandler struct {
 	security.UserHandler
 }
 
+var loginHandler = &LoginHandler{}
+
 func init() {
 	starter.RegisterStarter(Start)
+	inject.InjectValue("userHandler", loginHandler)
 }
 
 func Start() {
 	logger.Debug("Initializing Default User Handler")
-	security.RegisterUserHandler(new(DefaultUserHandler))
+	server.RegisterPasswordAuthorizationHandler(loginHandler.PasswordAuthorizationHandler)
 }
 
 func User2UserDetails(user *domain.User) *SecurityModel.UserDetails {
@@ -76,7 +81,7 @@ func SocialUser2UserDetails(exists *domain.SocialUser) *SecurityModel.UserDetail
 	}
 }
 
-func (h *DefaultUserHandler) GetUserDetails(ctx context.Context, username, password string) (*SecurityModel.UserDetails, error) {
+func (h *LoginHandler) GetUserDetails(ctx context.Context, username, password string) (*SecurityModel.UserDetails, error) {
 	user, err := h.UserService.Get(username)
 	if err != nil {
 		return nil, err
@@ -97,7 +102,7 @@ func (h *DefaultUserHandler) GetUserDetails(ctx context.Context, username, passw
 	return nil, errors.New("用户未注册")
 }
 
-func (h *DefaultUserHandler) GetMobileUserDetails(ctx context.Context, mobile string, code string) (*SecurityModel.UserDetails, error) {
+func (h *LoginHandler) GetMobileUserDetails(ctx context.Context, mobile string, code string) (*SecurityModel.UserDetails, error) {
 	if h.MobileValidator == nil {
 		return nil, errors.New("不支持手机验证码登录")
 	}
@@ -123,7 +128,7 @@ func (h *DefaultUserHandler) GetMobileUserDetails(ctx context.Context, mobile st
 	return nil, errors.New("该手机号用户未注册")
 }
 
-func (h *DefaultUserHandler) GetEmailUserDetails(ctx context.Context, email string, code string) (*SecurityModel.UserDetails, error) {
+func (h *LoginHandler) GetEmailUserDetails(ctx context.Context, email string, code string) (*SecurityModel.UserDetails, error) {
 	if h.EmailValidator == nil {
 		return nil, errors.New("不支持邮箱验证码登录")
 	}
@@ -144,7 +149,7 @@ func (h *DefaultUserHandler) GetEmailUserDetails(ctx context.Context, email stri
 	return nil, errors.New("该邮箱用户未注册")
 }
 
-func (h *DefaultUserHandler) getOrCreateSocialUser(socialUser social.SocialUser) (*domain.SocialUser, error) {
+func (h *LoginHandler) getOrCreateSocialUser(socialUser social.SocialUser) (*domain.SocialUser, error) {
 	exists, err := h.SocialUserService.GetById(socialUser.GetId())
 	if err != nil {
 		return nil, err
@@ -160,7 +165,15 @@ func (h *DefaultUserHandler) getOrCreateSocialUser(socialUser social.SocialUser)
 		}
 	} else {
 		// 更新已存在的社交账号信息
-		exists.SocialUser = socialUser
+		// NickName      *string    `gorm:"column:nick_name" json:"nickName,omitempty"`
+		// Title         *string    `gorm:"column:title;" json:"title,omitempty"`
+		// Mobile        *string    `gorm:"column:mobile" json:"mobile,omitempty"`
+		// Email         *string    `gorm:"column:email" json:"email,omitempty"`
+		// Name          *string    `gorm:"column:name" json:"name,omitempty"`
+		// Avatar        *string    `gorm:"column:avatar" json:"avatar,omitempty"`
+		// Remark        *string    `gorm:"column:remark" json:"remark,omitempty"`
+
+		util.MergeFields(&exists.SocialUser, socialUser, "nickName", "title", "mobile", "email", "name", "avatar", "remark")
 		if exists, err = h.SocialUserService.UpdateSocialUser(exists); err != nil {
 			return nil, err
 		}
@@ -168,14 +181,14 @@ func (h *DefaultUserHandler) getOrCreateSocialUser(socialUser social.SocialUser)
 	return exists, nil
 }
 
-func (h *DefaultUserHandler) GetSocialUserDetails(ctx context.Context, socialChannelId string, code string) (*SecurityModel.UserDetails, error) {
+func (h *LoginHandler) GetSocialUserDetails(ctx context.Context, socialChannelId string, code string) (*SecurityModel.UserDetails, error) {
 	service := social.GetSocialService(strings.Split(strings.ToLower(socialChannelId), ":")[0])
 	if service == nil {
 		return nil, nil
 	}
 
 	socialUser := service.GetSocialUserByCode(ctx, socialChannelId, code)
-	if socialUser == nil || socialUser.UserId == nil {
+	if socialUser == nil {
 		return nil, nil
 	}
 
@@ -185,11 +198,6 @@ func (h *DefaultUserHandler) GetSocialUserDetails(ctx context.Context, socialCha
 	exists, err := h.getOrCreateSocialUser(*socialUser)
 	if err != nil {
 		return nil, err
-	}
-
-	if socialUser.SocialId != nil && socialUser.OpenId != nil {
-		// create sub
-		h.getOrCreateSocialUser(*socialUser)
 	}
 
 	result := SocialUser2UserDetails(exists)
@@ -226,7 +234,53 @@ func (h *DefaultUserHandler) GetSocialUserDetails(ctx context.Context, socialCha
 		}
 		result.UserId = exists.UserId
 	} else {
-		result.UserId = util.StringAddr("sns:" + exists.Id)
+		result.UserId = util.StringAddr(exists.Id)
 	}
 	return result, nil
+}
+
+func (s *LoginHandler) PasswordAuthorizationHandler(ctx context.Context, clientID, username, password string) (userID string, err error) {
+	var userDetails *SecurityModel.UserDetails
+
+	mode, _ := ctx.Value("mode").(string)
+	switch mode {
+	case "mobile":
+		// username: {mobile}
+		// password: {code}
+		userDetails, err = s.GetMobileUserDetails(ctx, username, password)
+	case "email":
+		// username: {email}
+		// password: {code}
+		userDetails, err = s.GetEmailUserDetails(ctx, username, password)
+	case "social":
+		// username: {channel}:{appId}
+		// password: {code}
+		// channel: wxma/wxmp/wxcp
+		userDetails, err = s.GetSocialUserDetails(ctx, username, password)
+	default:
+		if mobile, b := strings.CutPrefix(username, "mobile:"); b {
+			// password: {code}
+			userDetails, err = s.GetMobileUserDetails(ctx, mobile, password)
+		} else if email, b := strings.CutPrefix(username, "email:"); b {
+			// password: {code}
+			userDetails, err = s.GetEmailUserDetails(ctx, email, password)
+		} else if social, b := strings.CutPrefix(username, "social:"); b {
+			// social: {channel}:{appId}
+			// password: {code}
+			// channel: wxma/wxmp/wxcp
+			userDetails, err = s.GetSocialUserDetails(ctx, social, password)
+		} else {
+			userDetails, err = s.GetUserDetails(ctx, username, password)
+		}
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	if userDetails != nil {
+		return util.StringValue(userDetails.UserId) + "@" + util.StringValue(userDetails.TenantId), err
+	}
+
+	return "", errors.New("not found")
 }

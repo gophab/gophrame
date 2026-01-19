@@ -172,7 +172,7 @@ func (a *MenuRepository) updatePathInfoNodeLevel(curItemid string) bool {
 		LEFT JOIN auth_menu b ON a.fid=b.id
 		SET 
 			a.level=IFNULL(b.level,0)+1, 
-			a.path_info=CONCAT(IFNULL(b.path_info,0),',',a.id)
+			a.path_info=CONCAT(IFNULL(b.path_info,'',CONCAT(b.path_info, ',')),a.id)
 		WHERE 
 			a.id=?
 		`

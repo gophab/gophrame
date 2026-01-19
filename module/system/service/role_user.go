@@ -3,9 +3,11 @@ package service
 import (
 	"errors"
 
+	"github.com/gophab/gophrame/core"
 	"github.com/gophab/gophrame/core/eventbus"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/query"
+	"github.com/gophab/gophrame/core/util/array"
 	"github.com/gophab/gophrame/service"
 
 	"github.com/gophab/gophrame/module/system/domain"
@@ -28,18 +30,18 @@ func init() {
 	eventbus.RegisterEventListener("USER_UPDATED", roleUserService.onUserUpdated)
 }
 
-func (u *RoleUserService) ListMembers(roleId, search, tenantId string, pageable query.Pageable) (int64, []*domain.RoleMember) {
-	return u.RoleUserRepository.ListMembers(roleId, search, tenantId, pageable)
+func (s *RoleUserService) ListMembers(roleId, search, tenantId string, pageable query.Pageable) (int64, []*domain.RoleMember) {
+	return s.RoleUserRepository.ListMembers(roleId, search, tenantId, pageable)
 }
 
-func (u *RoleUserService) ListUsers(roleId, search, tenantId string, pageable query.Pageable) (int64, []*domain.User) {
-	return u.RoleUserRepository.ListUsers(roleId, search, tenantId, pageable)
+func (s *RoleUserService) ListUsers(roleId, search, tenantId string, pageable query.Pageable) (int64, []*domain.User) {
+	return s.RoleUserRepository.ListUsers(roleId, search, tenantId, pageable)
 }
 
 // 根据用户id查询所有可能的岗位节点id
-func (u *RoleUserService) GetUserRoleIds(userId string) []string {
+func (s *RoleUserService) GetUserRoleIds(userId string) []string {
 	//获取用户的所有岗位id
-	roleUsers := u.RoleUserRepository.GetByUserId(userId)
+	roleUsers := s.RoleUserRepository.GetByUserId(userId)
 
 	roleIds := []string{}
 	for _, v := range roleUsers {
@@ -50,20 +52,20 @@ func (u *RoleUserService) GetUserRoleIds(userId string) []string {
 }
 
 // 根据用户id查询所有可能的岗位节点id
-func (u *RoleUserService) GetUserRoles(userId string) []*domain.RoleUser {
+func (s *RoleUserService) GetUserRoles(userId string) []*domain.RoleUser {
 	//获取用户的所有岗位id
-	roleUsers := u.RoleUserRepository.GetByUserId(userId)
+	roleUsers := s.RoleUserRepository.GetByUserId(userId)
 	return roleUsers
 }
 
-func (u *RoleUserService) DeleteUserRoles(userId string) {
+func (s *RoleUserService) ClearUserRoles(userId string) {
 	//获取用户的所有岗位id
-	u.RoleUserRepository.DeleteByUserId(userId)
+	s.RoleUserRepository.DeleteByUserId(userId)
 }
 
-func (u *RoleUserService) GetRoleUserIds(roleId string) []string {
+func (s *RoleUserService) GetRoleUserIds(roleId string) []string {
 	//获取用户的所有岗位id
-	roleUsers := u.RoleUserRepository.GetByRoleId(roleId)
+	roleUsers := s.RoleUserRepository.GetByRoleId(roleId)
 
 	roleIds := []string{}
 	for _, v := range roleUsers {
@@ -73,11 +75,11 @@ func (u *RoleUserService) GetRoleUserIds(roleId string) []string {
 	return roleIds
 }
 
-func (u *RoleUserService) AddRoleUserIds(roleId string, userIds []string) ([]*domain.RoleUser, error) {
+func (s *RoleUserService) AddRoleUserIds(roleId string, userIds []string) ([]*domain.RoleUser, error) {
 	//获取用户的所有岗位id
 	var roleUsers []*domain.RoleUser = make([]*domain.RoleUser, 0)
 	for _, userId := range userIds {
-		if user, err := u.UserService.GetById(userId); err == nil {
+		if user, err := s.UserService.GetById(userId); err == nil {
 			roleUser := &domain.RoleUser{
 				RoleId: roleId,
 				UserId: userId,
@@ -88,26 +90,31 @@ func (u *RoleUserService) AddRoleUserIds(roleId string, userIds []string) ([]*do
 		}
 	}
 	for _, roleUser := range roleUsers {
-		if res := u.RoleUserRepository.FirstOrCreate(roleUser); res.Error != nil {
+		if res := s.RoleUserRepository.FirstOrCreate(roleUser); res.Error != nil {
 			return nil, res.Error
 		}
+		eventbus.PublishEvent("USER_ROLE_ADDED", roleUser)
 	}
 	return roleUsers, nil
 }
 
-func (u *RoleUserService) DeleteRoleUserIds(roleId string, userIds []string) error {
+func (s *RoleUserService) DeleteRoleUserIds(roleId string, userIds []string) error {
 	//获取用户的所有岗位id
 	for _, userId := range userIds {
-		if b := u.RoleUserRepository.DeleteData(roleId, userId); !b {
+		if b := s.RoleUserRepository.DeleteData(roleId, userId); !b {
 			return errors.New("Delete Error")
 		}
+		eventbus.PublishEvent("USER_ROLE_DELETED", &domain.RoleUser{
+			RoleId: roleId,
+			UserId: userId,
+		})
 	}
 	return nil
 }
 
-func (u *RoleUserService) AddUserRoleIds(userId string, roleIds []string) ([]*domain.RoleUser, error) {
+func (s *RoleUserService) AddUserRoleIds(userId string, roleIds []string) ([]*domain.RoleUser, error) {
 	//获取用户的所有岗位id
-	if user, err := u.UserService.GetById(userId); err == nil {
+	if user, err := s.UserService.GetById(userId); err == nil {
 		var roleUsers []*domain.RoleUser = make([]*domain.RoleUser, 0)
 		for _, roleId := range roleIds {
 			roleUser := &domain.RoleUser{
@@ -119,36 +126,92 @@ func (u *RoleUserService) AddUserRoleIds(userId string, roleIds []string) ([]*do
 			roleUsers = append(roleUsers, roleUser)
 		}
 		for _, roleUser := range roleUsers {
-			if res := u.RoleUserRepository.FirstOrCreate(roleUser); res.Error != nil {
+			if res := s.RoleUserRepository.FirstOrCreate(roleUser); res.Error != nil {
 				return nil, res.Error
 			}
+			eventbus.PublishEvent("USER_ROLE_ADDED", roleUser)
 		}
 		return roleUsers, nil
 	}
 	return nil, nil
 }
 
-func (u *RoleUserService) DeleteUserRoleIds(roleId string, userIds []string) error {
+func (s *RoleUserService) AddUserRoles(userId string, roles []string) ([]*domain.RoleUser, error) {
 	//获取用户的所有岗位id
-	for _, userId := range userIds {
-		if b := u.RoleUserRepository.DeleteData(roleId, userId); !b {
+	rs, err := s.RoleRepository.GetRoles(core.M{"names": roles})
+	if err != nil || len(rs) == 0 {
+		return []*domain.RoleUser{}, err
+	}
+
+	roleIds := array.Map(rs, func(r *domain.Role) string {
+		return r.Id
+	})
+
+	return s.AddUserRoleIds(userId, roleIds)
+}
+
+func (s *RoleUserService) DeleteUserRoleIds(userId string, roleIds []string) error {
+	//获取用户的所有岗位id
+	for _, roleId := range roleIds {
+		if b := s.RoleUserRepository.DeleteData(roleId, userId); !b {
 			return errors.New("Delete Error")
 		}
+		eventbus.PublishEvent("USER_ROLE_DELETED", &domain.RoleUser{
+			RoleId: roleId,
+			UserId: userId,
+		})
 	}
 	return nil
 }
 
-func (s *RoleUserService) onUserCreated(event string, args ...interface{}) {
+func (s *RoleUserService) DeleteUserRoles(userId string, roles []string) error {
+	//获取用户的所有岗位id
+	rs, err := s.RoleRepository.GetRoles(core.M{"names": roles})
+	if err != nil || len(rs) == 0 {
+		return err
+	}
+
+	roleIds := array.Map(rs, func(r *domain.Role) string {
+		return r.Id
+	})
+
+	return s.DeleteUserRoleIds(userId, roleIds)
+}
+
+func (s *RoleUserService) HasRole(userId string, role string) bool {
+	if results := s.RoleUserRepository.GetUserRoles(userId); len(results) > 0 {
+		for _, result := range results {
+			if result.Id == role || result.Name == role {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (s *RoleUserService) HasRoleId(userId string, roleId string) bool {
+	return s.RoleUserRepository.GetByUserIdAndRoleId(userId, roleId) != nil
+}
+
+func (s *RoleUserService) onUserCreated(event string, args ...any) {
 	var user = args[0].(*domain.User)
 
-	if user.TenantId == "SYSTEM" {
+	switch user.TenantId {
+	case "SYSTEM":
 		// 1. Default add to ROLE:00000000000001 - 系统用户
 		role, err := s.RoleRepository.GetByName("operator", "SYSTEM")
 		if err == nil && role != nil {
 			// 自动添加到系统用户角色
 			s.AddRoleUserIds(role.Id, []string{user.Id})
 		}
-	} else {
+	case "PUBLIC":
+		// 1. Default add to ROLE:00000000000001 - 系统用户
+		role, err := s.RoleRepository.GetByName("user", "SYSTEM")
+		if err == nil && role != nil {
+			// 自动添加到系统用户角色
+			s.AddRoleUserIds(role.Id, []string{user.Id})
+		}
+	default:
 		// 2. Default add to ROLE:00000000000003 - 企业用户
 		role, err := s.RoleRepository.GetByName("member", "SYSTEM")
 		if err == nil && role != nil {
@@ -176,13 +239,13 @@ func (s *RoleUserService) onUserCreated(event string, args ...interface{}) {
 	}
 }
 
-func (s *RoleUserService) onUserUpdated(event string, args ...interface{}) {
+func (s *RoleUserService) onUserUpdated(event string, args ...any) {
 	var user = args[0].(*domain.User)
 
 	// 创建时设置角色
 	if user.Roles != nil {
 		// 清除所有
-		s.DeleteUserRoles(user.Id)
+		s.ClearUserRoles(user.Id)
 
 		if len(user.Roles) > 0 {
 			var roleIds = make([]string, 0)

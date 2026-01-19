@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"time"
 
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
@@ -112,7 +113,7 @@ func (h *UserRepository) ExistUserByID(id string) (bool, error) {
 	return true, nil
 }
 
-func (h *UserRepository) GetUserTotal(maps interface{}) (int64, error) {
+func (h *UserRepository) GetUserTotal(maps any) (int64, error) {
 	var count int64
 	if err := h.Model(&domain.User{}).Where(maps).Count(&count).Error; err != nil {
 		return 0, err
@@ -121,62 +122,48 @@ func (h *UserRepository) GetUserTotal(maps interface{}) (int64, error) {
 	return count, nil
 }
 
-func (h *UserRepository) GetUsers(maps interface{}, pageable query.Pageable) (int64, []domain.User) {
-	var users []domain.User
-	if count, err := h.GetUserTotal(maps); err == nil {
-		err := h.Preload("Roles").Where(maps).Offset(pageable.GetOffset()).Limit(pageable.GetLimit()).Find(&users).Error
-		if err == nil {
-			return count, users
+func (r *UserRepository) buildQuery(conds map[string]any) *gorm.DB {
+	q := r.Model(&domain.User{})
+	for k, v := range conds {
+		switch k {
+		case "search":
+			q = q.Where("name like ? or mobile like ? or telephone like ? or email like ? or id = ?", "%"+v.(string)+"%", "%"+v.(string)+"%", "%"+v.(string)+"%", "%"+v.(string)+"%", v)
+		case "name":
+			q = q.Where("name like ?", "%"+v.(string)+"%")
+		case "mobile":
+			q = q.Where("mobile like ?", "%"+v.(string)+"%")
+		case "login":
+			q = q.Where("login like ?", "%"+v.(string)+"%")
+		case "email":
+			q = q.Where("email like ?", "%"+v.(string)+"%")
+		case "ids":
+			q = q.Where("id in ?", v)
+		default:
+			q = q.Where(k+"=?", v)
 		}
 	}
-
-	return 0, []domain.User{}
+	q = q.Where("del_flag = ?", false)
+	return q
 }
 
-func (r *UserRepository) Find(conds map[string]interface{}, pageable query.Pageable) (total int64, list []*domain.User) {
-	var tx = r.DB.Model(&domain.User{})
+func (r *UserRepository) GetAll(conds map[string]any) ([]*domain.User, error) {
+	var users []*domain.User = make([]*domain.User, 0)
 
-	var search = conds["search"]
-	var id = conds["id"]
-	var ids = conds["ids"]
-	var name = conds["name"]
-	var login = conds["login"]
-	var email = conds["email"]
-	var mobile = conds["mobile"]
-	var tenantId = conds["tenant_id"]
-
-	if search != nil && search != "" {
-		tx = tx.Where("name like ? or login like ? or email like ? or mobile like ? or id = ?",
-			"%"+search.(string)+"%", "%"+search.(string)+"%", "%"+search.(string)+"%", "%"+search.(string)+"%", search)
+	var q = r.buildQuery(conds)
+	if res := q.Preload("Roles").Find(&users); res.Error == nil {
+		return users, nil
 	} else {
-		if id != nil && id != "" {
-			tx = tx.Where("id = ?", id)
-		}
-		if ids != nil {
-			tx = tx.Where("id in ?", ids)
-		}
-		if name != nil && name != "" {
-			tx = tx.Where("name like ?", "%"+name.(string)+"%")
-		}
-		if login != nil && login != "" {
-			tx = tx.Where("login like ?", "%"+login.(string)+"%")
-		}
-		if email != nil && email != "" {
-			tx = tx.Where("email like ?", "%"+email.(string)+"%")
-		}
-		if mobile != nil && mobile != "" {
-			tx = tx.Where("mobile like ?", "%"+login.(string)+"%")
-		}
+		return []*domain.User{}, res.Error
 	}
+}
 
-	if tenantId != nil && tenantId != "" {
-		tx = tx.Where("tenant_id = ?", tenantId)
-	}
-
+func (r *UserRepository) Find(conds map[string]any, pageable query.Pageable) (total int64, list []*domain.User) {
+	var tx = r.buildQuery(conds)
 	total = 0
-
-	if tx.Count(&total).Error != nil || total == 0 {
-		return
+	if !pageable.NoCount() {
+		if tx.Count(&total).Error != nil || total == 0 {
+			return
+		}
 	}
 
 	query.Page(tx, pageable).Find(&list)
@@ -269,6 +256,40 @@ func (h *UserRepository) UpdateUser(entity *domain.User) error {
 	h.Model(&user).Omit("created_by", "created_time", "last_login_time", "last_login_ip", "login_times").Save(&user)
 
 	return nil
+}
+
+func (r *UserRepository) Change(userId string, column string, value any) (int64, error) {
+	if res := r.Model(&domain.User{}).Where("id = ?", userId).UpdateColumn(column, value); res.Error == nil && res.RowsAffected > 0 {
+		return res.RowsAffected, nil
+	} else {
+		return 0, res.Error
+	}
+}
+
+func (r *UserRepository) Changes(userId string, columns map[string]any) (int64, error) {
+	if res := r.Model(&domain.User{}).Where("id = ?", userId).UpdateColumns(util.DbFields(columns)); res.Error == nil && res.RowsAffected > 0 {
+		return res.RowsAffected, nil
+	} else {
+		return 0, res.Error
+	}
+}
+
+func (r *UserRepository) ConditionChange(conds map[string]any, column string, value any) (int64, error) {
+	q := r.buildQuery(conds)
+	if res := q.UpdateColumn(column, value); res.Error == nil && res.RowsAffected > 0 {
+		return res.RowsAffected, nil
+	} else {
+		return 0, res.Error
+	}
+}
+
+func (r *UserRepository) ConditionChanges(conds map[string]any, columns map[string]any) (int64, error) {
+	q := r.buildQuery(conds)
+	if res := q.UpdateColumns(util.DbFields(columns)); res.Error == nil && res.RowsAffected > 0 {
+		return res.RowsAffected, nil
+	} else {
+		return 0, res.Error
+	}
 }
 
 func (h *UserRepository) CreateUser(user *domain.User) (*domain.User, error) {
@@ -367,6 +388,6 @@ func (a *UserRepository) GetUserWithOrganizations(userName string, pageable quer
 }
 
 func (a *UserRepository) LogUserLogin(userId string, loginIp string) error {
-	sql := `UPDATE sys_user SET login_times = login_times + 1, last_login_time=CURRENT_TIMESTAMP(), last_login_ip=? WHERE id=?`
-	return a.Exec(sql, loginIp, userId).Error
+	sql := `UPDATE sys_user SET login_times = login_times + 1, last_login_time=?, last_login_ip=? WHERE id=?`
+	return a.Exec(sql, time.Now(), loginIp, userId).Error
 }

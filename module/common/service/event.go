@@ -37,11 +37,11 @@ func (s *EventService) GetById(id int64) (*domain.Event, error) {
 	return s.EventRepository.GetById(id)
 }
 
-func (s *EventService) Check(conds map[string]interface{}) (*domain.Event, error) {
+func (s *EventService) Check(conds map[string]any) (*domain.Event, error) {
 	return s.EventRepository.Check(util.DbFields(conds))
 }
 
-func (s *EventService) Find(conds map[string]interface{}, pageable query.Pageable) (int64, []*domain.Event, error) {
+func (s *EventService) Find(conds map[string]any, pageable query.Pageable) (int64, []*domain.Event, error) {
 	return s.EventRepository.Find(util.DbFields(conds), pageable)
 }
 
@@ -49,7 +49,7 @@ func (s *EventService) CreateEvent(event *domain.Event) (*domain.Event, error) {
 	return s.EventRepository.CreateEvent(event)
 }
 
-func (s *EventService) PatchEvent(id int64, data map[string]interface{}) (*domain.Event, error) {
+func (s *EventService) PatchEvent(id int64, data map[string]any) (*domain.Event, error) {
 	return s.EventRepository.PatchEvent(id, data)
 }
 
@@ -63,7 +63,7 @@ func (s *EventService) FormatEvent(event *domain.Event) *domain.Event {
 		return event
 	}
 
-	var params = make(map[string]interface{})
+	var params = make(map[string]any)
 	if event.Properties != nil {
 		for k, v := range *event.Properties {
 			params[k] = fmt.Sprint(v)
@@ -87,7 +87,7 @@ func (s *EventService) HistoryEvents() {
 	}
 }
 
-func (s *EventService) TriggerEvent(event string, args ...interface{}) {
+func (s *EventService) TriggerEvent(event string, args ...any) {
 	data, b := args[0].(*domain.Event)
 	if !b || data == nil {
 		return
@@ -96,7 +96,7 @@ func (s *EventService) TriggerEvent(event string, args ...interface{}) {
 	s.CreateEvent(data)
 }
 
-func (s *EventService) OnAccessEventCenter(event string, args ...interface{}) {
+func (s *EventService) OnAccessEventCenter(event string, args ...any) {
 	userId := args[0].(string)
 	if userId != "" {
 		s.AccessEventCenter(userId)

@@ -58,7 +58,7 @@ func (a *MessageOpenController) GetList(context *gin.Context) {
 	search := request.Param(context, "search").DefaultString("")
 	pageable := query.GetPageable(context)
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if messageFrom != "" {
 		conds["from"] = messageFrom
 	}
@@ -95,7 +95,7 @@ func (a *MessageOpenController) GetManagedList(context *gin.Context) {
 	search := request.Param(context, "search").DefaultString("")
 	pageable := query.GetPageable(context)
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if messageTo != "" {
 		conds["to"] = messageTo
 	}
@@ -264,7 +264,7 @@ func (a *MessageOpenController) PatchMessage(c *gin.Context) {
 		return
 	}
 
-	var data = make(map[string]interface{})
+	var data = make(map[string]any)
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -366,7 +366,7 @@ func (a *AdminMessageOpenController) GetList(context *gin.Context) {
 	search := request.Param(context, "search").DefaultString("")
 	pageable := query.GetPageable(context)
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if messageFrom != "" {
 		conds["from"] = messageFrom
 	}
@@ -404,7 +404,7 @@ func (a *AdminMessageOpenController) GetManagedList(context *gin.Context) {
 	search := request.Param(context, "search").DefaultString("")
 	pageable := query.GetPageable(context)
 
-	var conds = make(map[string]interface{})
+	var conds = make(map[string]any)
 	if messageTo != "" {
 		conds["to"] = messageTo
 	}
@@ -573,7 +573,7 @@ func (a *AdminMessageOpenController) PatchMessage(c *gin.Context) {
 		return
 	}
 
-	var data = make(map[string]interface{})
+	var data = make(map[string]any)
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return

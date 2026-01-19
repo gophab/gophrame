@@ -12,7 +12,7 @@ func dereferencedType(t reflect.Type) reflect.Type {
 	return t
 }
 
-func dereferencedValue(value interface{}) reflect.Value {
+func dereferencedValue(value any) reflect.Value {
 	v := reflect.ValueOf(value)
 
 	for k := v.Kind(); k == reflect.Ptr || k == reflect.Interface; k = v.Kind() {

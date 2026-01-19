@@ -37,12 +37,12 @@ import (
 // Logger allows for simple logging as inject traverses and populates the
 // object graph.
 type Logger interface {
-	Debugf(format string, v ...interface{})
+	Debugf(format string, v ...any)
 }
 
 // Populate is a short-hand for populating a graph with the given incomplete
 // object values.
-func Populate(values ...interface{}) error {
+func Populate(values ...any) error {
 	var g Graph
 	for _, v := range values {
 		if err := g.Provide(&Object{Value: v}); err != nil {
@@ -54,7 +54,7 @@ func Populate(values ...interface{}) error {
 
 // An Object in the Graph.
 type Object struct {
-	Value        interface{}
+	Value        any
 	Name         string             // Optional
 	Complete     bool               // If true, the Value will be considered complete
 	Fields       map[string]*Object // Populated with the field names that were injected and their corresponding *Object.

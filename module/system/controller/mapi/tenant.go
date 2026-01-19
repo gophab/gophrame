@@ -64,7 +64,7 @@ func (a *TenantMController) GetTenants(c *gin.Context) {
 
 	pageable := query.GetPageable(c)
 
-	conds := make(map[string]interface{})
+	conds := make(map[string]any)
 	if search != "" {
 		conds["search"] = search
 	}
@@ -131,7 +131,7 @@ func (a *TenantMController) PatchTenant(c *gin.Context) {
 		return
 	}
 
-	var data = make(map[string]interface{})
+	var data = make(map[string]any)
 	if err := c.ShouldBind(&data); err != nil {
 		response.FailCode(c, errors.INVALID_PARAMS)
 		return
@@ -161,7 +161,7 @@ func (a *TenantMController) PatchTenant(c *gin.Context) {
 	}
 
 	var availableFields = []string{"name", "description", "telephone", "address", "logo", "status"}
-	var tenant = make(map[string]interface{})
+	var tenant = make(map[string]any)
 	for _, k := range availableFields {
 		if v, b := data[k]; b && v != nil {
 			switch t := v.(type) {
