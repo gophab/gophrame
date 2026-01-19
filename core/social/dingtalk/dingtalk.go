@@ -58,7 +58,7 @@ func (oar *OpenAPIResponse) checkError() error {
 	return err
 }
 
-func (c *Client) doRequest(request *http.Request, data interface{}) error {
+func (c *Client) doRequest(request *http.Request, data any) error {
 	logger.Debug("Http Request ", request.Method, request.URL)
 	if resp, err := c.Do(request); err == nil {
 		if resp != nil {
@@ -423,7 +423,7 @@ func (s *DingtalkService) GetJsTicket(appId string) (string, bool) {
 	return "", false
 }
 
-func (s *DingtalkService) GetSignature(ctx context.Context, appId string, url string, nonce string, timestamp int64) (*map[string]interface{}, error) {
+func (s *DingtalkService) GetSignature(ctx context.Context, appId string, url string, nonce string, timestamp int64) (*map[string]any, error) {
 	cfg := s.getAppSettingByAppId(appId)
 	if cfg == nil {
 		return nil, errors.New("应用不存在")
@@ -439,7 +439,7 @@ func (s *DingtalkService) GetSignature(ctx context.Context, appId string, url st
 
 		signature := util.SHA1(fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticket, nonce, timestamp, url))
 
-		result := make(map[string]interface{})
+		result := make(map[string]any)
 		result["signature"] = signature
 		result["appId"] = appId
 		result["corpId"] = cfg.CorpId

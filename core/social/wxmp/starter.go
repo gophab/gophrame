@@ -1,6 +1,7 @@
 package wxmp
 
 import (
+	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/social"
@@ -23,5 +24,7 @@ func Init() {
 
 		wxmpController := &WxmpController{WxmpService: wxmpService}
 		inject.InjectValue("wxmpController", wxmpController)
+
+		controller.AddController(wxmpController)
 	}
 }

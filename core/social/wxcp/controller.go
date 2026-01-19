@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/security"
 	"github.com/gophab/gophrame/core/social/wxcp/config"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
@@ -79,16 +80,11 @@ func (c *WxcpController) GetAgentSignature(ctx *gin.Context) {
 	}
 }
 
-/**
- * 处理WEB验证码的API路由
- */
 func (e *WxcpController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
-	// 创建一个验证码路由
-	wxcp := g.Group("/openapi/social/wxcp")
+	wxcp := g.Group("/openapi/social/wxcp", security.CheckTokenVerify())
 	{
-		// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
-		wxcp.GET("/signature", e.GetSignature)            // 发送
-		wxcp.GET("/agent-signature", e.GetAgentSignature) // 发送
+		wxcp.GET("/signature", e.GetSignature)
+		wxcp.GET("/agent-signature", e.GetAgentSignature)
 	}
 	return wxcp
 }

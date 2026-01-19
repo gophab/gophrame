@@ -2,6 +2,7 @@ package wxma
 
 import (
 	"context"
+	"net/http"
 	"strings"
 	"sync"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/gophab/gophrame/core/social"
 	"github.com/gophab/gophrame/core/social/wxma/config"
 	"github.com/gophab/gophrame/core/util"
+
+	"github.com/gophab/gophrame/errors"
 
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/miniProgram"
 )
@@ -87,19 +90,70 @@ func (s *WxmaService) GetSocialUserByCode(ctx context.Context, socialChannelId s
 	}
 
 	if app := s.GetApp(appId); app != nil {
-		if user, err := app.Auth.Session(ctx, code); err == nil && user != nil {
+		if session, err := app.Auth.Session(ctx, code); err == nil && session != nil && session.SessionKey != "" {
 			result := social.SocialUser{
-				OpenId: util.StringAddr(user.OpenID),
+				OpenId: util.StringAddr(session.OpenID),
 				Status: util.IntAddr(consts.STATUS_VALID),
 			}
-			if user.UnionID != "" {
-				result.SetSocialId("wx", user.UnionID)
+			if session.UnionID != "" {
+				result.SetSocialId("wx", session.UnionID)
 			} else {
-				result.SetSocialId("wx", user.OpenID)
+				result.SetSocialId("wx", session.OpenID)
 			}
 			return &result
 		}
 	}
 
 	return nil
+}
+
+// 用户授权手机号绑定
+func (s *WxmaService) GetUserPhoneNumber(ctx context.Context, socialChannelId string, code string) (string, error) {
+	var appId string
+	segments := strings.Split(socialChannelId, ":")
+	if len(segments) > 1 {
+		appId = segments[1]
+	}
+
+	if appId == "" {
+		value := ctx.Value(server.AppIdContextKey)
+		if value != nil {
+			appId = value.(string)
+		}
+	}
+
+	if app := s.GetApp(appId); app != nil {
+		if resp, err := app.PhoneNumber.GetUserPhoneNumber(ctx, code); err == nil && resp != nil {
+			return resp.PhoneInfo.PhoneNumber, nil
+		} else {
+			return "", err
+		}
+	}
+
+	return "", errors.New(http.StatusNotFound, "appId Not Found")
+}
+
+func (s *WxmaService) GetUserInfo(ctx context.Context, socialChannelId string, code string) (string, error) {
+	var appId string
+	segments := strings.Split(socialChannelId, ":")
+	if len(segments) > 1 {
+		appId = segments[1]
+	}
+
+	if appId == "" {
+		value := ctx.Value(server.AppIdContextKey)
+		if value != nil {
+			appId = value.(string)
+		}
+	}
+
+	if app := s.GetApp(appId); app != nil {
+		if resp, err := app.PhoneNumber.GetUserPhoneNumber(ctx, code); err == nil && resp != nil {
+			return resp.PhoneInfo.PhoneNumber, nil
+		} else {
+			return "", err
+		}
+	}
+
+	return "", errors.New(http.StatusNotFound, "appId Not Found")
 }

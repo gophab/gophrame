@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gophab/gophrame/core/controller"
+	"github.com/gophab/gophrame/core/security"
 	"github.com/gophab/gophrame/core/social/wxmp/config"
 	"github.com/gophab/gophrame/core/webservice/request"
 	"github.com/gophab/gophrame/core/webservice/response"
@@ -44,7 +45,7 @@ func (c *WxmpController) GetSignature(ctx *gin.Context) {
  */
 func (e *WxmpController) InitRouter(g *gin.RouterGroup) *gin.RouterGroup {
 	// 创建一个验证码路由
-	wxmp := g.Group("/openapi/social/wxmp")
+	wxmp := g.Group("/openapi/social/wxmp", security.CheckTokenVerify())
 	{
 		// 验证码业务，该业务无需专门校验参数，所以可以直接调用控制器
 		wxmp.GET("/signature", e.GetSignature) // 发送

@@ -42,7 +42,7 @@ func NewClient(app *kernel.ApplicationInterface) (*Client, error) {
 	return client, nil
 }
 
-func (comp *Client) BuildConfig(ctx context.Context, jsApiList []string, debug bool, beta bool, openTagList []string, url string) (interface{}, error) {
+func (comp *Client) BuildConfig(ctx context.Context, jsApiList []string, debug bool, beta bool, openTagList []string, url string) (any, error) {
 
 	signature, err := comp.ConfigSignature(ctx, url, "", 0)
 	if err != nil {
@@ -73,7 +73,7 @@ func (comp *Client) GetTicket(ctx context.Context, refresh bool, ticketType stri
 
 	if !refresh && comp.GetCache().Has(cacheKey) {
 		ticket, err := comp.GetCache().Get(cacheKey, nil)
-		ticket2 := ticket.(map[string]interface{})
+		ticket2 := ticket.(map[string]any)
 		return (*object.HashMap)(&ticket2), err
 	}
 

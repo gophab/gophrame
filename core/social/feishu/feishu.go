@@ -110,7 +110,7 @@ type GetTicketResp struct {
 	Data *GetTicketRespData `json:"data"` // 业务数据
 }
 
-func (s *FeishuService) GetSignature(ctx context.Context, appId string, url string, nonce string, timestamp int64) (*map[string]interface{}, error) {
+func (s *FeishuService) GetSignature(ctx context.Context, appId string, url string, nonce string, timestamp int64) (*map[string]any, error) {
 	if ticket, b := s.GetJsTicket(appId); b {
 		if nonce == "" {
 			nonce = object.QuickRandom(10)
@@ -121,7 +121,7 @@ func (s *FeishuService) GetSignature(ctx context.Context, appId string, url stri
 
 		signature := util.SHA1(fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticket, nonce, timestamp, url))
 
-		result := make(map[string]interface{})
+		result := make(map[string]any)
 		result["signature"] = signature
 		result["appId"] = appId
 		result["nonceStr"] = nonce

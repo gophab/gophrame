@@ -1,6 +1,7 @@
 package wxma
 
 import (
+	"github.com/gophab/gophrame/core/controller"
 	"github.com/gophab/gophrame/core/inject"
 	"github.com/gophab/gophrame/core/logger"
 	"github.com/gophab/gophrame/core/social"
@@ -20,5 +21,10 @@ func Init() {
 		inject.InjectValue("wxmaService", wxmaService)
 
 		social.RegisterSocialService("wma", wxmaService)
+
+		wxmaController := &WxmaController{WxmaService: wxmaService}
+		inject.InjectValue("wxmaController", wxmaController)
+
+		controller.AddController(wxmaController)
 	}
 }
