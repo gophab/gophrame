@@ -1,0 +1,1 @@
+处理实体存储的类  == iBatis Mapper

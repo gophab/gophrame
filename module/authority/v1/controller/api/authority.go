@@ -9,30 +9,27 @@ import (
 
 	"github.com/gophab/gophrame/errors"
 
-	"github.com/gophab/gophrame/module/authority/service"
+	"github.com/gophab/gophrame/module/authority/v1/service"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AuthorityController struct {
 	controller.ResourceController
-	AuthorityService *service.AuthorityService `inject:"authorityService"`
+	AuthorityService *service.AuthorityService `inject:"authorityService_v1"`
 }
 
 var authorityController *AuthorityController = &AuthorityController{}
 
 func init() {
-	inject.InjectValue("authorityController", authorityController)
+	inject.InjectValue("authorityController_v1", authorityController)
 }
 
 func (m *AuthorityController) AfterInitialize() {
 	m.SetResourceHandlers([]controller.ResourceHandler{
-		{HttpMethod: "GET", ResourcePath: "/operations", Handler: m.GetSystemOperations},
 		{HttpMethod: "GET", ResourcePath: "/user/menus", Handler: m.GetUserMenus},
 		// {HttpMethod: "GET", ResourcePath: "/user/menu/:id/buttons", Handler: m.GetUserMenuButtons},
-		{HttpMethod: "GET", ResourcePath: "/role/:id/operations", Handler: m.GetRoleOperations},
-		{HttpMethod: "GET", ResourcePath: "/user/:id/operations", Handler: m.GetUserOperations},
-		{HttpMethod: "GET", ResourcePath: "/authorities", Handler: m.GetSystemOperations},
+		{HttpMethod: "GET", ResourcePath: "/authorities", Handler: m.GetSystemAuthorities},
 		{HttpMethod: "GET", ResourcePath: "/role/:id/authorities", Handler: m.GetRoleAuthorities},
 		{HttpMethod: "GET", ResourcePath: "/user/:id/authorities", Handler: m.GetUserAuthorities},
 	})
@@ -59,37 +56,9 @@ func (c *AuthorityController) GetUserMenus(context *gin.Context) {
 // }
 
 // 待分配的系统菜单以及挂接的按钮
-func (c *AuthorityController) GetSystemOperations(context *gin.Context) {
-	count, list := c.AuthorityService.GetSystemOperations()
+func (c *AuthorityController) GetSystemAuthorities(context *gin.Context) {
+	count, list := c.AuthorityService.GetSystemAuthorities()
 	response.Page(context, count, list)
-}
-
-// 待分配的系统菜单以及挂接的按钮
-func (c *AuthorityController) GetRoleOperations(context *gin.Context) {
-	roleId, err := request.Param(context, "id").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
-	count, list := c.AuthorityService.GetRoleOperations(roleId)
-	response.Page(context, count, list)
-}
-
-// 根据用户ID获取所有权限的来源
-func (c *AuthorityController) GetUserOperations(context *gin.Context) {
-	id, err := request.Param(context, "id").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
-
-	//根据用户ID,查询隶属哪些组织机构
-	if data := c.AuthorityService.GetUserOperations(id); data != nil {
-		response.Success(context, data)
-	} else {
-		response.NotFound(context, "")
-	}
-
 }
 
 // 待分配的系统菜单以及挂接的按钮
@@ -99,14 +68,8 @@ func (c *AuthorityController) GetRoleAuthorities(context *gin.Context) {
 		response.FailCode(context, errors.INVALID_PARAMS)
 		return
 	}
-
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
-	list, _ := c.AuthorityService.GetRoleAuthorities(roleId, authType)
-	response.Page(context, int64(len(list)), list)
+	count, list := c.AuthorityService.GetRoleAuthorities(roleId)
+	response.Page(context, count, list)
 }
 
 // 根据用户ID获取所有权限的来源
@@ -117,14 +80,8 @@ func (c *AuthorityController) GetUserAuthorities(context *gin.Context) {
 		return
 	}
 
-	authType, err := request.Param(context, "auth_type").MustString()
-	if err != nil {
-		response.FailCode(context, errors.INVALID_PARAMS)
-		return
-	}
-
 	//根据用户ID,查询隶属哪些组织机构
-	if data := c.AuthorityService.GetUserAuthorities(id, authType); data != nil {
+	if data := c.AuthorityService.GetUserAuthorities(id); data != nil {
 		response.Success(context, data)
 	} else {
 		response.NotFound(context, "")

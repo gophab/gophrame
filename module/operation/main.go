@@ -6,6 +6,8 @@ import (
 
 	// 增加业务API
 	_ "github.com/gophab/gophrame/module/operation/controller"
+
+	_ "github.com/gophab/gophrame/module/operation/v1"
 )
 
 const (

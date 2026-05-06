@@ -5,10 +5,7 @@ import (
 	"github.com/gophab/gophrame/core/module"
 
 	// 增加业务API
-	_ "github.com/gophab/gophrame/module/authority/controller"
-
-	// V1
-	_ "github.com/gophab/gophrame/module/authority/v1"
+	_ "github.com/gophab/gophrame/module/authority/v1/controller"
 )
 
 var _module = &module.Module{
